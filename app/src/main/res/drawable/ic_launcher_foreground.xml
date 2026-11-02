@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer Panorama Frame / Globe -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M54,18C35.22,18 20,33.22 20,52c0,18.78 15.22,34 34,34s34,-15.22 34,-34C88,33.22 72.78,18 54,18zM54,82c-16.54,0 -30,-13.46 -30,-30s13.46,-30 30,-30 30,13.46 30,30 -13.46,30 -30,30z"/>
+    <!-- Stereo Dual Lenses / Eyes for 3D VR -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,42m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M68,42m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"/>
+    <!-- Panorama Horizon / Grid -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,60h44v4H32zM38,68h32v4H38zM24,50h60v2H24z"/>
+</vector>
