@@ -30,10 +30,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * Galerie der eigenen Panoramen (Bilder/StereoPano). Antippen = Betrachter, lange druecken = Loeschen.
- * Eigene Dateien sind unter Scoped Storage ohne Zusatzberechtigung lesbar und loeschbar.
- */
 public class GalleryActivity extends Activity {
 
     private static final String PFAD = Environment.DIRECTORY_PICTURES + "/StereoPano%";
@@ -53,7 +49,6 @@ public class GalleryActivity extends Activity {
                 MediaStore.Images.Media.DATE_ADDED + " DESC");
     }
 
-    /** Neueste Aufnahme oder null. */
     static Uri letzteAufnahme(Context c) {
         try (Cursor cur = abfrage(c)) {
             if (cur != null && cur.moveToFirst())
@@ -70,14 +65,14 @@ public class GalleryActivity extends Activity {
         root.setBackgroundColor(Color.BLACK);
 
         TextView titel = new TextView(this);
-        titel.setText("Meine Panoramen");
+        titel.setText(R.string.gallery_title);
         titel.setTextColor(Color.WHITE);
         titel.setTextSize(20);
         titel.setPadding(32, 24, 32, 24);
         root.addView(titel);
 
         leer = new TextView(this);
-        leer.setText("Noch keine Aufnahmen.");
+        leer.setText(R.string.gallery_empty);
         leer.setTextColor(0xFFAAAAAA);
         leer.setGravity(Gravity.CENTER);
         leer.setPadding(32, 64, 32, 64);
@@ -94,7 +89,7 @@ public class GalleryActivity extends Activity {
             @Override public long getItemId(int i) { return items.get(i).id; }
             @Override public View getView(int i, View v, ViewGroup p) {
                 ImageView iv = v instanceof ImageView ? (ImageView) v : new ImageView(GalleryActivity.this);
-                int h = (getResources().getDisplayMetrics().widthPixels / 2 - 16) / 2;    // Seitenverhaeltnis 2:1
+                int h = (getResources().getDisplayMetrics().widthPixels / 2 - 16) / 2;
                 iv.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h));
                 iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 iv.setBackgroundColor(0xFF222222);
@@ -157,8 +152,13 @@ public class GalleryActivity extends Activity {
     }
 
     private void zeigeMenue(Item it) {
-        String[] eintraege = {"Teilen (.vr.jpg)", "Als flaches 2D-Panorama speichern", "Als SBS-Bild speichern (Brille)",
-                "Als Anaglyphe speichern (Rot/Cyan)", "Loeschen"};
+        String[] eintraege = {
+                getString(R.string.share),
+                getString(R.string.export_2d),
+                getString(R.string.export_sbs),
+                getString(R.string.export_anaglyph),
+                getString(R.string.delete)
+        };
         new AlertDialog.Builder(this).setTitle(it.name).setItems(eintraege, (d, w) -> {
             if (w == 0) teilen(it);
             else if (w == 4) frageLoeschen(it);
@@ -171,21 +171,19 @@ public class GalleryActivity extends Activity {
         s.setType("image/jpeg");
         s.putExtra(Intent.EXTRA_STREAM, it.uri);
         s.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(Intent.createChooser(s, "Panorama teilen"));
+        startActivity(Intent.createChooser(s, getString(R.string.share)));
     }
 
     private void exportiere(Item it, int art) {
-        Toast.makeText(this, "Exportiere ...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.export_saving, Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             String m;
             try {
-                Uri u = Exporter.exportiere(this, it.uri, it.name, art);
-                m = "Gespeichert in Bilder/PanoExport";
-                final Uri fu = u;
-                runOnUiThread(() -> Toast.makeText(this, "Gespeichert in Bilder/PanoExport", Toast.LENGTH_LONG).show());
+                Exporter.exportiere(this, it.uri, it.name, art);
+                runOnUiThread(() -> Toast.makeText(this, R.string.export_success, Toast.LENGTH_LONG).show());
                 return;
             } catch (Exception | OutOfMemoryError e) {
-                m = "Export fehlgeschlagen: " + e.getMessage();
+                m = String.format(getString(R.string.export_failed), e.getMessage());
             }
             final String msg = m;
             runOnUiThread(() -> Toast.makeText(this, msg, Toast.LENGTH_LONG).show());
@@ -194,15 +192,15 @@ public class GalleryActivity extends Activity {
 
     private void frageLoeschen(Item it) {
         new AlertDialog.Builder(this)
-                .setMessage(it.name + " loeschen?")
-                .setNegativeButton("Abbrechen", null)
-                .setPositiveButton("Loeschen", (d, w) -> {
+                .setMessage(String.format(getString(R.string.delete_confirm), it.name))
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.delete, (d, w) -> {
                     try {
                         getContentResolver().delete(it.uri, null, null);
                         cache.remove(it.id);
                         laden();
                     } catch (SecurityException e) {
-                        Toast.makeText(this, "Loeschen nicht erlaubt.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.delete, Toast.LENGTH_SHORT).show();
                     }
                 }).show();
     }

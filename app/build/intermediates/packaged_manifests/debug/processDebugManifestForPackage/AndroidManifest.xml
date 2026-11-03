@@ -26,13 +26,14 @@
         android:debuggable="true"
         android:extractNativeLibs="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="Stereo Pano"
+        android:label="@string/app_name"
         android:largeHeap="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
         <activity
-            android:name="com.example.stereopano.MainActivity"
-            android:exported="true" >
+            android:name="com.example.stereopano.CaptureActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -40,14 +41,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.example.stereopano.CaptureActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-        <activity
             android:name="com.example.stereopano.GalleryActivity"
-            android:exported="false" />
-
-        <!-- Oeffnet auch .vr.jpg aus Dateimanager / Google Fotos ("Oeffnen mit") -->
+            android:exported="false"
+            android:label="@string/title_gallery" />
+        <activity
+            android:name="com.example.stereopano.SettingsActivity"
+            android:exported="false"
+            android:label="@string/title_settings" />
         <activity
             android:name="com.example.stereopano.ViewerActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"

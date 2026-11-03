@@ -38,76 +38,78 @@
 22-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:9:52-75
 23
 24    <application
-24-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:11:5-44:19
+24-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:11:5-49:19
 25        android:allowBackup="true"
 25-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:12:9-35
 26        android:debuggable="true"
 27        android:extractNativeLibs="false"
 27-->INJECTED
 28        android:icon="@mipmap/ic_launcher"
-28-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:13:9-43
-29        android:label="Stereo Pano"
-29-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:15:9-36
+28-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:14:9-43
+29        android:label="@string/app_name"
+29-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:13:9-41
 30        android:largeHeap="true"
 30-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:16:9-33
 31        android:roundIcon="@mipmap/ic_launcher_round"
-31-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:14:9-54
+31-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:15:9-54
 32        android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
 32-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:17:9-71
 33        <activity
-33-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:19:9-24:20
-34            android:name="com.example.stereopano.MainActivity"
-34-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:19:19-47
-35            android:exported="true" >
-35-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:19:48-71
-36            <intent-filter>
-36-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:20:13-23:29
-37                <action android:name="android.intent.action.MAIN" />
-37-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:21:17-69
-37-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:21:25-66
-38
-39                <category android:name="android.intent.category.LAUNCHER" />
-39-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:22:17-77
-39-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:22:27-74
-40            </intent-filter>
-41        </activity>
-42        <activity
-42-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:26:9-29:52
-43            android:name="com.example.stereopano.CaptureActivity"
-43-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:27:13-44
-44            android:exported="false"
-44-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:28:13-37
-45            android:screenOrientation="portrait" />
-45-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:29:13-49
-46        <activity
-46-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:31:9-78
-47            android:name="com.example.stereopano.GalleryActivity"
-47-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:31:19-50
-48            android:exported="false" />
-48-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:31:51-75
-49
-50        <!-- Oeffnet auch .vr.jpg aus Dateimanager / Google Fotos ("Oeffnen mit") -->
+33-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:19:9-27:20
+34            android:name="com.example.stereopano.CaptureActivity"
+34-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:20:13-44
+35            android:exported="true"
+35-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:21:13-36
+36            android:screenOrientation="portrait" >
+36-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:22:13-49
+37            <intent-filter>
+37-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:23:13-26:29
+38                <action android:name="android.intent.action.MAIN" />
+38-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:24:17-69
+38-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:24:25-66
+39
+40                <category android:name="android.intent.category.LAUNCHER" />
+40-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:25:17-77
+40-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:25:27-74
+41            </intent-filter>
+42        </activity>
+43        <activity
+43-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:29:9-32:53
+44            android:name="com.example.stereopano.GalleryActivity"
+44-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:30:13-44
+45            android:exported="false"
+45-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:31:13-37
+46            android:label="@string/title_gallery" />
+46-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:32:13-50
+47        <activity
+47-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:34:9-37:54
+48            android:name="com.example.stereopano.SettingsActivity"
+48-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:35:13-45
+49            android:exported="false"
+49-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:36:13-37
+50            android:label="@string/title_settings" />
+50-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:37:13-51
 51        <activity
-51-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:34:9-43:20
+51-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:39:9-48:20
 52            android:name="com.example.stereopano.ViewerActivity"
-52-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:35:13-43
+52-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:40:13-43
 53            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
-53-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:37:13-106
+53-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:42:13-106
 54            android:exported="true" >
-54-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:36:13-36
+54-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:41:13-36
 55            <intent-filter>
-55-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:38:13-42:29
+55-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:43:13-47:29
 56                <action android:name="android.intent.action.VIEW" />
-56-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:39:17-69
-56-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:39:25-66
+56-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:44:17-69
+56-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:44:25-66
 57
 58                <category android:name="android.intent.category.DEFAULT" />
-58-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:40:17-76
-58-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:40:27-73
+58-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:45:17-76
+58-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:45:27-73
 59
 60                <data android:mimeType="image/jpeg" />
-60-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:41:17-55
-60-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:41:23-52
+60-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:46:17-55
+60-->/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:46:23-52
 61            </intent-filter>
 62        </activity>
 63    </application>

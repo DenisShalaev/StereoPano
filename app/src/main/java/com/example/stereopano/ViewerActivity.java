@@ -24,8 +24,8 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -35,33 +35,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-/**
- * Betrachter fuer .vr.jpg (Cardboard-Camera-Format).
- *
- * Modi (Knopf "Modus"):
- *  2D        - flache Ansicht des linken Bildes, Vollbild
- *  Cardboard - Querformat, linkes/rechtes Auge nebeneinander (fuer Pappbrille, Telefon im Headset)
- *  SBS Brille- Querformat, Side-by-Side fuer Videobrillen (z. B. Goovis); optional "Halb-SBS" (gestaucht)
- *
- * Steuerung: Gyro an/aus, Kompass an/aus (Panorama nach Himmelsrichtungen, falls im Bild gespeichert),
- * Finger ziehen = verschieben, Pinch = Zoom, Tippen = Leiste ein/aus, Doppeltippen = 2D <-> letzter Stereo-Modus.
- */
 public class ViewerActivity extends Activity implements SensorEventListener {
 
     private static final int REQ_OEFFNEN = 7;
-    private static final String[] MODUS_NAMEN = {"2D", "Cardboard", "SBS Brille"};
 
     private GLSurfaceView gl;
     private PanoRenderer rend;
     private LinearLayout leiste;
-    private Button modusKnopf, kompassKnopf, gyroKnopf, halbKnopf, linsenKnopf;
+    private ImageButton galerieKnopf, modusKnopf, kompassKnopf, gyroKnopf, halbKnopf, linsenKnopf, mitteKnopf, einstellungenKnopf;
 
     private SensorManager sm;
     private SharedPreferences prefs;
     private final float[] r = new float[9], r2 = new float[9];
 
-    private double poseHeading = Double.NaN;   // Kompasskurs der Mitte des vollen Panoramas
-    private double azMitte;                    // Azimut (Grad) der Mitte des vorhandenen Ausschnitts
+    private double poseHeading = Double.NaN;
+    private double azMitte;
     private boolean kompassWunsch, gyroAn, sbsHalb, linsenAn;
     private boolean neuZentrieren = true;
     private int modus = PanoRenderer.MODE_FLAT;
@@ -105,7 +93,7 @@ public class ViewerActivity extends Activity implements SensorEventListener {
         });
         final ScaleGestureDetector sd = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override public boolean onScale(ScaleGestureDetector d) {
-                rend.setFovScale(rend.getFovScale() / d.getScaleFactor());   // spreizen = naeher heran
+                rend.setFovScale(rend.getFovScale() / d.getScaleFactor());
                 return true;
             }
         });
@@ -126,30 +114,58 @@ public class ViewerActivity extends Activity implements SensorEventListener {
 
         leiste = new LinearLayout(this);
         leiste.setOrientation(LinearLayout.HORIZONTAL);
-        leiste.setPadding(12, 12, 12, 12);
+        leiste.setGravity(Gravity.CENTER_VERTICAL);
+        leiste.setPadding(dp(8), dp(8), dp(8), dp(8));
         leiste.setBackgroundColor(0x77000000);
-        leiste.addView(knopf("Galerie", R.drawable.ic_gallery, v -> zurueckZurGalerie()));
-        modusKnopf = knopf("", R.drawable.ic_mode, v -> setzeModus((modus + 1) % 3));
-        leiste.addView(modusKnopf);
-        kompassKnopf = knopf("", R.drawable.ic_compass, v -> schalteKompass());
-        leiste.addView(kompassKnopf);
-        gyroKnopf = knopf("", R.drawable.ic_gyro, v -> schalteGyro());
-        leiste.addView(gyroKnopf);
-        halbKnopf = knopf("", 0, v -> {
-            sbsHalb = !sbsHalb;
-            prefs.edit().putBoolean("halb", sbsHalb).apply();
-            rend.setSbsHalf(sbsHalb);
-            beschrifte();
+
+        galerieKnopf = Ui.createRoundButton(this, R.drawable.ic_gallery, R.string.btn_gallery, v -> zurueckZurGalerie());
+        leiste.addView(galerieKnopf, knopfLp());
+
+        modusKnopf = Ui.createRoundButton(this, R.drawable.ic_mode_2d, R.string.btn_mode_2d, v -> {
+            setzeModus((modus + 1) % 3);
+            int msgRes = modus == PanoRenderer.MODE_FLAT ? R.string.msg_mode_2d :
+                    (modus == PanoRenderer.MODE_CARDBOARD ? R.string.msg_mode_cardboard : R.string.msg_mode_sbs);
+            Toast.makeText(this, msgRes, Toast.LENGTH_SHORT).show();
         });
-        leiste.addView(halbKnopf);
-        linsenKnopf = knopf("", 0, v -> {
+        leiste.addView(modusKnopf, knopfLp());
+
+        kompassKnopf = Ui.createRoundButton(this, R.drawable.ic_compass, R.string.btn_compass, v -> schalteKompass());
+        leiste.addView(kompassKnopf, knopfLp());
+
+        gyroKnopf = Ui.createRoundButton(this, R.drawable.ic_gyro, R.string.btn_gyro, v -> schalteGyro());
+        leiste.addView(gyroKnopf, knopfLp());
+
+        linsenKnopf = Ui.createRoundButton(this, R.drawable.ic_lens, R.string.btn_lens, v -> {
             linsenAn = !linsenAn;
             prefs.edit().putBoolean("linsen", linsenAn).apply();
             rend.setLens(linsenAn);
             beschrifte();
+            Toast.makeText(this, linsenAn ? R.string.msg_lens_on : R.string.msg_lens_off, Toast.LENGTH_SHORT).show();
         });
-        leiste.addView(linsenKnopf);
-        leiste.addView(knopf("Mitte", R.drawable.ic_center, v -> { rend.resetDrag(); rend.setFovScale(1f); neuZentrieren = true; wendeKursAn(); }));
+        leiste.addView(linsenKnopf, knopfLp());
+
+        halbKnopf = Ui.createRoundButton(this, R.drawable.ic_half_sbs, R.string.btn_half_sbs, v -> {
+            sbsHalb = !sbsHalb;
+            prefs.edit().putBoolean("halb", sbsHalb).apply();
+            rend.setSbsHalf(sbsHalb);
+            beschrifte();
+            Toast.makeText(this, sbsHalb ? R.string.msg_half_sbs_on : R.string.msg_half_sbs_off, Toast.LENGTH_SHORT).show();
+        });
+        leiste.addView(halbKnopf, knopfLp());
+
+        mitteKnopf = Ui.createRoundButton(this, R.drawable.ic_center, R.string.btn_center, v -> {
+            rend.resetDrag();
+            rend.setFovScale(1f);
+            neuZentrieren = true;
+            wendeKursAn();
+            Toast.makeText(this, R.string.msg_view_centered, Toast.LENGTH_SHORT).show();
+        });
+        leiste.addView(mitteKnopf, knopfLp());
+
+        einstellungenKnopf = Ui.createRoundButton(this, R.drawable.ic_settings, R.string.btn_settings,
+                v -> startActivity(new Intent(this, SettingsActivity.class)));
+        leiste.addView(einstellungenKnopf, knopfLp());
+
         root.addView(leiste, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP));
         setContentView(root);
@@ -161,42 +177,48 @@ public class ViewerActivity extends Activity implements SensorEventListener {
         else oeffnen();
     }
 
-    private Button knopf(String text, int iconRes, View.OnClickListener l) {
-        Button k = new Button(this);
-        k.setText(text);
-        k.setTextSize(10);
-        k.setTextColor(android.graphics.Color.WHITE);
-        k.setAllCaps(false);
-        if (iconRes != 0) {
-            k.setCompoundDrawablesWithIntrinsicBounds(0, iconRes, 0, 0);
-            k.setCompoundDrawablePadding(4);
-        }
-        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-        bg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-        bg.setCornerRadius(18);
-        bg.setColor(0x55000000);
-        bg.setStroke(2, 0x44FFFFFF);
-        k.setBackground(bg);
-        k.setPadding(8, 12, 8, 12);
-        k.setOnClickListener(l);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        lp.setMargins(4, 4, 4, 4);
-        k.setLayoutParams(lp);
-        return k;
+    private int dp(int v) { return (int) (v * getResources().getDisplayMetrics().density + 0.5f); }
+
+    private LinearLayout.LayoutParams knopfLp() {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(44), dp(44), 1f);
+        lp.setMargins(dp(4), dp(2), dp(4), dp(2));
+        return lp;
     }
 
     private void beschrifte() {
-        modusKnopf.setText("Modus:\n" + MODUS_NAMEN[modus]);
-        boolean kompassOk = !Double.isNaN(poseHeading);
-        kompassKnopf.setText(!kompassOk ? "Kompass:\nn/a" : kompassWunsch ? "Kompass:\nan" : "Kompass:\naus");
-        gyroKnopf.setText(gyroAn ? "Gyro:\nan" : "Gyro:\naus");
-        halbKnopf.setText(sbsHalb ? "Halb-SBS:\nan" : "Halb-SBS:\naus");
-        halbKnopf.setVisibility(modus == PanoRenderer.MODE_SBS ? View.VISIBLE : View.GONE);
-        linsenKnopf.setText(linsenAn ? "Linsen:\nan" : "Linsen:\naus");
-        linsenKnopf.setVisibility(modus == PanoRenderer.MODE_CARDBOARD ? View.VISIBLE : View.GONE);
-    }
+        if (modus == PanoRenderer.MODE_FLAT) {
+            modusKnopf.setImageResource(R.drawable.ic_mode_2d);
+            modusKnopf.setContentDescription(getString(R.string.btn_mode_2d));
+            Ui.setRoundButtonState(modusKnopf, Ui.ButtonState.INACTIVE);
+        } else if (modus == PanoRenderer.MODE_CARDBOARD) {
+            modusKnopf.setImageResource(R.drawable.ic_mode_cardboard);
+            modusKnopf.setContentDescription(getString(R.string.btn_mode_cardboard));
+            Ui.setRoundButtonState(modusKnopf, Ui.ButtonState.ACTIVE);
+        } else {
+            modusKnopf.setImageResource(R.drawable.ic_mode_sbs);
+            modusKnopf.setContentDescription(getString(R.string.btn_mode_sbs));
+            Ui.setRoundButtonState(modusKnopf, Ui.ButtonState.ACTIVE);
+        }
 
-    // ------------------------------------------------------------------ Lebenszyklus
+        boolean kompassOk = !Double.isNaN(poseHeading);
+        if (!kompassOk) {
+            Ui.setRoundButtonState(kompassKnopf, Ui.ButtonState.DISABLED);
+        } else {
+            Ui.setRoundButtonState(kompassKnopf, kompassWunsch ? Ui.ButtonState.ACTIVE : Ui.ButtonState.INACTIVE);
+        }
+
+        Ui.setRoundButtonState(gyroKnopf, gyroAn ? Ui.ButtonState.ACTIVE : Ui.ButtonState.INACTIVE);
+
+        halbKnopf.setVisibility(modus == PanoRenderer.MODE_SBS ? View.VISIBLE : View.GONE);
+        Ui.setRoundButtonState(halbKnopf, sbsHalb ? Ui.ButtonState.ACTIVE : Ui.ButtonState.INACTIVE);
+
+        linsenKnopf.setVisibility(modus == PanoRenderer.MODE_CARDBOARD ? View.VISIBLE : View.GONE);
+        Ui.setRoundButtonState(linsenKnopf, linsenAn ? Ui.ButtonState.ACTIVE : Ui.ButtonState.INACTIVE);
+
+        Ui.setRoundButtonState(mitteKnopf, Ui.ButtonState.INACTIVE);
+        Ui.setRoundButtonState(galerieKnopf, Ui.ButtonState.INACTIVE);
+        Ui.setRoundButtonState(einstellungenKnopf, Ui.ButtonState.INACTIVE);
+    }
 
     @Override
     protected void onResume() {
@@ -221,17 +243,15 @@ public class ViewerActivity extends Activity implements SensorEventListener {
         super.onDestroy();
     }
 
-    // ------------------------------------------------------------------ Sensor
-
     private void starteSensor() {
         if (!gyroAn) { rend.setRotation(null); return; }
-        Sensor s = sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);   // Gyro + Beschleunigung + Magnetometer
+        Sensor s = sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         if (s != null) {
             sm.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
             sensorAktiv = true;
             neuZentrieren = true;
         } else {
-            Toast.makeText(this, "Kein Rotationssensor - nur Touch-Steuerung.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.no_gyro, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -261,12 +281,10 @@ public class ViewerActivity extends Activity implements SensorEventListener {
 
     @Override public void onAccuracyChanged(Sensor sensor, int accuracy) { }
 
-    /** Legt fest, welche Himmelsrichtung dem Beginn des Panoramas (Spalte 0) entspricht. */
     private void wendeKursAn() {
         if (kompassWunsch && !Double.isNaN(poseHeading)) {
             rend.setHeadingOffset((float) (poseHeading - 180));
         } else {
-            // Ohne Kompass: Mitte des Bildes liegt dort, wohin das Telefon beim Zentrieren zeigt (-Z des Geraets)
             double dev = (gyroAn && sensorAktiv) ? Math.toDegrees(Math.atan2(-r2[2], -r2[5])) : 0;
             rend.setHeadingOffset((float) (dev - azMitte));
         }
@@ -274,7 +292,7 @@ public class ViewerActivity extends Activity implements SensorEventListener {
 
     private void schalteKompass() {
         if (Double.isNaN(poseHeading)) {
-            Toast.makeText(this, "Dieses Bild enthaelt keine Kompassdaten.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.msg_compass_na, Toast.LENGTH_SHORT).show();
             return;
         }
         kompassWunsch = !kompassWunsch;
@@ -282,6 +300,7 @@ public class ViewerActivity extends Activity implements SensorEventListener {
         neuZentrieren = true;
         wendeKursAn();
         beschrifte();
+        Toast.makeText(this, kompassWunsch ? R.string.msg_compass_on : R.string.msg_compass_off, Toast.LENGTH_SHORT).show();
     }
 
     private void schalteGyro() {
@@ -292,9 +311,8 @@ public class ViewerActivity extends Activity implements SensorEventListener {
         rend.resetDrag();
         wendeKursAn();
         beschrifte();
+        Toast.makeText(this, gyroAn ? R.string.msg_gyro_on : R.string.msg_gyro_off, Toast.LENGTH_SHORT).show();
     }
-
-    // ------------------------------------------------------------------ Modi
 
     private void setzeModus(int neu) {
         modus = neu;
@@ -310,15 +328,14 @@ public class ViewerActivity extends Activity implements SensorEventListener {
             else c.show(WindowInsets.Type.systemBars());
         }
         beschrifte();
-        if (stereo) Toast.makeText(this, "Tippen: Leiste, Doppeltippen: zurueck zu 2D", Toast.LENGTH_SHORT).show();
     }
 
     private void zurueckZurGalerie() {
-        startActivity(new Intent(this, GalleryActivity.class));
+        if (isTaskRoot()) {
+            startActivity(new Intent(this, GalleryActivity.class));
+        }
         finish();
     }
-
-    // ------------------------------------------------------------------ Laden
 
     @SuppressWarnings("deprecation")
     private void oeffnen() {
@@ -354,7 +371,6 @@ public class ViewerActivity extends Activity implements SensorEventListener {
                 final boolean stereo = rechts != null;
                 if (!stereo) rechts = links;
 
-                // Geometrie (ohne GPano-Daten: 360 Grad, vertikal zentriert annehmen)
                 int fullW = meta.fullW, fullH = meta.fullH, cropW = meta.cropW, cropH = meta.cropH;
                 int cropLeft = meta.cropLeft, cropTop = meta.cropTop;
                 if (fullW <= 0 || cropW <= 0) {
@@ -381,15 +397,12 @@ public class ViewerActivity extends Activity implements SensorEventListener {
                     wendeKursAn();
                     beschrifte();
                     starteTon(ton);
-                    if (!stereo) Toast.makeText(this, "Kein Stereo-Bild gefunden - zeige 2D-Panorama.", Toast.LENGTH_LONG).show();
                 });
             } catch (Exception | OutOfMemoryError ex) {
                 runOnUiThread(() -> Toast.makeText(this, "Fehler beim Laden: " + ex.getMessage(), Toast.LENGTH_LONG).show());
             }
         }).start();
     }
-
-    // ------------------------------------------------------------------ Ton
 
     private void starteTon(byte[] ton) {
         if (player != null) { player.release(); player = null; }
