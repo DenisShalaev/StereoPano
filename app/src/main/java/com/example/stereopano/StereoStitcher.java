@@ -227,42 +227,45 @@ final class StereoStitcher {
             }
         }
 
+        // Fill only small local gaps (up to 16 columns) along each row via linear interpolation
+        int maxGap = 16;
         for (int v = 0; v < panoH; v++) {
             int rowOffset = v * panoW;
-            int lastValidColor = 0xFF000000;
-            boolean hasValid = false;
+            int col = 0;
+            while (col < panoW) {
+                if (out[rowOffset + col] == 0) {
+                    int gapStart = col;
+                    while (col < panoW && out[rowOffset + col] == 0) {
+                        col++;
+                    }
+                    int gapEnd = col;
+                    int gapLen = gapEnd - gapStart;
 
-            for (int col = 0; col < panoW; col++) {
-                if (out[rowOffset + col] != 0) {
-                    lastValidColor = out[rowOffset + col];
-                    hasValid = true;
-                    break;
-                }
-            }
-
-            if (!hasValid) continue;
-
-            for (int col = 0; col < panoW; col++) {
-                if (out[rowOffset + col] != 0) {
-                    lastValidColor = out[rowOffset + col];
+                    if (gapLen <= maxGap && gapStart > 0 && gapEnd < panoW) {
+                        int cLeft = out[rowOffset + gapStart - 1];
+                        int cRight = out[rowOffset + gapEnd];
+                        for (int k = 0; k < gapLen; k++) {
+                            float factor = (float) (k + 1) / (gapLen + 1);
+                            out[rowOffset + gapStart + k] = blendColors(cLeft, cRight, factor);
+                        }
+                    }
                 } else {
-                    out[rowOffset + col] = lastValidColor;
+                    col++;
                 }
             }
         }
 
-        int blendWidth = (int) Math.round(panoW * 0.025);
+        // Subtle 360-degree circular seam blending (only over a small ~0.8% transition zone)
+        int blendWidth = Math.max(4, (int) Math.round(panoW * 0.008));
         for (int v = 0; v < panoH; v++) {
             int rowOffset = v * panoW;
             for (int dx = 0; dx < blendWidth; dx++) {
-                int leftCol = dx;
-                int rightCol = panoW - 1 - dx;
-                int cLeft = out[rowOffset + leftCol];
-                int cRight = out[rowOffset + rightCol];
+                int cLeft = out[rowOffset + dx];
+                int cRight = out[rowOffset + panoW - 1 - dx];
                 if (cLeft != 0 && cRight != 0) {
                     float factor = (float) dx / blendWidth;
-                    out[rowOffset + leftCol] = blendColors(cRight, cLeft, factor);
-                    out[rowOffset + rightCol] = blendColors(cLeft, cRight, factor);
+                    out[rowOffset + dx] = blendColors(cRight, cLeft, factor);
+                    out[rowOffset + panoW - 1 - dx] = blendColors(cLeft, cRight, factor);
                 }
             }
         }
