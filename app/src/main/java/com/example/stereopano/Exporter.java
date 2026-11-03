@@ -52,10 +52,10 @@ final class Exporter {
             }
             ziel = basis + "_2D.jpg";
         } else {
-            if (m.rightJpeg == null) throw new IOException("Kein Stereo-Bild (rechtes Auge) in der Datei.");
+            if (m.rightJpeg == null) throw new IOException(c.getString(R.string.export_no_stereo));
             Bitmap l = BitmapFactory.decodeByteArray(daten, 0, daten.length);
             Bitmap r = BitmapFactory.decodeByteArray(m.rightJpeg, 0, m.rightJpeg.length);
-            if (l == null || r == null) throw new IOException("Bild nicht lesbar.");
+            if (l == null || r == null) throw new IOException(c.getString(R.string.export_unreadable));
             int w = l.getWidth(), h = l.getHeight();
             Bitmap res;
             if (art == SBS) {
@@ -92,7 +92,7 @@ final class Exporter {
         v.put(MediaStore.Images.Media.RELATIVE_PATH, ZIEL);
         v.put(MediaStore.Images.Media.IS_PENDING, 1);
         Uri uri = c.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
-        if (uri == null) throw new IOException("MediaStore-Eintrag nicht moeglich");
+        if (uri == null) throw new IOException(c.getString(R.string.mediastore_failed));
         try (OutputStream os = c.getContentResolver().openOutputStream(uri)) {
             os.write(data);
         }

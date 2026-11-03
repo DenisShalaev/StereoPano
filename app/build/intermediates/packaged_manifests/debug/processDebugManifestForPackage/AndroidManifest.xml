@@ -30,6 +30,8 @@
         android:largeHeap="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
+
+        <!-- Startbildschirm = Kamera. Galerie ueber die Miniatur unten links. -->
         <activity
             android:name="com.example.stereopano.CaptureActivity"
             android:exported="true"
@@ -42,12 +44,12 @@
         </activity>
         <activity
             android:name="com.example.stereopano.GalleryActivity"
-            android:exported="false"
-            android:label="@string/title_gallery" />
+            android:exported="false" />
         <activity
             android:name="com.example.stereopano.SettingsActivity"
-            android:exported="false"
-            android:label="@string/title_settings" />
+            android:exported="false" />
+
+        <!-- Oeffnet auch .vr.jpg aus Dateimanager / Google Fotos ("Oeffnen mit") -->
         <activity
             android:name="com.example.stereopano.ViewerActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"

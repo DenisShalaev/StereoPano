@@ -3,12 +3,18 @@ package com.example.stereopano;
 import android.Manifest;
 import android.app.Activity;
 import android.content.ContentValues;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.ImageFormat;
 import android.graphics.drawable.GradientDrawable;
+import android.content.Intent;
+import android.net.Uri;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewOutlineProvider;
+import android.widget.ImageView;
+import android.graphics.ImageFormat;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.hardware.camera2.CameraAccessException;
@@ -21,28 +27,21 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaRecorder;
-import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.MediaStore;
 import android.util.Size;
 import android.util.SizeF;
-import android.view.GestureDetector;
 import android.view.Gravity;
-import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewOutlineProvider;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -58,19 +57,35 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * Aufnahme einer Stereo-Rundumpanorama (wie die alte Cardboard Camera):
+ * Telefon HOCHKANT halten, Arme ausstrecken und sich langsam im Uhrzeigersinn um die eigene Achse drehen.
+ * Camera2 liefert Kamerabilder, der Rotationsvektor-Sensor den Drehwinkel, die Streifen werden in
+ * {@link StereoStitcher} einsortiert. Ergebnis: .vr.jpg in Bilder/StereoPano.
+ */
 public class CaptureActivity extends Activity {
 
-    private static final int MAX_BREITE = 1280;
-    private static final double STEREO_WINKEL_GRAD = 3.5;
-    private static final double DELTA_GRAD = 0.6;
-    private static final double ZIEL_TEMPO = 8;
-    private static final long LATENZ_NS = 0;
+    // Werte kommen aus den Einstellungen (Zahnrad) - siehe ladeEinstellungen()
+    private int maxBreite = 1280;          // Kamerabild 4:3, lange Seite max. N px
+    private double stereoWinkel = 3.5;     // Streifenversatz zur Bildmitte (Stereobasis)
+    private double deltaGrad = 0.6;        // halbe Breite des Mittelungsfensters
+    private double zielTempo = 8;          // Grad/s des Tempo-Punktes
+    private long latenzNs = 0;             // Sensor-/Kameraversatz
+    private double fpxFaktor = 1.0;        // Korrektur der berechneten Brennweite
+    private int jpegQualitaet = 90;
+    private boolean audioAn = true;
+    private double fPxBasis;
+    private double maxNick = 6;          // Grad/s: schnellere Nick-/Kippbewegung -> Bild wird verworfen
+    private volatile long expNs, skewNs;  // letzte Belichtungszeit / Rolling-Shutter-Versatz aus den Kamera-Ergebnissen
+    private long vorherTs;
+    private double vorherNick = Double.NaN, vorherKipp = Double.NaN;
 
     // --- UI
     private FrameLayout root;
     private SurfaceView surface;
     private TextView info;
-    private ImageButton knopf, sperreKnopf, leitKnopf, griff, einstellungenKnopf;
+    private ImageView griff;
+    private ImageView knopf, sperreKnopf, leitKnopf;
     private ImageView galerie;
     private LinearLayout panel;
     private ProgressBar fortschritt;
@@ -92,7 +107,7 @@ public class CaptureActivity extends Activity {
                 letzterYaw = yaw;
                 letzteT = jetzt;
                 double anker = nimmtAuf ? startYaw : yaw;
-                double ziel = nimmtAuf ? Math.min(360, (jetzt - startZeit) / 1000.0 * ZIEL_TEMPO) : Double.NaN;
+                double ziel = nimmtAuf ? Math.min(360, (jetzt - startZeit) / 1000.0 * zielTempo) : Double.NaN;
                 guide.setzen(R, anker, yaw - anker, nimmtAuf, ziel, tempo);
             } else {
                 guide.setzen(null, 0, 0, false, Double.NaN, 0);
@@ -132,11 +147,12 @@ public class CaptureActivity extends Activity {
     private File audioDatei;
 
     @Override
-    protected void onCreate(Bundle b) {
+    protected void onCreate(android.os.Bundle b) {
         super.onCreate(b);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         sm = (SensorManager) getSystemService(SENSOR_SERVICE);
         cm = (CameraManager) getSystemService(CAMERA_SERVICE);
+        ladeEinstellungen();
 
         if (!waehleKamera()) {
             Toast.makeText(this, R.string.no_camera, Toast.LENGTH_LONG).show();
@@ -149,6 +165,8 @@ public class CaptureActivity extends Activity {
             requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO}, 1);
         }
     }
+
+    // ------------------------------------------------------------------ Aufbau
 
     private boolean waehleKamera() {
         try {
@@ -166,7 +184,7 @@ public class CaptureActivity extends Activity {
             StreamConfigurationMap map = cc.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             Size best = null;
             for (Size s : map.getOutputSizes(ImageFormat.YUV_420_888)) {
-                if (s.getWidth() * 3 == s.getHeight() * 4 && s.getWidth() <= MAX_BREITE
+                if (s.getWidth() * 3 == s.getHeight() * 4 && s.getWidth() <= maxBreite
                         && (best == null || s.getWidth() > best.getWidth())) best = s;
             }
             if (best == null) return false;
@@ -177,15 +195,34 @@ public class CaptureActivity extends Activity {
             Integer ts = cc.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
             zeitstempelEchtzeit = ts != null && ts == CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
 
+            // Brennweite in Pixeln aus Sensorgroesse und Brennweite (lange Bildseite)
             SizeF phys = cc.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
             float[] fl = cc.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
             double lang = Math.max(phys.getWidth(), phys.getHeight());
             double fovLang = 2 * Math.atan(lang / (2 * fl[0]));
-            fPx = (groesse.getWidth() / 2.0) / Math.tan(fovLang / 2);
+            fPxBasis = (groesse.getWidth() / 2.0) / Math.tan(fovLang / 2);
+            fPx = fPxBasis * fpxFaktor;
             return true;
         } catch (CameraAccessException | RuntimeException e) {
             return false;
         }
+    }
+
+    /** Liest die Einstellungen (Zahnrad) neu ein. Waehrend einer Aufnahme wird nichts veraendert. */
+    private void ladeEinstellungen() {
+        if (nimmtAuf) return;
+        stereoWinkel = Settings.stereoWinkel(this);
+        deltaGrad = Settings.delta(this);
+        zielTempo = Settings.zielTempo(this);
+        maxBreite = Settings.maxBreite(this);
+        latenzNs = Settings.latenzNs(this);
+        fpxFaktor = Settings.fpxFaktor(this);
+        jpegQualitaet = Settings.jpegQualitaet(this);
+        audioAn = Settings.audio(this);
+        maxNick = Settings.maxNickrate(this);
+        belichtungSperren = Settings.belichtungSperren(this);
+        leitpunkte = Settings.leitpunkte(this);
+        if (fPxBasis > 0) fPx = fPxBasis * fpxFaktor;
     }
 
     private int dp(int v) { return (int) (v * getResources().getDisplayMetrics().density + 0.5f); }
@@ -197,6 +234,7 @@ public class CaptureActivity extends Activity {
         surface = new SurfaceView(this);
         root.addView(surface, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        // Vorschau im Hochformat (3:4)
         root.post(() -> {
             ViewGroup.LayoutParams lp = surface.getLayoutParams();
             lp.width = root.getWidth();
@@ -217,120 +255,117 @@ public class CaptureActivity extends Activity {
             }
         });
 
+        // ---- Leitpunkte direkt ueber dem Kamerabild
         guide = new GuideView(this);
         guide.setFocalRatio(fPx / groesse.getHeight());
         root.addView(guide, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
+        // ---- Overlay ueber dem Kamerabild (Insets beachten)
         FrameLayout overlay = new FrameLayout(this);
         root.addView(overlay, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         Ui.applyInsets(overlay);
 
-        LinearLayout obenZeile = new LinearLayout(this);
-        obenZeile.setOrientation(LinearLayout.VERTICAL);
-
-        LinearLayout obenBalken = new LinearLayout(this);
-        obenBalken.setOrientation(LinearLayout.HORIZONTAL);
-        obenBalken.setGravity(Gravity.CENTER_VERTICAL);
-        obenBalken.setBackgroundColor(0x66000000);
-        obenBalken.setPadding(dp(12), dp(6), dp(12), dp(6));
-
-        info = new TextView(this);
-        info.setTextColor(Color.WHITE);
-        info.setTextSize(14);
-        info.setText(R.string.capture_info_default);
-        obenBalken.addView(info, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-        einstellungenKnopf = Ui.createRoundButton(this, R.drawable.ic_settings, R.string.btn_settings,
-                v -> startActivity(new Intent(this, SettingsActivity.class)));
-        LinearLayout.LayoutParams settingsLp = new LinearLayout.LayoutParams(dp(44), dp(44));
-        settingsLp.leftMargin = dp(8);
-        obenBalken.addView(einstellungenKnopf, settingsLp);
-
+        // oben: Fortschritt + Hinweis (bleiben auch bei verstecktem Panel sichtbar)
+        LinearLayout oben = new LinearLayout(this);
+        oben.setOrientation(LinearLayout.VERTICAL);
         fortschritt = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         fortschritt.setMax(1000);
-        obenZeile.addView(fortschritt, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(6)));
-        obenZeile.addView(obenBalken, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        overlay.addView(obenZeile, new FrameLayout.LayoutParams(
+        oben.addView(fortschritt, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(6)));
+        info = new TextView(this);
+        info.setTextColor(Color.WHITE);
+        info.setTextSize(15);
+        info.setPadding(dp(12), dp(6), dp(12), dp(6));
+        info.setBackgroundColor(0x66000000);
+        info.setText(R.string.hint_start);
+        LinearLayout zeile = new LinearLayout(this);
+        zeile.setOrientation(LinearLayout.HORIZONTAL);
+        zeile.setGravity(Gravity.CENTER_VERTICAL);
+        zeile.addView(info, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        ImageView zahnrad = Ui.zahnrad(this);
+        zahnrad.setOnClickListener(v -> {
+            if (nimmtAuf) Toast.makeText(this, R.string.finish_first, Toast.LENGTH_SHORT).show();
+            else startActivity(new Intent(this, SettingsActivity.class));
+        });
+        LinearLayout.LayoutParams zlp = new LinearLayout.LayoutParams(dp(42), dp(42));
+        zlp.setMargins(dp(6), dp(4), dp(8), 0);
+        zeile.addView(zahnrad, zlp);
+        oben.addView(zeile);
+        overlay.addView(oben, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP));
 
+        // unten: Bedienpanel - nur runde Symbole. Links Galerie, Mitte Ausloeser, rechts Schalter.
         panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.HORIZONTAL);
         panel.setGravity(Gravity.CENTER_VERTICAL);
-        panel.setPadding(dp(16), dp(12), dp(16), dp(20));
-        panel.setBackgroundColor(0x55000000);
+        panel.setPadding(dp(16), dp(12), dp(16), dp(24));
 
-        LinearLayout leftBlock = new LinearLayout(this);
-        leftBlock.setOrientation(LinearLayout.HORIZONTAL);
-        leftBlock.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-
+        LinearLayout links = new LinearLayout(this);
+        links.setGravity(Gravity.CENTER);
         galerie = new ImageView(this);
-        galerie.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        galerie.setImageResource(R.drawable.ic_gallery);
+        galerie.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        galerie.setPadding(dp(13), dp(13), dp(13), dp(13));
+        galerie.setContentDescription(getString(R.string.cd_gallery));
+        galerie.setTooltipText(getString(R.string.cd_gallery));
         GradientDrawable rund = new GradientDrawable();
         rund.setShape(GradientDrawable.OVAL);
-        rund.setColor(0x44FFFFFF);
+        rund.setColor(0x73000000);
         rund.setStroke(dp(2), Color.WHITE);
         galerie.setBackground(rund);
         galerie.setOutlineProvider(ViewOutlineProvider.BACKGROUND);
         galerie.setClipToOutline(true);
-        galerie.setContentDescription(getString(R.string.btn_gallery));
         galerie.setOnClickListener(v -> startActivity(new Intent(this, GalleryActivity.class)));
-        galerie.setOnLongClickListener(v -> {
-            Toast.makeText(this, R.string.btn_gallery, Toast.LENGTH_SHORT).show();
-            return true;
-        });
-        leftBlock.addView(galerie, new LinearLayout.LayoutParams(dp(56), dp(56)));
-        panel.addView(leftBlock, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        links.addView(galerie, gewicht(dp(52), dp(52)));
+        panel.addView(links, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
-        FrameLayout centerBlock = new FrameLayout(this);
-        knopf = new ImageButton(this);
-        knopf.setScaleType(ImageButton.ScaleType.CENTER_INSIDE);
-        knopf.setPadding(dp(8), dp(8), dp(8), dp(8));
+        knopf = new ImageView(this);
+        knopf.setScaleType(ImageView.ScaleType.FIT_CENTER);
         setzeAusloeser(false);
         knopf.setOnClickListener(v -> {
             if (nimmtAuf) beendeAufnahme(); else starteAufnahme();
         });
-        FrameLayout.LayoutParams knopfLp = new FrameLayout.LayoutParams(dp(72), dp(72), Gravity.CENTER);
-        centerBlock.addView(knopf, knopfLp);
-        panel.addView(centerBlock, new LinearLayout.LayoutParams(dp(80), dp(80)));
+        panel.addView(knopf, gewicht(dp(72), dp(72)));   // exakt mittig: links/rechts haben gleiches Gewicht
 
-        LinearLayout rightBlock = new LinearLayout(this);
-        rightBlock.setOrientation(LinearLayout.HORIZONTAL);
-        rightBlock.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
-
-        sperreKnopf = Ui.createRoundButton(this, R.drawable.ic_lock, R.string.btn_exposure_lock, v -> {
+        LinearLayout rechts = new LinearLayout(this);
+        rechts.setGravity(Gravity.CENTER);
+        sperreKnopf = Ui.runderKnopf(this, R.drawable.ic_lock, R.string.cd_lock);
+        sperreKnopf.setOnClickListener(v -> {
             if (nimmtAuf) return;
             belichtungSperren = !belichtungSperren;
+            Settings.p(this).edit().putBoolean(Settings.K_AE, belichtungSperren).apply();
             aktualisiereSperreKnopf();
-            Toast.makeText(this, belichtungSperren ? R.string.msg_exposure_locked : R.string.msg_exposure_auto, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, belichtungSperren ? R.string.lock_on : R.string.lock_off, Toast.LENGTH_SHORT).show();
         });
-        LinearLayout.LayoutParams sperreLp = new LinearLayout.LayoutParams(dp(48), dp(48));
-        sperreLp.rightMargin = dp(12);
-        rightBlock.addView(sperreKnopf, sperreLp);
-
-        leitKnopf = Ui.createRoundButton(this, R.drawable.ic_guide, R.string.btn_guide_points, v -> {
+        leitKnopf = Ui.runderKnopf(this, R.drawable.ic_guide, R.string.cd_guides);
+        leitKnopf.setOnClickListener(v -> {
             leitpunkte = !leitpunkte;
+            Settings.p(this).edit().putBoolean(Settings.K_LEIT, leitpunkte).apply();
             aktualisiereLeitKnopf();
-            Toast.makeText(this, leitpunkte ? R.string.msg_guide_on : R.string.msg_guide_off, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, leitpunkte ? R.string.guides_on : R.string.guides_off, Toast.LENGTH_SHORT).show();
         });
-        rightBlock.addView(leitKnopf, new LinearLayout.LayoutParams(dp(48), dp(48)));
-
-        panel.addView(rightBlock, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
+        LinearLayout.LayoutParams lpr = gewicht(dp(46), dp(46));
+        lpr.setMargins(dp(4), 0, dp(4), 0);
+        rechts.addView(sperreKnopf, lpr);
+        rechts.addView(leitKnopf, gewicht(dp(46), dp(46)));
+        ((LinearLayout.LayoutParams) leitKnopf.getLayoutParams()).setMargins(dp(4), 0, dp(4), 0);
         aktualisiereSperreKnopf();
         aktualisiereLeitKnopf();
+        panel.addView(rechts, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         overlay.addView(panel, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
 
-        griff = Ui.createRoundButton(this, R.drawable.ic_arrow_up, R.string.btn_restore_panel, v -> zeigePanel(true));
+        // Griff, wenn das Panel versteckt ist (antippen oder nach oben wischen)
+        griff = Ui.runderKnopf(this, R.drawable.ic_chevron_up, R.string.cd_show_controls);
         griff.setVisibility(View.GONE);
-        FrameLayout.LayoutParams griffLp = new FrameLayout.LayoutParams(dp(52), dp(52), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        griffLp.bottomMargin = dp(24);
-        overlay.addView(griff, griffLp);
+        griff.setOnClickListener(v -> zeigePanel(true));
+        FrameLayout.LayoutParams glp = new FrameLayout.LayoutParams(dp(40), dp(40), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        glp.bottomMargin = dp(16);
+        overlay.addView(griff, glp);
 
+        // Wischgesten: nach unten = Panel verstecken, nach oben = zeigen
         gesten = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
             @Override public boolean onFling(MotionEvent e1, MotionEvent e2, float vx, float vy) {
                 if (Math.abs(vy) > Math.abs(vx) && Math.abs(vy) > 800) {
@@ -350,6 +385,10 @@ public class CaptureActivity extends Activity {
         return super.dispatchTouchEvent(ev);
     }
 
+    private LinearLayout.LayoutParams gewicht(int w, int h) {
+        return new LinearLayout.LayoutParams(w, h);
+    }
+
     private void zeigePanel(boolean zeigen) {
         if (zeigen == panelSichtbar) return;
         panelSichtbar = zeigen;
@@ -363,43 +402,47 @@ public class CaptureActivity extends Activity {
     }
 
     private void setzeAusloeser(boolean laeuft) {
-        GradientDrawable ring = new GradientDrawable();
-        ring.setShape(GradientDrawable.OVAL);
-        ring.setColor(0x33000000);
-        ring.setStroke(dp(4), laeuft ? 0xFFFFCDD2 : 0xFFFFFFFF);
-        knopf.setBackground(ring);
-        knopf.setImageResource(laeuft ? R.drawable.ic_shutter_stop : R.drawable.ic_shutter_start);
-        String desc = getString(laeuft ? R.string.btn_shutter_stop : R.string.btn_shutter_start);
-        knopf.setContentDescription(desc);
-        knopf.setOnLongClickListener(v -> {
-            Toast.makeText(this, desc, Toast.LENGTH_SHORT).show();
-            return true;
-        });
+        knopf.setImageResource(laeuft ? R.drawable.ic_shutter_recording : R.drawable.ic_shutter_idle);
+        String cd = getString(laeuft ? R.string.cd_shutter_stop : R.string.cd_shutter_start);
+        knopf.setContentDescription(cd);
+        knopf.setTooltipText(cd);
     }
 
     private void aktualisiereLeitKnopf() {
-        Ui.setRoundButtonState(leitKnopf, leitpunkte ? Ui.ButtonState.ACTIVE : Ui.ButtonState.INACTIVE);
+        Ui.zustand(leitKnopf, leitpunkte ? Ui.AN : Ui.AUS);
         if (guide != null) guide.setVisibility(leitpunkte ? View.VISIBLE : View.INVISIBLE);
     }
 
     private void aktualisiereSperreKnopf() {
-        Ui.setRoundButtonState(sperreKnopf, belichtungSperren ? Ui.ButtonState.ACTIVE : Ui.ButtonState.INACTIVE);
+        Ui.zustand(sperreKnopf, belichtungSperren ? Ui.AN : Ui.AUS);
     }
 
+    /** Zeigt die letzte Aufnahme als runde Miniatur (Knopf zur Galerie). */
     private void ladeMiniatur() {
         new Thread(() -> {
             try {
                 Uri u = GalleryActivity.letzteAufnahme(this);
                 if (u == null) return;
                 Bitmap bm = getContentResolver().loadThumbnail(u, new Size(256, 256), null);
-                runOnUiThread(() -> galerie.setImageBitmap(bm));
+                runOnUiThread(() -> {
+                    galerie.setPadding(0, 0, 0, 0);
+                    galerie.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    galerie.setImageBitmap(bm);
+                });
             } catch (Exception ignored) { }
         }).start();
     }
 
+    // ------------------------------------------------------------------ Lebenszyklus
+
     @Override
     protected void onResume() {
         super.onResume();
+        int alteBreite = maxBreite;
+        ladeEinstellungen();
+        if (maxBreite != alteBreite) { recreate(); return; }   // andere Kameraaufloesung -> Kamera neu einrichten
+        if (guide != null) guide.setFocalRatio(fPx / groesse.getHeight());
+        if (sperreKnopf != null) { aktualisiereSperreKnopf(); aktualisiereLeitKnopf(); }
         startSensoren();
         letzteT = 0;
         if (guide != null) guide.postOnAnimation(tick);
@@ -421,10 +464,12 @@ public class CaptureActivity extends Activity {
         if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             oeffneKamera();
         } else {
-            Toast.makeText(this, R.string.camera_permission_required, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.camera_permission_needed, Toast.LENGTH_LONG).show();
             finish();
         }
     }
+
+    // ------------------------------------------------------------------ Sensoren
 
     private void startSensoren() {
         sensorThread = new HandlerThread("sensor");
@@ -434,7 +479,7 @@ public class CaptureActivity extends Activity {
         if (game == null) game = sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         Sensor mag = sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         if (game == null) {
-            Toast.makeText(this, R.string.no_gyro, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.no_rotation_sensor, Toast.LENGTH_LONG).show();
             finish();
             return;
         }
@@ -451,6 +496,8 @@ public class CaptureActivity extends Activity {
             sensorThread = null;
         }
     }
+
+    // ------------------------------------------------------------------ Kamera (Camera2)
 
     private void oeffneKamera() {
         if (kamera != null || oeffnet || !surfaceBereit) return;
@@ -472,7 +519,7 @@ public class CaptureActivity extends Activity {
                 }
                 @Override public void onError(CameraDevice c, int err) {
                     oeffnet = false; c.close(); kamera = null;
-                    runOnUiThread(() -> Toast.makeText(CaptureActivity.this, "Kamerafehler " + err, Toast.LENGTH_LONG).show());
+                    runOnUiThread(() -> Toast.makeText(CaptureActivity.this, getString(R.string.camera_error, err), Toast.LENGTH_LONG).show());
                 }
             }, kameraHandler);
         } catch (CameraAccessException | SecurityException e) {
@@ -491,6 +538,7 @@ public class CaptureActivity extends Activity {
             anfrage.addTarget(vorschau);
             anfrage.addTarget(leser.getSurface());
             anfrage.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            // Stabilisierung aus: sie wuerde das Sichtfeld unvorhersehbar verschieben
             if (hat(cc.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION),
                     CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF))
                 anfrage.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE, CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF);
@@ -503,14 +551,15 @@ public class CaptureActivity extends Activity {
                         @Override public void onConfigured(CameraCaptureSession s) {
                             sitzung = s;
                             try {
-                                s.setRepeatingRequest(anfrage.build(), null, kameraHandler);
+                                s.setRepeatingRequest(anfrage.build(), ergebnisCallback, kameraHandler);
                             } catch (CameraAccessException | IllegalStateException ignored) { }
                         }
                         @Override public void onConfigureFailed(CameraCaptureSession s) {
-                            runOnUiThread(() -> Toast.makeText(CaptureActivity.this, "Kamera-Sitzung fehlgeschlagen", Toast.LENGTH_LONG).show());
+                            runOnUiThread(() -> Toast.makeText(CaptureActivity.this, R.string.camera_session_failed, Toast.LENGTH_LONG).show());
                         }
                     }, kameraHandler);
         } catch (CameraAccessException | IllegalStateException e) {
+            // Kamera wurde zwischenzeitlich geschlossen
         }
     }
 
@@ -528,30 +577,45 @@ public class CaptureActivity extends Activity {
         oeffnet = false;
     }
 
+    // ------------------------------------------------------------------ Aufnahme
+
     private void starteAufnahme() {
         if (!gameYaw.hasData() || sitzung == null) {
-            Toast.makeText(this, "Sensoren/Kamera noch nicht bereit.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.not_ready, Toast.LENGTH_SHORT).show();
             return;
         }
         startYaw = gameYaw.latest();
         startKurs = hatKompass ? kompass.azimuth() : Double.NaN;
-        stitcher = new StereoStitcher(groesse.getHeight(), groesse.getWidth(), fPx, STEREO_WINKEL_GRAD, DELTA_GRAD, startYaw);
+        stitcher = new StereoStitcher(groesse.getHeight(), groesse.getWidth(), fPx, stereoWinkel, deltaGrad, startYaw);
 
         if (belichtungSperren) setzeSperren(true);
         starteAudio();
         startZeit = android.os.SystemClock.elapsedRealtime();
+        vorherNick = Double.NaN;
         nimmtAuf = true;
         setzeAusloeser(true);
-        info.setText(R.string.capture_info_recording);
+        info.setText(R.string.recording_hint);
     }
 
     private void setzeSperren(boolean an) {
         try {
             anfrage.set(CaptureRequest.CONTROL_AE_LOCK, an);
             anfrage.set(CaptureRequest.CONTROL_AWB_LOCK, an);
-            sitzung.setRepeatingRequest(anfrage.build(), null, kameraHandler);
+            sitzung.setRepeatingRequest(anfrage.build(), ergebnisCallback, kameraHandler);
         } catch (CameraAccessException | IllegalStateException | NullPointerException ignored) { }
     }
+
+    /** Wird fuer jedes Kamerabild im Kamera-Thread aufgerufen. */
+    /** Merkt sich Belichtungszeit und Rolling-Shutter-Versatz, um den Aufnahmezeitpunkt genau zu bestimmen. */
+    private final CameraCaptureSession.CaptureCallback ergebnisCallback = new CameraCaptureSession.CaptureCallback() {
+        @Override
+        public void onCaptureCompleted(CameraCaptureSession s, CaptureRequest rq, android.hardware.camera2.TotalCaptureResult res) {
+            Long e = res.get(android.hardware.camera2.CaptureResult.SENSOR_EXPOSURE_TIME);
+            Long k = res.get(android.hardware.camera2.CaptureResult.SENSOR_ROLLING_SHUTTER_SKEW);
+            if (e != null) expNs = e;
+            if (k != null) skewNs = k;
+        }
+    };
 
     private void bildDa(ImageReader r) {
         Image img = r.acquireLatestImage();
@@ -559,13 +623,27 @@ public class CaptureActivity extends Activity {
         try {
             StereoStitcher s = stitcher;
             if (!nimmtAuf || s == null) return;
-            long ts = zeitstempelEchtzeit ? img.getTimestamp() + LATENZ_NS : Long.MAX_VALUE;
+            // Zeitstempel = Beginn der Belichtung der ersten Zeile. Die Bildmitte (aufrecht) liegt in der Mitte
+            // des Sensors: Belichtungsmitte + halber Rolling-Shutter-Versatz.
+            long ts = zeitstempelEchtzeit ? img.getTimestamp() + expNs / 2 + skewNs / 2 + latenzNs : Long.MAX_VALUE;
             double yaw = gameYaw.yawAt(ts);
             float[] rot = gameYaw.rotationAt(ts);
             double psi = yaw - startYaw;
             if (Double.isNaN(psi) || rot == null) return;
 
-            s.addFrame(new YuvFrame(img, sensorOrientierung), psi, rot);
+            // Bewegungsfilter: Bei schnellem Nicken/Kippen ist die Lage zum Bildzeitpunkt zu ungenau
+            // (Zeitfehler x Drehrate = vertikaler Versatz -> "Treppen" an waagerechten Kanten).
+            double nick = Math.toDegrees(Math.asin(Math.max(-1, Math.min(1, -rot[8]))));
+            double kipp = Math.toDegrees(Math.atan2(rot[6], rot[7]));
+            long jetztNs = android.os.SystemClock.elapsedRealtimeNanos();
+            long zeit = zeitstempelEchtzeit ? ts : jetztNs;
+            boolean ruhig = true;
+            if (!Double.isNaN(vorherNick) && zeit > vorherTs) {
+                double dt = (zeit - vorherTs) / 1e9;
+                ruhig = Math.abs(nick - vorherNick) / dt <= maxNick && Math.abs(kipp - vorherKipp) / dt <= maxNick;
+            }
+            vorherNick = nick; vorherKipp = kipp; vorherTs = zeit;
+            if (ruhig) s.addFrame(new YuvFrame(img, sensorOrientierung), psi, rot);
 
             long jetzt = System.currentTimeMillis();
             if (jetzt - letzteAnzeige > 100) {
@@ -584,10 +662,10 @@ public class CaptureActivity extends Activity {
     private void aktualisiereAnzeige(double fort, double pitch, double psi) {
         fortschritt.setProgress((int) (fort * 1000));
         String hinweis;
-        if (psi < -10) hinweis = getString(R.string.capture_rotate_right);
-        else if (Math.abs(pitch) > 15) hinweis = String.format(Locale.getDefault(), getString(R.string.capture_hold_level), Math.round(pitch));
-        else hinweis = getString(R.string.capture_keep_rotating);
-        info.setText(String.format(Locale.getDefault(), "%.0f / 360° - %s", fort * 360, hinweis));
+        if (psi < -10) hinweis = getString(R.string.hint_turn_right);
+        else if (Math.abs(pitch) > 15) hinweis = getString(R.string.hint_hold_upright, (int) Math.round(Math.abs(pitch)));
+        else hinweis = getString(R.string.hint_keep_turning);
+        info.setText(getString(R.string.progress_fmt, (int) Math.round(fort * 360), hinweis));
     }
 
     private void verwirfAufnahme() {
@@ -610,15 +688,15 @@ public class CaptureActivity extends Activity {
         if (belichtungSperren && sitzung != null) setzeSperren(false);
 
         knopf.setEnabled(false);
-        info.setText(R.string.capture_info_saving);
+        info.setText(R.string.saving);
         final double kurs = startKurs;
         new Thread(() -> {
             String meldung;
             try {
                 Uri uri = speichere(s, ton, kurs);
-                meldung = "Gespeichert: " + uri;
+                meldung = getString(R.string.saved_toast);
             } catch (Exception | OutOfMemoryError e) {
-                meldung = "Fehler beim Speichern: " + e.getMessage();
+                meldung = getString(R.string.save_error, String.valueOf(e.getMessage()));
             }
             final String m = meldung;
             runOnUiThread(() -> {
@@ -627,17 +705,19 @@ public class CaptureActivity extends Activity {
                 setzeAusloeser(false);
                 ladeMiniatur();
                 fortschritt.setProgress(0);
-                info.setText(R.string.capture_info_done);
+                info.setText(R.string.done_again);
             });
         }).start();
     }
 
+    // ------------------------------------------------------------------ Speichern
+
     private Uri speichere(StereoStitcher s, byte[] ton, double kurs) throws Exception {
         StereoStitcher.Result e = s.result();
-        if (e.width < 100) throw new Exception(getString(R.string.capture_error_too_short));
+        if (e.width < 100) throw new Exception(getString(R.string.too_little));
 
-        byte[] links = jpeg(e.left, e);
-        byte[] rechts = jpeg(e.right, e);
+        byte[] links = jpeg(e.left, e, jpegQualitaet);
+        byte[] rechts = jpeg(e.right, e, jpegQualitaet);
 
         VrJpgWriter.Meta m = new VrJpgWriter.Meta();
         m.fullW = e.panoW;
@@ -646,6 +726,7 @@ public class CaptureActivity extends Activity {
         m.cropH = e.panoH;
         m.cropLeft = e.x0;
         m.cropTop = (m.fullH - e.panoH) / 2;
+        // Kompasskurs der Mitte des vollen Panoramas (Spalte 0 = Startrichtung)
         if (!Double.isNaN(kurs)) m.poseHeading = (kurs + 180) % 360;
         byte[] datei = VrJpgWriter.build(links, rechts, ton, m);
 
@@ -656,7 +737,7 @@ public class CaptureActivity extends Activity {
         v.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/StereoPano");
         v.put(MediaStore.Images.Media.IS_PENDING, 1);
         Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
-        if (uri == null) throw new Exception("MediaStore-Eintrag nicht moeglich");
+        if (uri == null) throw new Exception(getString(R.string.mediastore_failed));
         try (OutputStream os = getContentResolver().openOutputStream(uri)) {
             os.write(datei);
         }
@@ -666,16 +747,19 @@ public class CaptureActivity extends Activity {
         return uri;
     }
 
-    private static byte[] jpeg(int[] pixel, StereoStitcher.Result e) {
+    private static byte[] jpeg(int[] pixel, StereoStitcher.Result e, int qualitaet) {
         Bitmap bmp = Bitmap.createBitmap(pixel, e.x0, e.panoW, e.width, e.panoH, Bitmap.Config.ARGB_8888);
         ByteArrayOutputStream bo = new ByteArrayOutputStream(4_000_000);
-        bmp.compress(Bitmap.CompressFormat.JPEG, 90, bo);
+        bmp.compress(Bitmap.CompressFormat.JPEG, qualitaet, bo);
         bmp.recycle();
         return bo.toByteArray();
     }
 
+    // ------------------------------------------------------------------ Ton (wie Cardboard Camera)
+
     @SuppressWarnings("deprecation")
     private void starteAudio() {
+        if (!audioAn) return;
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return;
         try {
             audioDatei = File.createTempFile("pano", ".m4a", getCacheDir());
@@ -708,6 +792,13 @@ public class CaptureActivity extends Activity {
         return data;
     }
 
+    // ------------------------------------------------------------------ YUV -> RGB
+
+    /**
+     * Kamerabild (YUV_420_888, im Sensor-Koordinatensystem) als aufrechtes Hochformatbild.
+     * Sensororientierung 90: aufrecht(ux, uy) = roh(x = uy, y = H-1-ux)
+     * Sensororientierung 270: aufrecht(ux, uy) = roh(x = W-1-uy, y = ux)
+     */
     private static final class YuvFrame implements StereoStitcher.Frame {
         private final ByteBuffer yb, ub, vb;
         private final int yRow, uRow, vRow, uPix, vPix, rawW, rawH;
@@ -736,16 +827,12 @@ public class CaptureActivity extends Activity {
             int yy = yb.get(y * yRow + x) & 0xFF;
             int cu = (ub.get((y >> 1) * uRow + (x >> 1) * uPix) & 0xFF) - 128;
             int cv = (vb.get((y >> 1) * vRow + (x >> 1) * vPix) & 0xFF) - 128;
-
-            int r = (int) (yy + 1.402 * cv);
-            int g = (int) (yy - 0.344136 * cu - 0.714136 * cv);
-            int b = (int) (yy + 1.772 * cu);
-
-            if (r < 0) r = 0; else if (r > 255) r = 255;
-            if (g < 0) g = 0; else if (g > 255) g = 255;
-            if (b < 0) b = 0; else if (b > 255) b = 255;
-
+            int r = clamp(yy + (int) (1.402f * cv));
+            int g = clamp(yy - (int) (0.344f * cu + 0.714f * cv));
+            int b = clamp(yy + (int) (1.772f * cu));
             return 0xFF000000 | (r << 16) | (g << 8) | b;
         }
+
+        private static int clamp(int v) { return v < 0 ? 0 : Math.min(v, 255); }
     }
 }

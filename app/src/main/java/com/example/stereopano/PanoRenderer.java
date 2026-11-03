@@ -48,7 +48,8 @@ final class PanoRenderer implements GLSurfaceView.Renderer {
     private volatile float fovScale = 1f;    // Pinch-Zoom
 
     // --- Linsenkorrektur (Cardboard): Szene -> FBO -> Fragment-Shader mit radialer Tonnenverzerrung
-    private static final float K1 = 0.34f, K2 = 0.55f;   // Cardboard-v2-aehnliche Koeffizienten (nach Geschmack anpassen)
+    private volatile float k1 = 0.34f, k2 = 0.55f;      // Cardboard-v2-aehnliche Koeffizienten (Einstellungen)
+    private volatile float sbsFov = 45f;                 // vertikales Sichtfeld im SBS-Modus (Einstellungen)
     private static final float RS = 0.5f;                // Normierung des Radius
     private static final String VS2 =
             "attribute vec2 aP; varying vec2 vP; void main(){ vP = aP; gl_Position = vec4(aP, 0.0, 1.0); }";
@@ -89,6 +90,8 @@ final class PanoRenderer implements GLSurfaceView.Renderer {
     void setMode(int m) { mode = m; }
     void setSbsHalf(boolean h) { sbsHalf = h; }
     void setLens(boolean l) { lens = l; }
+    void setLensK(float a, float b) { k1 = a; k2 = b; }
+    void setSbsFov(float f) { sbsFov = f; }
     void setFovScale(float s) { fovScale = Math.max(0.4f, Math.min(1.6f, s)); }
     float getFovScale() { return fovScale; }
 
@@ -152,7 +155,7 @@ final class PanoRenderer implements GLSurfaceView.Renderer {
                 }
                 break;
             case MODE_SBS: {
-                float fov = 45f * fovScale;
+                float fov = sbsFov * fovScale;
                 // Half-SBS: Bild wird fuer die volle Breite berechnet und von der Brille wieder gestreckt
                 float asp = sbsHalf ? (float) width / height : (float) half / height;
                 drawEye(0, half, texL, fov, asp);
@@ -179,9 +182,9 @@ final class PanoRenderer implements GLSurfaceView.Renderer {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTex);
         GLES20.glUniform1i(uT2, 0);
         GLES20.glUniform1f(uAsp2, (float) w / height);
-        GLES20.glUniform1f(uK12, K1);
-        GLES20.glUniform1f(uK22, K2);
-        GLES20.glUniform1f(uFit2, 1f / (1f + K1 * RS * RS + K2 * RS * RS * RS * RS));
+        GLES20.glUniform1f(uK12, k1);
+        GLES20.glUniform1f(uK22, k2);
+        GLES20.glUniform1f(uFit2, 1f / (1f + k1 * RS * RS + k2 * RS * RS * RS * RS));
         quad.position(0);
         GLES20.glVertexAttribPointer(aP2, 2, GLES20.GL_FLOAT, false, 8, quad);
         GLES20.glEnableVertexAttribArray(aP2);
