@@ -534,10 +534,25 @@ public class CaptureActivity extends Activity {
             leser.setOnImageAvailableListener(this::bildDa, kameraHandler);
             Surface vorschau = surface.getHolder().getSurface();
 
-            anfrage = kamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            anfrage = kamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
             anfrage.addTarget(vorschau);
             anfrage.addTarget(leser.getSurface());
             anfrage.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            
+            // Prefer high target FPS range for short exposure times and crisp frames without motion blur
+            android.util.Range<Integer>[] fpsRanges = cc.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+            if (fpsRanges != null) {
+                android.util.Range<Integer> bestRange = null;
+                for (android.util.Range<Integer> r : fpsRanges) {
+                    if (r.getUpper() >= 30 && (bestRange == null || r.getLower() > bestRange.getLower())) {
+                        bestRange = r;
+                    }
+                }
+                if (bestRange != null) {
+                    anfrage.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, bestRange);
+                }
+            }
+
             // Stabilisierung aus: sie wuerde das Sichtfeld unvorhersehbar verschieben
             if (hat(cc.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION),
                     CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF))
@@ -653,7 +668,7 @@ public class CaptureActivity extends Activity {
                 final double p = psi;
                 runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p));
             }
-            if (s.isComplete()) runOnUiThread(this::beendeAufnahme);
+            if (s.isComplete() || psi >= 355.0 || s.progress() >= 1.0) runOnUiThread(this::beendeAufnahme);
         } finally {
             img.close();
         }
