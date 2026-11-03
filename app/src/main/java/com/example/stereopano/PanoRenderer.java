@@ -42,7 +42,26 @@ final class PanoRenderer implements GLSurfaceView.Renderer {
     private volatile float[] rot;            // 3x3 (zeilenweise), Geraet -> Welt; null = nur Touch
     private volatile float headingOffset;    // Grad, dreht das Panorama um die Hochachse
     private volatile float yaw, pitch;       // Touch-Verschiebung in Grad
-    private volatile boolean vr;
+    static final int MODE_FLAT = 0, MODE_CARDBOARD = 1, MODE_SBS = 2;
+    private volatile int mode = MODE_FLAT;
+    private volatile boolean sbsHalf;        // Half-SBS: jedes Auge horizontal auf die halbe Breite gestaucht
+    private volatile float fovScale = 1f;    // Pinch-Zoom
+
+    // --- Linsenkorrektur (Cardboard): Szene -> FBO -> Fragment-Shader mit radialer Tonnenverzerrung
+    private static final float K1 = 0.34f, K2 = 0.55f;   // Cardboard-v2-aehnliche Koeffizienten (nach Geschmack anpassen)
+    private static final float RS = 0.5f;                // Normierung des Radius
+    private static final String VS2 =
+            "attribute vec2 aP; varying vec2 vP; void main(){ vP = aP; gl_Position = vec4(aP, 0.0, 1.0); }";
+    private static final String FS2 =
+            "precision mediump float; varying vec2 vP; uniform sampler2D uT; uniform float uAsp, uK1, uK2, uFit;"
+          + "void main(){ vec2 p = vec2(vP.x * uAsp, vP.y); vec2 pr = p * " + RS + "; float r2 = dot(pr, pr);"
+          + " float s = (1.0 + uK1 * r2 + uK2 * r2 * r2) * uFit; vec2 q = p * s; vec2 uv = vec2(q.x / uAsp, q.y);"
+          + " if (abs(uv.x) > 1.0 || abs(uv.y) > 1.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }"
+          + " gl_FragColor = texture2D(uT, uv * 0.5 + 0.5); }";
+    private volatile boolean lens = true;
+    private int prog2, aP2, uT2, uAsp2, uK12, uK22, uFit2;
+    private int fbo, fboTex, fboW, fboH;
+    private FloatBuffer quad;
 
     // --- GL-Objekte
     private int program, aPos, aUv, uMvp, uTex;
@@ -67,7 +86,11 @@ final class PanoRenderer implements GLSurfaceView.Renderer {
 
     void setRotation(float[] r) { rot = r; }
     void setHeadingOffset(float deg) { headingOffset = deg; }
-    void setVr(boolean v) { vr = v; }
+    void setMode(int m) { mode = m; }
+    void setSbsHalf(boolean h) { sbsHalf = h; }
+    void setLens(boolean l) { lens = l; }
+    void setFovScale(float s) { fovScale = Math.max(0.4f, Math.min(1.6f, s)); }
+    float getFovScale() { return fovScale; }
 
     void drag(float dx, float dy) {
         yaw -= dx * 0.15f;
@@ -87,6 +110,17 @@ final class PanoRenderer implements GLSurfaceView.Renderer {
         uMvp = GLES20.glGetUniformLocation(program, "uMvp");
         uTex = GLES20.glGetUniformLocation(program, "uTex");
         texL = texR = 0;
+        prog2 = link(compile(GLES20.GL_VERTEX_SHADER, VS2), compile(GLES20.GL_FRAGMENT_SHADER, FS2));
+        aP2 = GLES20.glGetAttribLocation(prog2, "aP");
+        uT2 = GLES20.glGetUniformLocation(prog2, "uT");
+        uAsp2 = GLES20.glGetUniformLocation(prog2, "uAsp");
+        uK12 = GLES20.glGetUniformLocation(prog2, "uK1");
+        uK22 = GLES20.glGetUniformLocation(prog2, "uK2");
+        uFit2 = GLES20.glGetUniformLocation(prog2, "uFit");
+        quad = ByteBuffer.allocateDirect(32).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        quad.put(new float[]{-1, -1, 1, -1, -1, 1, 1, 1}).position(0);
+        fbo = fboTex = 0;   // GL-Kontext ist neu
+        fboW = fboH = 0;
     }
 
     @Override
@@ -106,18 +140,79 @@ final class PanoRenderer implements GLSurfaceView.Renderer {
         Matrix.setRotateM(model, 0, -headingOffset, 0, 0, 1);   // Azimut im Uhrzeigersinn -> Drehung um -Z
         Matrix.multiplyMM(vm, 0, view, 0, model, 0);
 
-        if (vr) {
-            int half = width / 2;
-            drawEye(0, half, texL, 90f);
-            drawEye(half, width - half, texR, 90f);
-        } else {
-            drawEye(0, width, texL, 65f);
+        int half = width / 2;
+        switch (mode) {
+            case MODE_CARDBOARD:
+                if (lens) {
+                    cardboardEye(0, half, texL);
+                    cardboardEye(half, width - half, texR);
+                } else {
+                    drawEye(0, half, texL, 90f, (float) half / height);
+                    drawEye(half, width - half, texR, 90f, (float) half / height);
+                }
+                break;
+            case MODE_SBS: {
+                float fov = 45f * fovScale;
+                // Half-SBS: Bild wird fuer die volle Breite berechnet und von der Brille wieder gestreckt
+                float asp = sbsHalf ? (float) width / height : (float) half / height;
+                drawEye(0, half, texL, fov, asp);
+                drawEye(half, width - half, texR, fov, asp);
+                break;
+            }
+            default:
+                drawEye(0, width, texL, 65f * fovScale, (float) width / height);
         }
     }
 
-    private void drawEye(int x, int w, int tex, float fovY) {
+    /** Ein Auge: Szene mit groesserem Sichtfeld in den FBO, dann mit Linsenverzerrung auf den Bildschirm. */
+    private void cardboardEye(int x, int w, int tex) {
+        ensureFbo(w, height);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fbo);
+        GLES20.glViewport(0, 0, w, height);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        drawEye(0, w, tex, 100f, (float) w / height);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+
         GLES20.glViewport(x, 0, w, height);
-        Matrix.perspectiveM(proj, 0, fovY, (float) w / height, 0.1f, 100f);
+        GLES20.glUseProgram(prog2);
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTex);
+        GLES20.glUniform1i(uT2, 0);
+        GLES20.glUniform1f(uAsp2, (float) w / height);
+        GLES20.glUniform1f(uK12, K1);
+        GLES20.glUniform1f(uK22, K2);
+        GLES20.glUniform1f(uFit2, 1f / (1f + K1 * RS * RS + K2 * RS * RS * RS * RS));
+        quad.position(0);
+        GLES20.glVertexAttribPointer(aP2, 2, GLES20.GL_FLOAT, false, 8, quad);
+        GLES20.glEnableVertexAttribArray(aP2);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        GLES20.glDisableVertexAttribArray(aP2);
+    }
+
+    private void ensureFbo(int w, int h) {
+        if (fbo != 0 && fboW == w && fboH == h) return;
+        if (fbo != 0) {
+            GLES20.glDeleteFramebuffers(1, new int[]{fbo}, 0);
+            GLES20.glDeleteTextures(1, new int[]{fboTex}, 0);
+        }
+        int[] t = new int[1], f = new int[1];
+        GLES20.glGenTextures(1, t, 0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, t[0]);
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, w, h, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glGenFramebuffers(1, f, 0);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, f[0]);
+        GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, t[0], 0);
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+        fbo = f[0]; fboTex = t[0]; fboW = w; fboH = h;
+    }
+
+    private void drawEye(int x, int w, int tex, float fovY, float aspect) {
+        GLES20.glViewport(x, 0, w, height);
+        Matrix.perspectiveM(proj, 0, fovY, aspect, 0.1f, 100f);
         Matrix.multiplyMM(mvp, 0, proj, 0, vm, 0);
 
         GLES20.glUseProgram(program);

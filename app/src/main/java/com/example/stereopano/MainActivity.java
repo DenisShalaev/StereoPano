@@ -17,7 +17,7 @@ public class MainActivity extends Activity {
         l.setGravity(Gravity.CENTER);
         l.setPadding(48, 48, 48, 48);
         l.addView(knopf("Aufnehmen", CaptureActivity.class));
-        l.addView(knopf("Ansehen", ViewerActivity.class));
+        l.addView(knopf("Galerie", GalleryActivity.class));
         setContentView(l);
         Ui.applyInsets(l);
     }

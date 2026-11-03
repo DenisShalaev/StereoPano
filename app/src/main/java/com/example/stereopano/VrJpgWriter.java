@@ -51,6 +51,18 @@ final class VrJpgWriter {
         String guid = md5Hex(extBytes);
 
         // 2) Standard-XMP mit GPano-Daten
+        byte[] mainBytes = mainXmp(m, guid).getBytes(StandardCharsets.UTF_8);
+
+        // 3) Einfuegen
+        return insert(leftJpeg, mainBytes, extBytes, guid);
+    }
+
+    /** Flaches 360-Grad-Panorama (nur GPano, ohne zweites Auge/Ton) - fuer normale Panorama-Betrachter. */
+    static byte[] flat(byte[] jpegWithoutXmp, Meta m) throws IOException {
+        return insert(jpegWithoutXmp, mainXmp(m, null).getBytes(StandardCharsets.UTF_8), null, null);
+    }
+
+    private static String mainXmp(Meta m, String guid) {
         StringBuilder main = new StringBuilder(1024);
         main.append("<?xpacket begin=\"\uFEFF\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n")
             .append("<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"><rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">")
@@ -67,11 +79,41 @@ final class VrJpgWriter {
         if (!Double.isNaN(m.poseHeading)) {
             main.append(" GPano:PoseHeadingDegrees=\"").append(String.format(Locale.US, "%.1f", m.poseHeading)).append('"');
         }
-        main.append(" xmpNote:HasExtendedXMP=\"").append(guid).append("\"/>")
-            .append("</rdf:RDF></x:xmpmeta>\n<?xpacket end=\"w\"?>");
-        byte[] mainBytes = main.toString().getBytes(StandardCharsets.UTF_8);
+        if (guid != null) main.append(" xmpNote:HasExtendedXMP=\"").append(guid).append('"');
+        main.append("/></rdf:RDF></x:xmpmeta>\n<?xpacket end=\"w\"?>");
+        return main.toString();
+    }
 
-        // 3) Einfuegestelle: nach SOI (und nach JFIF-APP0, falls vorhanden)
+    /** Entfernt alle XMP-APP1-Segmente (Standard und Extended) - Rest des JPEG bleibt unveraendert. */
+    static byte[] withoutXmp(byte[] jpg) {
+        ByteArrayOutputStream o = new ByteArrayOutputStream(jpg.length);
+        o.write(jpg, 0, 2);
+        int pos = 2;
+        while (pos + 4 <= jpg.length && (jpg[pos] & 0xFF) == 0xFF) {
+            int marker = jpg[pos + 1] & 0xFF;
+            if (marker == 0xDA || marker == 0xD9) break;
+            if (marker == 0x01 || (marker >= 0xD0 && marker <= 0xD7)) {
+                o.write(jpg, pos, 2);
+                pos += 2;
+                continue;
+            }
+            int len = ((jpg[pos + 2] & 0xFF) << 8) | (jpg[pos + 3] & 0xFF);
+            boolean xmp = marker == 0xE1 && (starts(jpg, pos + 4, HDR_XMP) || starts(jpg, pos + 4, HDR_EXT));
+            if (!xmp) o.write(jpg, pos, 2 + len);
+            pos += 2 + len;
+        }
+        o.write(jpg, pos, jpg.length - pos);
+        return o.toByteArray();
+    }
+
+    private static boolean starts(byte[] b, int off, byte[] prefix) {
+        if (off + prefix.length > b.length) return false;
+        for (int i = 0; i < prefix.length; i++) if (b[off + i] != prefix[i]) return false;
+        return true;
+    }
+
+    /** Fuegt Standard-XMP (und ggf. Extended-XMP-Bloecke) nach SOI/JFIF ein. */
+    private static byte[] insert(byte[] leftJpeg, byte[] mainBytes, byte[] extBytes, String guid) throws IOException {
         if (leftJpeg.length < 4 || (leftJpeg[0] & 0xFF) != 0xFF || (leftJpeg[1] & 0xFF) != 0xD8) {
             throw new IOException("Kein gueltiges JPEG");
         }
@@ -79,8 +121,7 @@ final class VrJpgWriter {
         if ((leftJpeg[2] & 0xFF) == 0xFF && (leftJpeg[3] & 0xFF) == 0xE0) {
             pos = 4 + (((leftJpeg[4] & 0xFF) << 8) | (leftJpeg[5] & 0xFF));
         }
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream(leftJpeg.length + extBytes.length + 200_000);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(leftJpeg.length + (extBytes == null ? 0 : extBytes.length) + 200_000);
         out.write(leftJpeg, 0, pos);
 
         ByteArrayOutputStream seg = new ByteArrayOutputStream();
@@ -88,18 +129,19 @@ final class VrJpgWriter {
         seg.write(mainBytes);
         writeApp1(out, seg.toByteArray());
 
-        byte[] guidAscii = ascii(guid);
-        for (int off = 0; off < extBytes.length; off += CHUNK) {
-            int len = Math.min(CHUNK, extBytes.length - off);
-            seg.reset();
-            seg.write(HDR_EXT);
-            seg.write(guidAscii);               // 32 Byte
-            writeInt(seg, extBytes.length);     // Gesamtlaenge
-            writeInt(seg, off);                 // Offset dieses Blocks
-            seg.write(extBytes, off, len);
-            writeApp1(out, seg.toByteArray());
+        if (extBytes != null) {
+            byte[] guidAscii = ascii(guid);
+            for (int off = 0; off < extBytes.length; off += CHUNK) {
+                int len = Math.min(CHUNK, extBytes.length - off);
+                seg.reset();
+                seg.write(HDR_EXT);
+                seg.write(guidAscii);               // 32 Byte
+                writeInt(seg, extBytes.length);     // Gesamtlaenge
+                writeInt(seg, off);                 // Offset dieses Blocks
+                seg.write(extBytes, off, len);
+                writeApp1(out, seg.toByteArray());
+            }
         }
-
         out.write(leftJpeg, pos, leftJpeg.length - pos);
         return out.toByteArray();
     }

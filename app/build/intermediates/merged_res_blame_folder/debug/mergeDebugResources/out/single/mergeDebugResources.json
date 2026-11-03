@@ -1,0 +1,26 @@
+[
+    {
+        "merged": "com.example.stereopano.app-debug-4:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.example.stereopano.app-main-6:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_capture.xml.flat",
+        "source": "com.example.stereopano.app-main-6:/drawable/ic_capture.xml"
+    },
+    {
+        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.example.stereopano.app-main-6:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.example.stereopano.app-main-6:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.example.stereopano.app-debug-4:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.example.stereopano.app-main-6:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_view.xml.flat",
+        "source": "com.example.stereopano.app-main-6:/drawable/ic_view.xml"
+    }
+]

@@ -1,19 +1,28 @@
 package com.example.stereopano;
 
 /**
- * Schlitzaufnahme (Slit-Scan): Aus jedem Kamerabild werden schmale Streifen links und rechts
- * der Bildmitte in zwei Panoramen (linkes / rechtes Auge) einsortiert.
+ * Schlitzaufnahme (Slit-Scan) fuer Stereo-Rundumpanoramen, Version 2.
  *
- * Geometrie: Dreht man sich mit ausgestrecktem Arm im Uhrzeigersinn, wandert die Kamera auf einem
- * Kreis (Radius = Armlaenge). Ein Strahl, der um +alpha rechts von der optischen Achse liegt, stammt
- * von einer Kameraposition, die weiter links liegt -> linkes Auge. Ein Strahl bei -alpha -> rechtes Auge.
- * Die Stereobasis ist daher ca. 2 * Armlaenge * sin(alpha).
+ * Gegenueber Version 1 (nur Gierwinkel, jede Spalte genau einmal geschrieben):
+ *  1. Volle Ausrichtung: Jeder Panoramapixel ist ein Strahl in Weltkoordinaten (Azimut/Elevation relativ
+ *     zum Horizont). Er wird mit der gemessenen Geraete-Rotation (3x3-Matrix) in die Kamera zurueckgerechnet.
+ *     Neigung und Seitenkippen der Hand werden dadurch ausgeglichen -> der Horizont bleibt gerade und
+ *     die Spalten wackeln nicht mehr.
+ *  2. Gewichtete Mehrfachbelegung: Jede Panoramaspalte wird aus mehreren aufeinanderfolgenden Bildern
+ *     gemittelt (Dreiecksgewicht ueber +-deltaDeg). Das glaettet Zeitstempel-/Sensorrauschen,
+ *     Helligkeitsspruenge, Bildrauschen und harte Kanten durch Parallaxe (weicher Uebergang statt Stufe).
+ *  3. Keine Richtungsannahme: Beliebiges Hin- und Herdrehen ist erlaubt; fertig ist das Bild, wenn alle
+ *     Spalten beider Augen genug Gewicht haben. Unvollstaendige Aufnahmen werden auf den laengsten
+ *     gemeinsam abgedeckten Bereich zugeschnitten.
  *
- * Diese Klasse hat keine Android-Abhaengigkeiten (gut testbar).
+ * Geometrie (360-Grad-Drehung mit ausgestrecktem Arm): Strahl bei +alpha rechts der optischen Achse
+ * -> linkes Auge, bei -alpha -> rechtes Auge; Stereobasis ca. 2 * Armlaenge * sin(alpha).
+ *
+ * Keine Android-Abhaengigkeiten (testbar).
  */
 final class StereoStitcher {
 
-    /** Bildquelle in "aufrechten" Koordinaten (Hochformat, x nach rechts, y nach unten). */
+    /** Bildquelle in aufrechten Koordinaten (Hochformat, x nach rechts, y nach unten). */
     interface Frame {
         int rgb(int ux, int uy);
     }
@@ -21,82 +30,121 @@ final class StereoStitcher {
     static final class Result {
         int[] left, right;
         int panoW, panoH;      // Groesse des vollen 360-Grad-Arrays
-        int x0, width;         // aufgenommener Ausschnitt (Spalten)
+        int x0, width;         // verwertbarer Ausschnitt (Spalten)
         boolean complete;
     }
 
+    private static final int W_FULL = 8;    // Gewicht in der Mitte des Dreiecks
+    private static final int W_MIN = 4;     // Mindestgewicht, ab dem eine Spalte als abgedeckt gilt
+
+    /** Akkumulator eines Auges. */
     private static final class Eye {
         final double offsetDeg;
-        final long start, end;
-        long last;
+        char[] r, g, b;      // gewichtete Summen (max 255 * 255 = 65025 passt in char)
+        byte[] w;            // Gewicht je Pixel (0..255)
+        final int[] colW;    // Gewicht je Spalte (Absicherung/Fortschritt)
+        int covered;         // Anzahl Spalten mit colW >= W_MIN
 
-        Eye(double offsetDeg, int panoW) {
+        Eye(double offsetDeg, int n, int panoW) {
             this.offsetDeg = offsetDeg;
-            this.start = (long) Math.floor(offsetDeg / 360.0 * panoW);
-            this.end = start + panoW - 1;
-            this.last = start - 1;
+            r = new char[n]; g = new char[n]; b = new char[n];
+            w = new byte[n];
+            colW = new int[panoW];
         }
     }
 
     final int frameW, frameH, panoW, panoH;
-    final double fPx;
-    private final int[] left, right;
-    private final double[] srcY;
+    final double fPx, deltaDeg, az0Deg;
+    private final double[] sinE, cosE;
     private final Eye eyeL, eyeR;
     private boolean closed;
+    private Result cached;
 
     /**
      * @param frameW   Breite des aufrechten Bildes in Pixel
      * @param frameH   Hoehe des aufrechten Bildes in Pixel
      * @param fPx      Brennweite in Pixeln
      * @param alphaDeg Winkel der Streifen zur Bildmitte (Stereobasis)
+     * @param deltaDeg halbe Breite des Mittelungsfensters (Grad)
+     * @param az0Deg   Welt-Azimut (Grad, im Uhrzeigersinn ab Nord) der Startrichtung
      */
-    StereoStitcher(int frameW, int frameH, double fPx, double alphaDeg) {
+    StereoStitcher(int frameW, int frameH, double fPx, double alphaDeg, double deltaDeg, double az0Deg) {
         this.frameW = frameW;
         this.frameH = frameH;
         this.fPx = fPx;
+        this.deltaDeg = deltaDeg;
+        this.az0Deg = az0Deg;
         this.panoW = (int) Math.round(2 * Math.PI * fPx) & ~1;
         double ppd = panoW / 360.0; // Pixel pro Grad
         double vfov = 2 * Math.toDegrees(Math.atan((frameH / 2.0) / fPx));
         this.panoH = (int) Math.round(vfov * ppd) & ~1;
-        this.left = new int[panoW * panoH];
-        this.right = new int[panoW * panoH];
-        this.srcY = new double[panoH];
+        this.sinE = new double[panoH];
+        this.cosE = new double[panoH];
         for (int v = 0; v < panoH; v++) {
-            // Elevation der Zeile (aequirektangular) -> Zeile im Kamerabild (Pinhole)
-            double el = Math.toRadians((panoH / 2.0 - (v + 0.5)) / ppd);
-            double sy = frameH / 2.0 - fPx * Math.tan(el);
-            srcY[v] = Math.max(0, Math.min(frameH - 1.001, sy));
+            double el = Math.toRadians((panoH / 2.0 - (v + 0.5)) / ppd);   // Elevation ueber dem Horizont
+            sinE[v] = Math.sin(el);
+            cosE[v] = Math.cos(el);
         }
-        this.eyeL = new Eye(+alphaDeg, panoW);
-        this.eyeR = new Eye(-alphaDeg, panoW);
+        int n = panoW * panoH;
+        this.eyeL = new Eye(+alphaDeg, n, panoW);
+        this.eyeR = new Eye(-alphaDeg, n, panoW);
     }
 
     synchronized void close() {
         closed = true;
     }
 
-    /** psi = Drehwinkel seit Start in Grad (im Uhrzeigersinn, nicht auf 360 begrenzt). */
-    synchronized void addFrame(Frame f, double psi) {
-        if (closed || Double.isNaN(psi)) return;
-        fill(left, eyeL, f, psi);
-        fill(right, eyeR, f, psi);
+    /**
+     * @param psi Drehwinkel der Kamera-Blickrichtung seit Start (Grad, im Uhrzeigersinn, unbegrenzt)
+     * @param rot Geraete->Welt-Rotation (3x3 zeilenweise, Welt = Ost/Nord/Oben) zum Aufnahmezeitpunkt
+     */
+    synchronized void addFrame(Frame f, double psi, float[] rot) {
+        if (closed || cached != null || rot == null || Double.isNaN(psi)) return;
+        accumulate(eyeL, f, psi, rot);
+        accumulate(eyeR, f, psi, rot);
     }
 
-    private void fill(int[] dst, Eye e, Frame f, double psi) {
-        long cur = Math.min(e.end, (long) Math.floor((psi + e.offsetDeg) / 360.0 * panoW));
-        for (long x = e.last + 1; x <= cur; x++) {
-            // Winkel des Strahls relativ zur optischen Achse des aktuellen Bildes
-            double a = Math.toRadians((x + 0.5) / panoW * 360.0 - psi);
-            if (Math.abs(a) > Math.toRadians(80)) continue;
-            double ux = frameW / 2.0 + fPx * Math.tan(a);
-            ux = Math.max(0, Math.min(frameW - 1.001, ux));
+    private void accumulate(Eye e, Frame f, double psi, float[] R) {
+        double centre = psi + e.offsetDeg;
+        long x0 = (long) Math.ceil((centre - deltaDeg) / 360.0 * panoW - 0.5);
+        long x1 = (long) Math.floor((centre + deltaDeg) / 360.0 * panoW - 0.5);
+        double qx = R[6], qy = R[7], qz = R[8];   // Welt-"Oben" im Geraetesystem (Spalte 2 von R^T)
+
+        for (long x = x0; x <= x1; x++) {
+            double phi = (x + 0.5) / panoW * 360.0;              // Panorama-Azimut relativ zum Start
+            double a = phi - centre;                              // -delta .. +delta
+            int wt = (int) Math.round(W_FULL * (1 - Math.abs(a) / deltaDeg));
+            if (wt <= 0) continue;
             int col = (int) Math.floorMod(x, (long) panoW);
+
+            double A = Math.toRadians(az0Deg + phi);              // Welt-Azimut des Strahls
+            double sA = Math.sin(A), cA = Math.cos(A);
+            // c = R^T * d,  d = (sinA cosE, cosA cosE, sinE)  ->  c = cosE * P + sinE * Q
+            double px = sA * R[0] + cA * R[3];
+            double py = sA * R[1] + cA * R[4];
+            double pz = sA * R[2] + cA * R[5];
+
             for (int v = 0; v < panoH; v++) {
-                dst[v * panoW + col] = bilinear(f, ux, srcY[v]);
+                double cx = cosE[v] * px + sinE[v] * qx;
+                double cy = cosE[v] * py + sinE[v] * qy;
+                double cz = cosE[v] * pz + sinE[v] * qz;
+                if (cz > -1e-3) continue;                          // Strahl liegt hinter der Kamera
+                double ux = frameW / 2.0 + fPx * cx / -cz;
+                double uy = frameH / 2.0 - fPx * cy / -cz;
+                if (ux < 0 || uy < 0 || ux > frameW - 1.001 || uy > frameH - 1.001) continue;
+                int idx = v * panoW + col;
+                int wp = e.w[idx] & 0xFF;
+                if (wp + wt > 255) continue;                       // Ueberlaufschutz bei sehr langsamer Drehung
+                int c = bilinear(f, ux, uy);
+                e.r[idx] += (char) (wt * ((c >> 16) & 255));
+                e.g[idx] += (char) (wt * ((c >> 8) & 255));
+                e.b[idx] += (char) (wt * (c & 255));
+                e.w[idx] = (byte) (wp + wt);
             }
+            int before = e.colW[col];
+            e.colW[col] = before + wt;
+            if (before < W_MIN && before + wt >= W_MIN) e.covered++;
         }
-        if (cur > e.last) e.last = cur;
     }
 
     private int bilinear(Frame f, double x, double y) {
@@ -114,30 +162,59 @@ final class StereoStitcher {
     }
 
     synchronized boolean isComplete() {
-        return eyeL.last >= eyeL.end && eyeR.last >= eyeR.end;
+        return eyeL.covered >= panoW && eyeR.covered >= panoW;
     }
 
-    /** Fortschritt 0..1 (das rechte Auge hinkt hinterher). */
+    /** Fortschritt 0..1 (Anteil abgedeckter Spalten des schwaecheren Auges). */
     synchronized double progress() {
-        return Math.max(0, Math.min(1, (eyeR.last - eyeR.start + 1) / (double) panoW));
+        return Math.min(eyeL.covered, eyeR.covered) / (double) panoW;
     }
 
+    /** Fertigt das Ergebnis (einmalig); danach sind keine weiteren Bilder mehr moeglich. */
     synchronized Result result() {
+        if (cached != null) return cached;
+        closed = true;
         Result r = new Result();
-        r.left = left;
-        r.right = right;
         r.panoW = panoW;
         r.panoH = panoH;
-        r.complete = isComplete();
-        if (r.complete) {
-            r.x0 = 0;
-            r.width = panoW;
-        } else {
-            long s = eyeL.start;
-            long e = Math.min(eyeL.last, eyeR.last);
-            r.x0 = (int) Math.max(0, s);
-            r.width = (int) Math.max(0, Math.min(e, panoW - 1) - r.x0 + 1);
+
+        // laengster zusammenhaengender Bereich, den beide Augen abdecken
+        int bestStart = 0, bestLen = 0, runStart = 0, runLen = 0;
+        for (int x = 0; x < panoW; x++) {
+            if (eyeL.colW[x] >= W_MIN && eyeR.colW[x] >= W_MIN) {
+                if (runLen == 0) runStart = x;
+                runLen++;
+                if (runLen > bestLen) { bestLen = runLen; bestStart = runStart; }
+            } else {
+                runLen = 0;
+            }
         }
+        r.complete = bestLen >= panoW;
+        r.x0 = r.complete ? 0 : bestStart;
+        r.width = bestLen;
+
+        r.left = finish(eyeL);
+        eyeL.r = eyeL.g = eyeL.b = null;
+        eyeL.w = null;
+        r.right = finish(eyeR);
+        eyeR.r = eyeR.g = eyeR.b = null;
+        eyeR.w = null;
+        cached = r;
         return r;
+    }
+
+    private int[] finish(Eye e) {
+        int n = panoW * panoH;
+        int[] out = new int[n];
+        for (int i = 0; i < n; i++) {
+            int wp = e.w[i] & 0xFF;
+            if (wp == 0) { out[i] = 0xFF000000; continue; }
+            int h = wp >> 1;
+            out[i] = 0xFF000000
+                    | (((e.r[i] + h) / wp) << 16)
+                    | (((e.g[i] + h) / wp) << 8)
+                    | ((e.b[i] + h) / wp);
+        }
+        return out;
     }
 }

@@ -25,9 +25,10 @@
         android:allowBackup="true"
         android:debuggable="true"
         android:extractNativeLibs="false"
+        android:icon="@mipmap/ic_launcher"
         android:label="Stereo Pano"
         android:largeHeap="true"
-        android:testOnly="true"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar" >
         <activity
             android:name="com.example.stereopano.MainActivity"
@@ -42,6 +43,9 @@
             android:name="com.example.stereopano.CaptureActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
+        <activity
+            android:name="com.example.stereopano.GalleryActivity"
+            android:exported="false" />
 
         <!-- Oeffnet auch .vr.jpg aus Dateimanager / Google Fotos ("Oeffnen mit") -->
         <activity

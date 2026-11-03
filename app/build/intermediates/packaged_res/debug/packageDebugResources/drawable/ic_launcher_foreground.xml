@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Zwei ueberlappende "Augen" (Stereopaar) ueber einem Panorama-Horizont. Sicherheitszone 18..90. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Horizontbogen -->
+    <path android:pathData="M24,76 Q54,90 84,76"
+        android:strokeColor="#4FC3F7" android:strokeWidth="3.5" android:strokeLineCap="round"
+        android:fillColor="#00000000"/>
+    <!-- linkes Auge -->
+    <path android:pathData="M28,50 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0"
+        android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:fillColor="#00000000"/>
+    <!-- rechtes Auge -->
+    <path android:pathData="M48,50 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0"
+        android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:fillColor="#00000000"/>
+    <!-- Pupillen -->
+    <path android:pathData="M40,50 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" android:fillColor="#4FC3F7"/>
+    <path android:pathData="M60,50 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" android:fillColor="#4FC3F7"/>
+</vector>
