@@ -227,10 +227,19 @@ final class StereoStitcher {
             }
         }
 
-        // Fill only small local gaps (up to 16 columns) along each row via linear interpolation
-        int maxGap = 16;
+        // Circular Inpainting: Fill any unwritten gaps along each row using circular wrapping around panoW
         for (int v = 0; v < panoH; v++) {
             int rowOffset = v * panoW;
+            
+            int firstValid = -1;
+            for (int col = 0; col < panoW; col++) {
+                if (out[rowOffset + col] != 0) {
+                    firstValid = col;
+                    break;
+                }
+            }
+            if (firstValid == -1) continue;
+
             int col = 0;
             while (col < panoW) {
                 if (out[rowOffset + col] == 0) {
@@ -241,12 +250,31 @@ final class StereoStitcher {
                     int gapEnd = col;
                     int gapLen = gapEnd - gapStart;
 
-                    if (gapLen <= maxGap && gapStart > 0 && gapEnd < panoW) {
-                        int cLeft = out[rowOffset + gapStart - 1];
-                        int cRight = out[rowOffset + gapEnd];
+                    int leftValid = Math.floorMod(gapStart - 1, panoW);
+                    while (out[rowOffset + leftValid] == 0 && leftValid != gapEnd % panoW) {
+                        leftValid = Math.floorMod(leftValid - 1, panoW);
+                    }
+
+                    int rightValid = Math.floorMod(gapEnd, panoW);
+                    while (out[rowOffset + rightValid] == 0 && rightValid != leftValid) {
+                        rightValid = Math.floorMod(rightValid + 1, panoW);
+                    }
+
+                    int cLeft = out[rowOffset + leftValid];
+                    int cRight = out[rowOffset + rightValid];
+
+                    if (cLeft != 0 && cRight != 0) {
                         for (int k = 0; k < gapLen; k++) {
                             float factor = (float) (k + 1) / (gapLen + 1);
                             out[rowOffset + gapStart + k] = blendColors(cLeft, cRight, factor);
+                        }
+                    } else if (cLeft != 0) {
+                        for (int k = 0; k < gapLen; k++) {
+                            out[rowOffset + gapStart + k] = cLeft;
+                        }
+                    } else if (cRight != 0) {
+                        for (int k = 0; k < gapLen; k++) {
+                            out[rowOffset + gapStart + k] = cRight;
                         }
                     }
                 } else {
