@@ -2,9 +2,19 @@ R_DEF: Internal format may change without notice
 local
 color ic_launcher_background
 color launcher_background
+drawable btn_rounded_dark
+drawable btn_rounded_glass
+drawable btn_rounded_primary
 drawable ic_capture
+drawable ic_center
+drawable ic_compass
+drawable ic_gallery
+drawable ic_guide
+drawable ic_gyro
 drawable ic_launcher_background
 drawable ic_launcher_foreground
+drawable ic_lock
+drawable ic_mode
 drawable ic_view
 mipmap ic_launcher
 mipmap ic_launcher_round

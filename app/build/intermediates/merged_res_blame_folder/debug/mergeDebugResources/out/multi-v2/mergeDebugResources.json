@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.stereopano.app-debug-4:/values_values.arsc.flat",
+            "outputFile": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/values_values.arsc.flat",
             "map": [
                 {
                     "source": "/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/res/values/colors.xml",

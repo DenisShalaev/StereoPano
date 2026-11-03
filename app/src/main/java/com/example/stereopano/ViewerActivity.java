@@ -126,29 +126,30 @@ public class ViewerActivity extends Activity implements SensorEventListener {
 
         leiste = new LinearLayout(this);
         leiste.setOrientation(LinearLayout.HORIZONTAL);
+        leiste.setPadding(12, 12, 12, 12);
         leiste.setBackgroundColor(0x77000000);
-        leiste.addView(knopf("Galerie", v -> zurueckZurGalerie()));
-        modusKnopf = knopf("", v -> setzeModus((modus + 1) % 3));
+        leiste.addView(knopf("Galerie", R.drawable.ic_gallery, v -> zurueckZurGalerie()));
+        modusKnopf = knopf("", R.drawable.ic_mode, v -> setzeModus((modus + 1) % 3));
         leiste.addView(modusKnopf);
-        kompassKnopf = knopf("", v -> schalteKompass());
+        kompassKnopf = knopf("", R.drawable.ic_compass, v -> schalteKompass());
         leiste.addView(kompassKnopf);
-        gyroKnopf = knopf("", v -> schalteGyro());
+        gyroKnopf = knopf("", R.drawable.ic_gyro, v -> schalteGyro());
         leiste.addView(gyroKnopf);
-        halbKnopf = knopf("", v -> {
+        halbKnopf = knopf("", 0, v -> {
             sbsHalb = !sbsHalb;
             prefs.edit().putBoolean("halb", sbsHalb).apply();
             rend.setSbsHalf(sbsHalb);
             beschrifte();
         });
         leiste.addView(halbKnopf);
-        linsenKnopf = knopf("", v -> {
+        linsenKnopf = knopf("", 0, v -> {
             linsenAn = !linsenAn;
             prefs.edit().putBoolean("linsen", linsenAn).apply();
             rend.setLens(linsenAn);
             beschrifte();
         });
         leiste.addView(linsenKnopf);
-        leiste.addView(knopf("Mitte", v -> { rend.resetDrag(); rend.setFovScale(1f); neuZentrieren = true; wendeKursAn(); }));
+        leiste.addView(knopf("Mitte", R.drawable.ic_center, v -> { rend.resetDrag(); rend.setFovScale(1f); neuZentrieren = true; wendeKursAn(); }));
         root.addView(leiste, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP));
         setContentView(root);
@@ -160,13 +161,27 @@ public class ViewerActivity extends Activity implements SensorEventListener {
         else oeffnen();
     }
 
-    private Button knopf(String text, View.OnClickListener l) {
+    private Button knopf(String text, int iconRes, View.OnClickListener l) {
         Button k = new Button(this);
         k.setText(text);
-        k.setTextSize(11);
+        k.setTextSize(10);
+        k.setTextColor(android.graphics.Color.WHITE);
         k.setAllCaps(false);
+        if (iconRes != 0) {
+            k.setCompoundDrawablesWithIntrinsicBounds(0, iconRes, 0, 0);
+            k.setCompoundDrawablePadding(4);
+        }
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        bg.setCornerRadius(18);
+        bg.setColor(0x55000000);
+        bg.setStroke(2, 0x44FFFFFF);
+        k.setBackground(bg);
+        k.setPadding(8, 12, 8, 12);
         k.setOnClickListener(l);
-        k.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        lp.setMargins(4, 4, 4, 4);
+        k.setLayoutParams(lp);
         return k;
     }
 

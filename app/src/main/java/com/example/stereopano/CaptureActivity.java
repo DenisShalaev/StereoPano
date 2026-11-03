@@ -290,6 +290,7 @@ public class CaptureActivity extends Activity {
         sperreKnopf = new Button(this);
         sperreKnopf.setAllCaps(false);
         sperreKnopf.setTextSize(11);
+        styleToolButton(sperreKnopf, R.drawable.ic_lock);
         aktualisiereSperreKnopf();
         sperreKnopf.setOnClickListener(v -> {
             if (nimmtAuf) return;
@@ -301,6 +302,7 @@ public class CaptureActivity extends Activity {
         leitKnopf = new Button(this);
         leitKnopf.setAllCaps(false);
         leitKnopf.setTextSize(11);
+        styleToolButton(leitKnopf, R.drawable.ic_guide);
         aktualisiereLeitKnopf();
         leitKnopf.setOnClickListener(v -> {
             leitpunkte = !leitpunkte;
@@ -346,6 +348,23 @@ public class CaptureActivity extends Activity {
 
     private LinearLayout.LayoutParams gewicht(int w, int h) {
         return new LinearLayout.LayoutParams(w, h);
+    }
+
+    private void styleToolButton(Button btn, int iconRes) {
+        btn.setTextColor(Color.WHITE);
+        btn.setTextSize(10);
+        btn.setAllCaps(false);
+        if (iconRes != 0) {
+            btn.setCompoundDrawablesWithIntrinsicBounds(0, iconRes, 0, 0);
+            btn.setCompoundDrawablePadding(dp(4));
+        }
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.RECTANGLE);
+        bg.setCornerRadius(dp(18));
+        bg.setColor(0x55000000);
+        bg.setStroke(dp(1), 0x66FFFFFF);
+        btn.setBackground(bg);
+        btn.setPadding(dp(6), dp(6), dp(6), dp(6));
     }
 
     private void zeigePanel(boolean zeigen) {
