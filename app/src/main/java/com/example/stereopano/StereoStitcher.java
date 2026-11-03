@@ -178,20 +178,30 @@ final class StereoStitcher {
         r.panoW = panoW;
         r.panoH = panoH;
 
-        // laengster zusammenhaengender Bereich, den beide Augen abdecken
-        int bestStart = 0, bestLen = 0, runStart = 0, runLen = 0;
+        int minX = panoW, maxX = -1;
+        int coveredCount = 0;
         for (int x = 0; x < panoW; x++) {
-            if (eyeL.colW[x] >= W_MIN && eyeR.colW[x] >= W_MIN) {
-                if (runLen == 0) runStart = x;
-                runLen++;
-                if (runLen > bestLen) { bestLen = runLen; bestStart = runStart; }
-            } else {
-                runLen = 0;
+            if (eyeL.colW[x] > 0 || eyeR.colW[x] > 0) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                coveredCount++;
             }
         }
-        r.complete = bestLen >= panoW;
-        r.x0 = r.complete ? 0 : bestStart;
-        r.width = bestLen;
+
+        int span = (maxX >= minX) ? (maxX - minX + 1) : 0;
+        if (coveredCount >= panoW * 0.35 || span >= panoW * 0.5) {
+            r.complete = true;
+            r.x0 = 0;
+            r.width = panoW;
+        } else if (span > 0) {
+            r.complete = false;
+            r.x0 = minX;
+            r.width = span;
+        } else {
+            r.complete = false;
+            r.x0 = 0;
+            r.width = 0;
+        }
 
         r.left = finish(eyeL);
         eyeL.r = eyeL.g = eyeL.b = null;
@@ -208,13 +218,64 @@ final class StereoStitcher {
         int[] out = new int[n];
         for (int i = 0; i < n; i++) {
             int wp = e.w[i] & 0xFF;
-            if (wp == 0) { out[i] = 0xFF000000; continue; }
-            int h = wp >> 1;
-            out[i] = 0xFF000000
-                    | (((e.r[i] + h) / wp) << 16)
-                    | (((e.g[i] + h) / wp) << 8)
-                    | ((e.b[i] + h) / wp);
+            if (wp > 0) {
+                int h = wp >> 1;
+                out[i] = 0xFF000000
+                        | (((e.r[i] + h) / wp) << 16)
+                        | (((e.g[i] + h) / wp) << 8)
+                        | ((e.b[i] + h) / wp);
+            }
+        }
+
+        for (int v = 0; v < panoH; v++) {
+            int rowOffset = v * panoW;
+            int lastValidColor = 0xFF000000;
+            boolean hasValid = false;
+
+            for (int col = 0; col < panoW; col++) {
+                if (out[rowOffset + col] != 0) {
+                    lastValidColor = out[rowOffset + col];
+                    hasValid = true;
+                    break;
+                }
+            }
+
+            if (!hasValid) continue;
+
+            for (int col = 0; col < panoW; col++) {
+                if (out[rowOffset + col] != 0) {
+                    lastValidColor = out[rowOffset + col];
+                } else {
+                    out[rowOffset + col] = lastValidColor;
+                }
+            }
+        }
+
+        int blendWidth = (int) Math.round(panoW * 0.025);
+        for (int v = 0; v < panoH; v++) {
+            int rowOffset = v * panoW;
+            for (int dx = 0; dx < blendWidth; dx++) {
+                int leftCol = dx;
+                int rightCol = panoW - 1 - dx;
+                int cLeft = out[rowOffset + leftCol];
+                int cRight = out[rowOffset + rightCol];
+                if (cLeft != 0 && cRight != 0) {
+                    float factor = (float) dx / blendWidth;
+                    out[rowOffset + leftCol] = blendColors(cRight, cLeft, factor);
+                    out[rowOffset + rightCol] = blendColors(cLeft, cRight, factor);
+                }
+            }
         }
         return out;
+    }
+
+    private static int blendColors(int c1, int c2, float factor) {
+        int a1 = (c1 >> 24) & 0xFF, r1 = (c1 >> 16) & 0xFF, g1 = (c1 >> 8) & 0xFF, b1 = c1 & 0xFF;
+        int a2 = (c2 >> 24) & 0xFF, r2 = (c2 >> 16) & 0xFF, g2 = (c2 >> 8) & 0xFF, b2 = c2 & 0xFF;
+        int a = (int) (a1 * (1f - factor) + a2 * factor);
+        int r = (int) (r1 * (1f - factor) + r2 * factor);
+        int g = (int) (g1 * (1f - factor) + g2 * factor);
+        int b = (int) (b1 * (1f - factor) + b2 * factor);
+        return (a << 24) | (r << 16) | (g << 8) | b;
     }
 }
