@@ -93,8 +93,11 @@ public class SettingsActivity extends Activity {
         regler(R.string.set_delta_t, R.string.set_delta_d, Settings.K_DELTA, 2, 15, 1, 6,
                 v -> String.format(loc, "%.1f\u00B0", v / 10.0));
         regler(R.string.set_tempo_t, R.string.set_tempo_d, Settings.K_TEMPO, 4, 15, 1, 8, v -> v + "\u00B0/s");
-        auswahl(R.string.set_res_t, R.string.set_res_d, Settings.K_BREITE, new int[]{960, 1280, 1600},
-                new String[]{getString(R.string.res_960), getString(R.string.res_1280), getString(R.string.res_1600)}, 1280);
+        auswahl(R.string.set_res_t, R.string.set_res_d, Settings.K_BREITE, new int[]{960, 1280, 1600, 1920},
+                new String[]{getString(R.string.res_960), getString(R.string.res_1280), getString(R.string.res_1600),
+                        getString(R.string.res_1920)}, 1920);
+        regler(R.string.set_sharp_t, R.string.set_sharp_d, Settings.K_SHARP, 0, 100, 5, 50,
+                v -> v == 0 ? getString(R.string.off) : v + " %");
         regler(R.string.set_quality_t, R.string.set_quality_d, Settings.K_QUALI, 70, 100, 1, 90, v -> v + " %");
         schalter(R.string.set_ae_t, R.string.set_ae_d, Settings.K_AE, true);
         schalter(R.string.set_guides_t, R.string.set_guides_d, Settings.K_LEIT, true);

@@ -102,6 +102,7 @@ string progress_fmt
 string recording_hint
 string res_1280
 string res_1600
+string res_1920
 string res_960
 string reset
 string reset_confirm
@@ -146,6 +147,8 @@ string set_res_d
 string set_res_t
 string set_sbsfov_d
 string set_sbsfov_t
+string set_sharp_d
+string set_sharp_t
 string set_stab_d
 string set_stab_t
 string set_tempo_d

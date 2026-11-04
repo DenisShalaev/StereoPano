@@ -24,6 +24,10 @@
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
+        "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_chevron_up.xml.flat",
+        "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_chevron_up.xml"
+    },
+    {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_arrow_up.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_arrow_up.xml"
     },
@@ -36,8 +40,8 @@
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_view.xml"
     },
     {
-        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_lens.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/drawable/ic_lens.xml"
+        "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_shutter_idle.xml.flat",
+        "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_shutter_idle.xml"
     },
     {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_center.xml.flat",
@@ -50,6 +54,10 @@
     {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_mode_2d.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_mode_2d.xml"
+    },
+    {
+        "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_shutter_recording.xml.flat",
+        "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_shutter_recording.xml"
     },
     {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_lens.xml.flat",
@@ -68,12 +76,12 @@
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_launcher_background.xml"
     },
     {
-        "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_half_sbs.xml.flat",
-        "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_half_sbs.xml"
+        "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_mode_flat.xml.flat",
+        "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_mode_flat.xml"
     },
     {
-        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_half.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/drawable/ic_half.xml"
+        "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_half_sbs.xml.flat",
+        "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_half_sbs.xml"
     },
     {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_gallery.xml.flat",
@@ -84,8 +92,8 @@
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/mipmap-anydpi-v26/ic_launcher_round.xml"
     },
     {
-        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_settings.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/drawable/ic_settings.xml"
+        "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_half.xml.flat",
+        "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_half.xml"
     },
     {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_launcher_foreground.xml.flat",
@@ -96,10 +104,6 @@
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/btn_rounded_glass.xml"
     },
     {
-        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_shutter_recording.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/drawable/ic_shutter_recording.xml"
-    },
-    {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_shutter_stop.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_shutter_stop.xml"
     },
@@ -108,31 +112,11 @@
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_compass.xml"
     },
     {
-        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_mode_sbs.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/drawable/ic_mode_sbs.xml"
-    },
-    {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_mode_sbs.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_mode_sbs.xml"
     },
     {
-        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_mode_cardboard.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/drawable/ic_mode_cardboard.xml"
-    },
-    {
-        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_mode_flat.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/drawable/ic_mode_flat.xml"
-    },
-    {
-        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_chevron_up.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/drawable/ic_chevron_up.xml"
-    },
-    {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_guide.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_guide.xml"
-    },
-    {
-        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_shutter_idle.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/drawable/ic_shutter_idle.xml"
     }
 ]

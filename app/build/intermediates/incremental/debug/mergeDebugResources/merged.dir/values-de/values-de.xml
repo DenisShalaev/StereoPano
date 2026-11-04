@@ -64,8 +64,9 @@
     <string name="not_ready">Sensoren oder Kamera noch nicht bereit.</string>
     <string name="off">Aus</string>
     <string name="recording_hint">Aufnahme läuft – langsam nach rechts drehen (360°).</string>
-    <string name="res_1280">1280 px (Standard)</string>
+    <string name="res_1280">1280 px</string>
     <string name="res_1600">1600 px (viel Speicher)</string>
+    <string name="res_1920">1920 px (Standard, schärfer)</string>
     <string name="res_960">960 px (spart Speicher)</string>
     <string name="reset">Zurücksetzen</string>
     <string name="reset_confirm">Alle Einstellungen auf Standardwerte zurücksetzen?</string>
@@ -110,6 +111,8 @@
     <string name="set_res_t">Kameraauflösung</string>
     <string name="set_sbsfov_d">Vertikales Sichtfeld im Brillenmodus. Standard 45°.</string>
     <string name="set_sbsfov_t">Sichtfeld SBS-Brille</string>
+    <string name="set_sharp_d">Leichte Nachschärfung des fertigen Panoramas (nur Helligkeit, keine Farbsäume). Gleicht die Weichheit durch das Zusammensetzen vieler Bilder aus. 0 = aus. Standard 50.</string>
+    <string name="set_sharp_t">Nachschärfung</string>
     <string name="set_stab_d">Verwirft Bilder, während das Telefon schneller als dieser Wert nickt oder kippt. Niedriger = geradere Horizonte und weniger Treppen an waagerechten Kanten, aber ruhigere Hand und mehr Licht nötig. Maximum = aus. Standard 6°/s.</string>
     <string name="set_stab_t">Bewegungsfilter</string>
     <string name="set_tempo_d">Geschwindigkeit des roten Leitpunkts. 8°/s ≈ 45 s pro Umdrehung.</string>

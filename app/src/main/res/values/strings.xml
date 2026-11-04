@@ -96,7 +96,7 @@
     <string name="set_res_t">Camera resolution</string>
     <string name="set_res_d">Long side of the captured frames. Higher = sharper but needs a lot of memory (applies when you return to the camera).</string>
     <string name="res_960">960 px (saves memory)</string>
-    <string name="res_1280">1280 px (default)</string>
+    <string name="res_1280">1280 px</string>
     <string name="res_1600">1600 px (needs lots of memory)</string>
     <string name="set_quality_t">JPEG quality</string>
     <string name="set_quality_d">Quality of the saved panoramas. Default 90.</string>
@@ -132,4 +132,7 @@
     <string name="off">Off</string>
     <string name="set_stab_t">Motion filter</string>
     <string name="set_stab_d">Skips frames while the phone tilts up/down or sideways faster than this. Lower = straighter horizons and fewer steps on horizontal edges, but needs a steadier hand and more light. Maximum = off. Default 6°/s.</string>
+    <string name="res_1920">1920 px (default, sharper)</string>
+    <string name="set_sharp_t">Sharpening</string>
+    <string name="set_sharp_d">Light sharpening of the finished panorama (brightness only, no colour fringes). Compensates the softness that comes from combining many frames. 0 = off. Default 50.</string>
 </resources>

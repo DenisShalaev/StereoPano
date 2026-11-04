@@ -75,6 +75,7 @@ public class CaptureActivity extends Activity {
     private int jpegQualitaet = 90;
     private boolean audioAn = true;
     private double fPxBasis;
+    private float schaerfe = 0.5f;        // Nachschaerfung des fertigen Panoramas (0..1)
     private double maxNick = 6;          // Grad/s: schnellere Nick-/Kippbewegung -> Bild wird verworfen
     private volatile long expNs, skewNs;  // letzte Belichtungszeit / Rolling-Shutter-Versatz aus den Kamera-Ergebnissen
     private long vorherTs;
@@ -220,6 +221,7 @@ public class CaptureActivity extends Activity {
         jpegQualitaet = Settings.jpegQualitaet(this);
         audioAn = Settings.audio(this);
         maxNick = Settings.maxNickrate(this);
+        schaerfe = Settings.schaerfe(this);
         belichtungSperren = Settings.belichtungSperren(this);
         leitpunkte = Settings.leitpunkte(this);
         if (fPxBasis > 0) fPx = fPxBasis * fpxFaktor;
@@ -538,6 +540,9 @@ public class CaptureActivity extends Activity {
             anfrage.addTarget(vorschau);
             anfrage.addTarget(leser.getSurface());
             anfrage.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            // Schaerfe: Kantenanhebung der Kamera-Pipeline in hoechster Qualitaet
+            if (hat(cc.get(CameraCharacteristics.EDGE_AVAILABLE_EDGE_MODES), CaptureRequest.EDGE_MODE_HIGH_QUALITY))
+                anfrage.set(CaptureRequest.EDGE_MODE, CaptureRequest.EDGE_MODE_HIGH_QUALITY);
             
             // Prefer high target FPS range for short exposure times and crisp frames without motion blur
             android.util.Range<Integer>[] fpsRanges = cc.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
@@ -603,7 +608,7 @@ public class CaptureActivity extends Activity {
         startKurs = hatKompass ? kompass.azimuth() : Double.NaN;
         stitcher = new StereoStitcher(groesse.getHeight(), groesse.getWidth(), fPx, stereoWinkel, deltaGrad, startYaw);
 
-        if (belichtungSperren) setzeSperren(true);
+        setzeSperren(true);
         starteAudio();
         startZeit = android.os.SystemClock.elapsedRealtime();
         vorherNick = Double.NaN;
@@ -614,8 +619,14 @@ public class CaptureActivity extends Activity {
 
     private void setzeSperren(boolean an) {
         try {
-            anfrage.set(CaptureRequest.CONTROL_AE_LOCK, an);
-            anfrage.set(CaptureRequest.CONTROL_AWB_LOCK, an);
+            boolean ae = an && belichtungSperren;
+            anfrage.set(CaptureRequest.CONTROL_AE_LOCK, ae);
+            anfrage.set(CaptureRequest.CONTROL_AWB_LOCK, ae);
+            // Fokus festhalten: kein Fokus-Pumpen und konstantes Sichtfeld (Fokus-Atmen) waehrend des Drehens.
+            // AF_MODE_AUTO laesst die Linse an der letzten Position stehen, bis ein Trigger kommt.
+            anfrage.set(CaptureRequest.CONTROL_AF_MODE, an && hat(cc.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES),
+                    CaptureRequest.CONTROL_AF_MODE_AUTO) ? CaptureRequest.CONTROL_AF_MODE_AUTO
+                    : CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             sitzung.setRepeatingRequest(anfrage.build(), ergebnisCallback, kameraHandler);
         } catch (CameraAccessException | IllegalStateException | NullPointerException ignored) { }
     }
@@ -668,7 +679,7 @@ public class CaptureActivity extends Activity {
                 final double p = psi;
                 runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p));
             }
-            if (s.isComplete() || psi >= 355.0 || s.progress() >= 1.0) runOnUiThread(this::beendeAufnahme);
+            if (s.isComplete() || psi >= 372.0) runOnUiThread(this::beendeAufnahme);   // fertig, oder deutlich ueber 360 Grad hinaus
         } finally {
             img.close();
         }
@@ -688,7 +699,7 @@ public class CaptureActivity extends Activity {
         if (stitcher != null) stitcher.close();
         stitcher = null;
         stopAudio();
-        if (belichtungSperren && sitzung != null) setzeSperren(false);
+        if (sitzung != null) setzeSperren(false);
         setzeAusloeser(false);
         fortschritt.setProgress(0);
     }
@@ -700,7 +711,7 @@ public class CaptureActivity extends Activity {
         stitcher = null;
         s.close();
         final byte[] ton = stopAudio();
-        if (belichtungSperren && sitzung != null) setzeSperren(false);
+        if (sitzung != null) setzeSperren(false);
 
         knopf.setEnabled(false);
         info.setText(R.string.saving);
@@ -728,7 +739,7 @@ public class CaptureActivity extends Activity {
     // ------------------------------------------------------------------ Speichern
 
     private Uri speichere(StereoStitcher s, byte[] ton, double kurs) throws Exception {
-        StereoStitcher.Result e = s.result();
+        StereoStitcher.Result e = s.result(schaerfe);
         if (e.width < 100) throw new Exception(getString(R.string.too_little));
 
         byte[] links = jpeg(e.left, e, jpegQualitaet);
@@ -832,6 +843,14 @@ public class CaptureActivity extends Activity {
             rawW = img.getWidth();
             rawH = img.getHeight();
             rot90 = sensorOrientation != 270;
+        }
+
+        @Override
+        public int luma(int ux, int uy) {
+            int x, y;
+            if (rot90) { x = uy; y = rawH - 1 - ux; }
+            else       { x = rawW - 1 - uy; y = ux; }
+            return yb.get(y * yRow + x) & 0xFF;
         }
 
         @Override
