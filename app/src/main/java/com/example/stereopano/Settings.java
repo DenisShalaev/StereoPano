@@ -19,6 +19,7 @@ final class Settings {
     static final String K_LATENZ = "latenz_ms";          // Millisekunden
     static final String K_FPX = "fpx_prozent";           // Prozent
     static final String K_STAB = "max_nickrate";         // Grad/s (20 = aus)
+    static final String K_MOVE = "bewegung";             // 0..100: Empfindlichkeit der Erkennung bewegter Objekte (0 = aus)
     static final String K_SHARP = "schaerfe";            // 0..100 (Nachschaerfung des fertigen Panoramas)
     static final String K_QUALI = "jpeg_quali";          // 70..100
     static final String K_AE = "belichtung_sperren";
@@ -33,7 +34,7 @@ final class Settings {
     static final String K_K2 = "lens_k2";                // Hundertstel
     static final String K_SBSFOV = "sbs_fov";            // Grad (vertikal)
 
-    static final String[] ALLE = {K_WINKEL, K_DELTA, K_TEMPO, K_BREITE, K_LATENZ, K_FPX, K_STAB, K_SHARP, K_QUALI, K_AE, K_LEIT,
+    static final String[] ALLE = {K_WINKEL, K_DELTA, K_TEMPO, K_BREITE, K_LATENZ, K_FPX, K_STAB, K_MOVE, K_SHARP, K_QUALI, K_AE, K_LEIT,
             K_AUDIO, K_KOMPASS, K_GYRO, K_HALB, K_LINSEN, K_K1, K_K2, K_SBSFOV};
 
     private Settings() {}
@@ -54,6 +55,7 @@ final class Settings {
         int v = p(c).getInt(K_STAB, 6);
         return v >= 20 ? Double.POSITIVE_INFINITY : v;
     }
+    static int bewegung(Context c) { return p(c).getInt(K_MOVE, 0); }
     static float schaerfe(Context c) { return p(c).getInt(K_SHARP, 50) / 100f; }
     static int jpegQualitaet(Context c) { return p(c).getInt(K_QUALI, 90); }
     static boolean belichtungSperren(Context c) { return p(c).getBoolean(K_AE, true); }

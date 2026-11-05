@@ -105,6 +105,8 @@
     <string name="set_latency_t">Sensor-Latenz</string>
     <string name="set_lens_d">Tonnenförmige Vorverzerrung für Cardboard-Linsen.</string>
     <string name="set_lens_t">Linsenkorrektur (Cardboard)</string>
+    <string name="set_move_d">Erkennt Personen und andere bewegte Objekte während des Drehens und füllt die Lücken mit dem Hintergrund aus einem anderen Moment. Höher = empfindlicher. Funktioniert am besten bei strukturierten Objekten; einfarbige Objekte werden evtl. nur teilweise entfernt. Braucht ca. 50 MB zusätzlichen Speicher und etwas Rechenzeit. 0 = aus. Experimentell. Standard 0 (aus).</string>
+    <string name="set_move_t">Bewegte Objekte</string>
     <string name="set_quality_d">Qualität der gespeicherten Panoramen. Standard 90.</string>
     <string name="set_quality_t">JPEG-Qualität</string>
     <string name="set_res_d">Lange Bildseite der Aufnahme. Höher = schärfer, braucht aber viel Speicher (wirkt nach der Rückkehr zur Kamera).</string>

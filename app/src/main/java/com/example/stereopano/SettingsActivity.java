@@ -96,6 +96,8 @@ public class SettingsActivity extends Activity {
         auswahl(R.string.set_res_t, R.string.set_res_d, Settings.K_BREITE, new int[]{960, 1280, 1600, 1920},
                 new String[]{getString(R.string.res_960), getString(R.string.res_1280), getString(R.string.res_1600),
                         getString(R.string.res_1920)}, 1920);
+        regler(R.string.set_move_t, R.string.set_move_d, Settings.K_MOVE, 0, 100, 5, 0,
+                v -> v == 0 ? getString(R.string.off) : v + " %");
         regler(R.string.set_sharp_t, R.string.set_sharp_d, Settings.K_SHARP, 0, 100, 5, 50,
                 v -> v == 0 ? getString(R.string.off) : v + " %");
         regler(R.string.set_quality_t, R.string.set_quality_d, Settings.K_QUALI, 70, 100, 1, 90, v -> v + " %");

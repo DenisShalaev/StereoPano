@@ -141,6 +141,8 @@ string set_latency_d
 string set_latency_t
 string set_lens_d
 string set_lens_t
+string set_move_d
+string set_move_t
 string set_quality_d
 string set_quality_t
 string set_res_d

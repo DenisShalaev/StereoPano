@@ -111,6 +111,8 @@
     <string name="set_latency_t">Sensor latency</string>
     <string name="set_lens_d">Barrel pre-distortion for Cardboard lenses.</string>
     <string name="set_lens_t">Lens correction (Cardboard)</string>
+    <string name="set_move_d">Detects people and other moving objects while you turn and fills the gaps with the background seen at another moment. Higher = more sensitive. Works best on textured objects; plain-coloured objects may be only partly removed. Uses about 50 MB extra memory and some processing. 0 = off. Experimental. Default 0 (off).</string>
+    <string name="set_move_t">Moving objects</string>
     <string name="set_quality_d">Quality of the saved panoramas. Default 90.</string>
     <string name="set_quality_t">JPEG quality</string>
     <string name="set_res_d">Long side of the captured frames. Higher = sharper but needs a lot of memory (applies when you return to the camera).</string>

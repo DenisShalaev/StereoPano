@@ -135,4 +135,6 @@
     <string name="res_1920">1920 px (default, sharper)</string>
     <string name="set_sharp_t">Sharpening</string>
     <string name="set_sharp_d">Light sharpening of the finished panorama (brightness only, no colour fringes). Compensates the softness that comes from combining many frames. 0 = off. Default 50.</string>
+    <string name="set_move_t">Moving objects</string>
+    <string name="set_move_d">Detects people and other moving objects while you turn and fills the gaps with the background seen at another moment. Higher = more sensitive. Works best on textured objects; plain-coloured objects may be only partly removed. Uses about 50 MB extra memory and some processing. 0 = off. Experimental. Default 0 (off).</string>
 </resources>

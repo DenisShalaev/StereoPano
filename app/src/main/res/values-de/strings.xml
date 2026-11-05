@@ -125,4 +125,6 @@
     <string name="res_1920">1920 px (Standard, schärfer)</string>
     <string name="set_sharp_t">Nachschärfung</string>
     <string name="set_sharp_d">Leichte Nachschärfung des fertigen Panoramas (nur Helligkeit, keine Farbsäume). Gleicht die Weichheit durch das Zusammensetzen vieler Bilder aus. 0 = aus. Standard 50.</string>
+    <string name="set_move_t">Bewegte Objekte</string>
+    <string name="set_move_d">Erkennt Personen und andere bewegte Objekte während des Drehens und füllt die Lücken mit dem Hintergrund aus einem anderen Moment. Höher = empfindlicher. Funktioniert am besten bei strukturierten Objekten; einfarbige Objekte werden evtl. nur teilweise entfernt. Braucht ca. 50 MB zusätzlichen Speicher und etwas Rechenzeit. 0 = aus. Experimentell. Standard 0 (aus).</string>
 </resources>

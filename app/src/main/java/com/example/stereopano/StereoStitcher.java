@@ -18,6 +18,10 @@ package com.example.stereopano;
  *  4. Strenge Fertig-Bedingung (alle Spalten abgedeckt UND 360 Grad + Ueberlappung erreicht). Kleine Luecken
  *     (bis 2 % der Breite) werden interpoliert, groessere werden nicht erfunden, sondern abgeschnitten.
  *  5. Optionale Nachschaerfung (Unsharp-Mask nur auf der Helligkeit, keine Farbsaeume).
+ *  6. NEU - Bewegte Objekte: Jedes Bild wird (drehungskompensiert) mit einem Bild von vor ca. 0.2 s verglichen.
+ *     Zellen, die sich staerker veraendert haben als die Kamerabewegung erklaert, gelten als "bewegt" und
+ *     werden nicht ins Panorama geschrieben. Die entstehenden Luecken werden aus einer Hilfsebene gefuellt, die
+ *     den Hintergrund aus leicht anderem Blickwinkel/Zeitpunkt (+-FB_DEG) mit halber Aufloesung sammelt.
  *
  * Keine Android-Abhaengigkeiten (testbar).
  */
@@ -46,6 +50,9 @@ final class StereoStitcher {
     private static final int W_REF = 12;    // Spalten mit mindestens diesem Gewicht dienen als Referenz
     private static final int REG_COLS = 6;  // Anzahl Referenzspalten fuer die Ausrichtung
     private static final double REG_BACK_DEG = 3.0;   // so weit hinter der aktuellen Spalte wird verglichen
+    private static final int MV_STRIDE = 8;           // Rasterweite der Bewegungserkennung (Bildpixel)
+    private static final int MV_LAG = 3;              // Vergleich mit dem Bild von vor n Bildern (ca. 0.1 s)
+    private static final double FB_DEG = 4.0;         // Versatz der Hilfsebenen (Grad)
 
     /** Akkumulator eines Auges. */
     private static final class Eye {
@@ -54,12 +61,19 @@ final class StereoStitcher {
         byte[] w;            // Gewicht je Pixel (0..255)
         final int[] colW;    // Gewicht je Spalte
         int covered;         // Anzahl Spalten mit colW >= W_MIN
+        char[] fr, fg, fb;   // Hilfsebene (halbe Aufloesung) fuer Hintergrund hinter bewegten Objekten
+        byte[] fw;
 
-        Eye(double offsetDeg, int n, int panoW) {
+        Eye(double offsetDeg, int n, int panoW, boolean fallback) {
             this.offsetDeg = offsetDeg;
             r = new char[n]; g = new char[n]; b = new char[n];
             w = new byte[n];
             colW = new int[panoW];
+            if (fallback) {
+                int m = n / 4;
+                fr = new char[m]; fg = new char[m]; fb = new char[m];
+                fw = new byte[m];
+            }
         }
     }
 
@@ -68,6 +82,7 @@ final class StereoStitcher {
     private final double[] sinE, cosE;
     private final Eye eyeL, eyeR;
     private final boolean register;
+    private final double moveThresh;       // Helligkeitsschwelle der Bewegungserkennung (0 = aus)
     private boolean closed;
     private Result cached;
     private double maxPsi = -1e9;
@@ -76,6 +91,22 @@ final class StereoStitcher {
     private final int regMax;
     private final double[] sUx, sUy, sRef;
     private final int regRY, regRX;
+    // Bewegungserkennung
+    private final int gw, gh;
+    private final java.util.ArrayDeque<GridFrame> hist = new java.util.ArrayDeque<>();
+    private byte[] mask;   // Maske des aktuellen Bildes (1 = bewegt) oder null
+
+    private static final class GridFrame {
+        final short[] h;       // Hochpass der Helligkeit (Rasterzellen), unempfindlich gegen Flackern/Belichtung
+        final float[] rot;
+        GridFrame(short[] h, float[] rot) { this.h = h; this.rot = rot; }
+    }
+
+    /** Vorzeichen der Parallaxen-Richtung (+1: Vorgaengerbild zeigt nahe Objekte weiter rechts). Per Test ermittelt. */
+    private static final int PAR_SIGN = +1;
+    private static final double PAR_K = 0.8;       // Parallaxen-Faktor: Armlaenge 0.6 m / kleinster Objektabstand 0.5 m
+    private static final int MV_MIN_CELLS = 10;    // kleinere zusammenhaengende Flecken sind Rauschen
+    private byte[] prevMask;                        // Maske des Vorgaengerbildes (zeitliche Bestaetigung)
     /** Zuletzt verwendete Verschiebung (nur zur Diagnose). */
     double lastDx, lastDy;
 
@@ -93,12 +124,19 @@ final class StereoStitcher {
      * @param register bildbasierte Feinausrichtung verwenden
      */
     StereoStitcher(int frameW, int frameH, double fPx, double alphaDeg, double deltaDeg, double az0Deg, boolean register) {
+        this(frameW, frameH, fPx, alphaDeg, deltaDeg, az0Deg, register, 0);
+    }
+
+    /** @param moveSens Empfindlichkeit der Erkennung bewegter Objekte 0 (aus) .. 100 */
+    StereoStitcher(int frameW, int frameH, double fPx, double alphaDeg, double deltaDeg, double az0Deg,
+                   boolean register, int moveSens) {
         this.frameW = frameW;
         this.frameH = frameH;
         this.fPx = fPx;
         this.deltaDeg = deltaDeg;
         this.az0Deg = az0Deg;
         this.register = register;
+        this.moveThresh = moveSens <= 0 ? 0 : Math.max(6, Math.min(40, 6 + (100 - moveSens) * 0.30));
         this.panoW = (int) Math.round(2 * Math.PI * fPx) & ~1;
         double ppd = panoW / 360.0; // Pixel pro Grad
         double vfov = 2 * Math.toDegrees(Math.atan((frameH / 2.0) / fPx));
@@ -111,8 +149,10 @@ final class StereoStitcher {
             cosE[v] = Math.cos(el);
         }
         int n = panoW * panoH;
-        this.eyeL = new Eye(+alphaDeg, n, panoW);
-        this.eyeR = new Eye(-alphaDeg, n, panoW);
+        this.eyeL = new Eye(+alphaDeg, n, panoW, moveThresh > 0);
+        this.eyeR = new Eye(-alphaDeg, n, panoW, moveThresh > 0);
+        this.gw = frameW / MV_STRIDE;
+        this.gh = frameH / MV_STRIDE;
         this.regRY = Math.max(6, frameH / 160);
         this.regRX = Math.max(3, regRY / 2);
         this.regMax = REG_COLS * (panoH / 3 + 2);
@@ -139,8 +179,15 @@ final class StereoStitcher {
         }
         lastDx = dx;
         lastDy = dy;
+        mask = moveThresh > 0 ? motionMask(f, rot) : null;
         accumulate(eyeL, f, psi, rot, dx, dy);
         accumulate(eyeR, f, psi, rot, dx, dy);
+        if (mask != null) {
+            accumulateFallback(eyeL, f, psi, rot, dx, dy, +FB_DEG);
+            accumulateFallback(eyeL, f, psi, rot, dx, dy, -FB_DEG);
+            accumulateFallback(eyeR, f, psi, rot, dx, dy, +FB_DEG);
+            accumulateFallback(eyeR, f, psi, rot, dx, dy, -FB_DEG);
+        }
         if (psi > maxPsi) maxPsi = psi;
     }
 
@@ -173,6 +220,7 @@ final class StereoStitcher {
                 double ux = frameW / 2.0 + fPx * cx / -cz + sx;
                 double uy = frameH / 2.0 - fPx * cy / -cz + sy;
                 if (ux < 0 || uy < 0 || ux > frameW - 1.001 || uy > frameH - 1.001) continue;
+                if (isMoving(ux - sx, uy - sy)) continue;          // bewegtes Objekt: nicht ins Panorama schreiben
                 int idx = v * panoW + col;
                 int wp = e.w[idx] & 0xFF;
                 if (wp + wt > 255) continue;                       // Ueberlaufschutz bei sehr langsamer Drehung
@@ -186,6 +234,212 @@ final class StereoStitcher {
             e.colW[col] = before + wt;
             if (before < W_MIN && before + wt >= W_MIN) e.covered++;
         }
+    }
+
+    private boolean isMoving(double ux, double uy) {
+        if (mask == null) return false;
+        int gx = (int) (ux / MV_STRIDE), gy = (int) (uy / MV_STRIDE);
+        return gx >= 0 && gy >= 0 && gx < gw && gy < gh && mask[gy * gw + gx] != 0;
+    }
+
+    /** Wie accumulate, aber nur Hintergrund (nicht bewegt), halbe Aufloesung, Mittelpunkt um offsetPlus verschoben. */
+    private void accumulateFallback(Eye e, Frame f, double psi, float[] R, double sx, double sy, double offsetPlus) {
+        double centre = psi + e.offsetDeg + offsetPlus;
+        long x0 = (long) Math.ceil((centre - deltaDeg) / 360.0 * panoW - 0.5);
+        long x1 = (long) Math.floor((centre + deltaDeg) / 360.0 * panoW - 0.5);
+        double qx = R[6], qy = R[7], qz = R[8];
+        int fW = panoW >> 1;
+        for (long x = x0; x <= x1; x++) {
+            if ((x & 1L) != 0) continue;
+            double phi = (x + 0.5) / panoW * 360.0;
+            double a = phi - centre;
+            int wt = (int) Math.round(W_FULL * (1 - Math.abs(a) / deltaDeg));
+            if (wt <= 0) continue;
+            int col = (int) Math.floorMod(x, (long) panoW);
+            double A = Math.toRadians(az0Deg + phi);
+            double sA = Math.sin(A), cA = Math.cos(A);
+            double px = sA * R[0] + cA * R[3];
+            double py = sA * R[1] + cA * R[4];
+            double pz = sA * R[2] + cA * R[5];
+            for (int v = 0; v < panoH; v += 2) {
+                double cx = cosE[v] * px + sinE[v] * qx;
+                double cy = cosE[v] * py + sinE[v] * qy;
+                double cz = cosE[v] * pz + sinE[v] * qz;
+                if (cz > -1e-3) continue;
+                double ux = frameW / 2.0 + fPx * cx / -cz + sx;
+                double uy = frameH / 2.0 - fPx * cy / -cz + sy;
+                if (ux < 0 || uy < 0 || ux > frameW - 1.001 || uy > frameH - 1.001) continue;
+                if (isMoving(ux - sx, uy - sy)) continue;
+                int idx = (v >> 1) * fW + (col >> 1);
+                int wp = e.fw[idx] & 0xFF;
+                if (wp + wt > 255) continue;
+                int c = bilinear(f, ux, uy);
+                e.fr[idx] += (char) (wt * ((c >> 16) & 255));
+                e.fg[idx] += (char) (wt * ((c >> 8) & 255));
+                e.fb[idx] += (char) (wt * (c & 255));
+                e.fw[idx] = (byte) (wp + wt);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ Bewegte Objekte
+
+    /**
+     * Vergleicht das aktuelle Bild (auf grobem Raster) mit dem Bild von vor MV_LAG Bildern, nachdem dieses mit den
+     * Sensorlagen in die aktuelle Ansicht gedreht wurde. Kleine Ausrichtungsfehler werden durch das Minimum ueber
+     * horizontal +-8 Pixel, vertikal +-4 Pixel toleriert. Zellen mit grossem Restunterschied gelten als bewegt. Die Maske wird erweitert und
+     * geschlossene Konturen werden gefuellt (Innenflaeche einfarbiger Objekte).
+     */
+    private byte[] motionMask(Frame f, float[] R) {
+        // 1) grobe Helligkeit je Zelle (3x3 Stichproben -> weniger Rauschen), 2) Hochpass (lokales 5x5-Mittel abziehen)
+        int[] g = new int[gw * gh];
+        for (int gy = 0; gy < gh; gy++) {
+            for (int gx = 0; gx < gw; gx++) {
+                int ux = gx * MV_STRIDE + MV_STRIDE / 2, uy = gy * MV_STRIDE + MV_STRIDE / 2;
+                int sum = 0;
+                for (int dy = -3; dy <= 3; dy += 3)
+                    for (int dx = -3; dx <= 3; dx += 3) sum += f.luma(ux + dx, uy + dy);
+                g[gy * gw + gx] = sum / 9;
+            }
+        }
+        short[] hp = highPass(g);
+
+        byte[] m = null;
+        GridFrame prev = hist.size() >= MV_LAG ? hist.peekFirst() : null;
+        if (prev != null) {
+            float[] P = prev.rot;
+            // Winkel zwischen den Blickrichtungen -> erlaubte Parallaxen-Verschiebung nahe gelegener Objekte (in Pixeln)
+            double dot = R[2] * P[2] + R[5] * P[5] + R[8] * P[8];
+            double ang = Math.acos(Math.max(-1, Math.min(1, dot)));
+            double parPx = PAR_K * fPx * ang;
+            int parSteps = (int) Math.ceil(parPx / (MV_STRIDE * 0.5));     // in halben Zellen
+            m = new byte[gw * gh];
+            double cx0 = frameW / 2.0, cy0 = frameH / 2.0;
+            for (int gy = 0; gy < gh; gy++) {
+                for (int gx = 0; gx < gw; gx++) {
+                    double x = gx * MV_STRIDE + MV_STRIDE / 2 - cx0, y = cy0 - (gy * MV_STRIDE + MV_STRIDE / 2);
+                    double z = -fPx;
+                    double dE = R[0] * x + R[1] * y + R[2] * z;
+                    double dN = R[3] * x + R[4] * y + R[5] * z;
+                    double dU = R[6] * x + R[7] * y + R[8] * z;
+                    double qx = P[0] * dE + P[3] * dN + P[6] * dU;
+                    double qy = P[1] * dE + P[4] * dN + P[7] * dU;
+                    double qz = P[2] * dE + P[5] * dN + P[8] * dU;
+                    if (qz > -1e-3) continue;
+                    double pu = (cx0 + fPx * qx / -qz) / MV_STRIDE - 0.5;
+                    double pv = (cy0 - fPx * qy / -qz) / MV_STRIDE - 0.5;
+                    int c = hp[gy * gw + gx];
+                    double best = 1e9;
+                    // Toleranz: +-0.5 Zelle (Sensorfehler) und zusaetzlich einseitig bis zur Parallaxen-Grenze
+                    for (int oy = -1; oy <= 1; oy++) {
+                        for (int ox = -1; ox <= parSteps; ox++) {
+                            double u = pu + 0.5 * ox * PAR_SIGN, v = pv + 0.5 * oy;
+                            if (u < 0 || v < 0 || u > gw - 1.001 || v > gh - 1.001) continue;
+                            double d = Math.abs(c - gridBilinear(prev.h, u, v));
+                            if (d < best) best = d;
+                        }
+                    }
+                    if (best < 1e8 && best > moveThresh) m[gy * gw + gx] = 1;
+                }
+            }
+            removeSmall(m, MV_MIN_CELLS);
+            // zeitliche Bestaetigung: nur Zellen, die schon im Vorgaengerbild (leicht erweitert) markiert waren
+            if (prevMask != null) {
+                byte[] pd = dilate(prevMask, 3);
+                for (int i = 0; i < m.length; i++) if (m[i] != 0 && pd[i] == 0) m[i] = 0;
+            }
+            byte[] raw = m.clone();
+            m = dilate(m, 3);
+            fillEnclosed(m);
+            prevMask = raw;
+        } else {
+            prevMask = null;
+        }
+        hist.addLast(new GridFrame(hp, R.clone()));
+        while (hist.size() > MV_LAG) hist.removeFirst();
+        return m;
+    }
+
+    /** Helligkeit minus lokales 5x5-Mittel (trennt echte Strukturaenderung von Flackern, Banding und Belichtung). */
+    private short[] highPass(int[] g) {
+        int r = 2;
+        int[] t = new int[g.length];
+        for (int y = 0; y < gh; y++) {
+            for (int x = 0; x < gw; x++) {
+                int s = 0, n = 0;
+                for (int k = Math.max(0, x - r); k <= Math.min(gw - 1, x + r); k++) { s += g[y * gw + k]; n++; }
+                t[y * gw + x] = s / n;
+            }
+        }
+        short[] o = new short[g.length];
+        for (int y = 0; y < gh; y++) {
+            for (int x = 0; x < gw; x++) {
+                int s = 0, n = 0;
+                for (int k = Math.max(0, y - r); k <= Math.min(gh - 1, y + r); k++) { s += t[k * gw + x]; n++; }
+                o[y * gw + x] = (short) (g[y * gw + x] - s / n);
+            }
+        }
+        return o;
+    }
+
+    /** Entfernt zusammenhaengende Flecken (4er-Nachbarschaft) mit weniger als minCells Zellen. */
+    private void removeSmall(byte[] m, int minCells) {
+        boolean[] seen = new boolean[m.length];
+        int[] q = new int[m.length];
+        for (int i = 0; i < m.length; i++) {
+            if (m[i] == 0 || seen[i]) continue;
+            int h = 0, t = 0;
+            q[t++] = i;
+            seen[i] = true;
+            while (h < t) {
+                int c = q[h++], x = c % gw, y = c / gw;
+                if (x > 0 && m[c - 1] != 0 && !seen[c - 1]) { seen[c - 1] = true; q[t++] = c - 1; }
+                if (x < gw - 1 && m[c + 1] != 0 && !seen[c + 1]) { seen[c + 1] = true; q[t++] = c + 1; }
+                if (y > 0 && m[c - gw] != 0 && !seen[c - gw]) { seen[c - gw] = true; q[t++] = c - gw; }
+                if (y < gh - 1 && m[c + gw] != 0 && !seen[c + gw]) { seen[c + gw] = true; q[t++] = c + gw; }
+            }
+            if (t < minCells) for (int k = 0; k < t; k++) m[q[k]] = 0;
+        }
+    }
+
+    private double gridBilinear(short[] g, double x, double y) {
+        int x0 = (int) x, y0 = (int) y;
+        int x1 = Math.min(x0 + 1, gw - 1), y1 = Math.min(y0 + 1, gh - 1);
+        double dx = x - x0, dy = y - y0;
+        double a = g[y0 * gw + x0] * (1 - dx) + g[y0 * gw + x1] * dx;
+        double b = g[y1 * gw + x0] * (1 - dx) + g[y1 * gw + x1] * dx;
+        return a * (1 - dy) + b * dy;
+    }
+
+    /** Quadratische Dilatation (getrennt in x und y). */
+    private byte[] dilate(byte[] m, int r) {
+        byte[] t = new byte[m.length], o = new byte[m.length];
+        for (int y = 0; y < gh; y++)
+            for (int x = 0; x < gw; x++)
+                if (m[y * gw + x] != 0)
+                    for (int k = Math.max(0, x - r); k <= Math.min(gw - 1, x + r); k++) t[y * gw + k] = 1;
+        for (int y = 0; y < gh; y++)
+            for (int x = 0; x < gw; x++)
+                if (t[y * gw + x] != 0)
+                    for (int k = Math.max(0, y - r); k <= Math.min(gh - 1, y + r); k++) o[k * gw + x] = 1;
+        return o;
+    }
+
+    /** Nicht markierte Zellen, die vom Bildrand aus nicht erreichbar sind (von einer Kontur umschlossen), werden markiert. */
+    private void fillEnclosed(byte[] m) {
+        boolean[] outside = new boolean[m.length];
+        int[] q = new int[m.length];
+        int h = 0, t = 0;
+        for (int x = 0; x < gw; x++) { int[] ys = {0, gh - 1}; for (int y : ys) { int i = y * gw + x; if (m[i] == 0 && !outside[i]) { outside[i] = true; q[t++] = i; } } }
+        for (int y = 0; y < gh; y++) { int[] xs = {0, gw - 1}; for (int x : xs) { int i = y * gw + x; if (m[i] == 0 && !outside[i]) { outside[i] = true; q[t++] = i; } } }
+        while (h < t) {
+            int i = q[h++], x = i % gw, y = i / gw;
+            if (x > 0 && m[i - 1] == 0 && !outside[i - 1]) { outside[i - 1] = true; q[t++] = i - 1; }
+            if (x < gw - 1 && m[i + 1] == 0 && !outside[i + 1]) { outside[i + 1] = true; q[t++] = i + 1; }
+            if (y > 0 && m[i - gw] == 0 && !outside[i - gw]) { outside[i - gw] = true; q[t++] = i - gw; }
+            if (y < gh - 1 && m[i + gw] == 0 && !outside[i + gw]) { outside[i + gw] = true; q[t++] = i + gw; }
+        }
+        for (int i = 0; i < m.length; i++) if (m[i] == 0 && !outside[i]) m[i] = 1;
     }
 
     private int bilinear(Frame f, double x, double y) {
@@ -403,9 +657,13 @@ final class StereoStitcher {
         r.left = finish(eyeL, gapMax, sharpen);
         eyeL.r = eyeL.g = eyeL.b = null;
         eyeL.w = null;
+        eyeL.fr = eyeL.fg = eyeL.fb = null;
+        eyeL.fw = null;
         r.right = finish(eyeR, gapMax, sharpen);
         eyeR.r = eyeR.g = eyeR.b = null;
         eyeR.w = null;
+        eyeR.fr = eyeR.fg = eyeR.fb = null;
+        eyeR.fw = null;
         cached = r;
         return r;
     }
@@ -421,6 +679,22 @@ final class StereoStitcher {
                         | (((e.r[i] + h) / wp) << 16)
                         | (((e.g[i] + h) / wp) << 8)
                         | ((e.b[i] + h) / wp);
+            }
+        }
+
+        // Luecken durch entfernte bewegte Objekte: Hintergrund aus der Hilfsebene (halbe Aufloesung) einsetzen
+        if (e.fw != null) {
+            int fW = panoW >> 1;
+            for (int v = 0; v < panoH; v++) {
+                int row = v * panoW, frow = (v >> 1) * fW;
+                for (int c = 0; c < panoW; c++) {
+                    if (out[row + c] != 0) continue;
+                    int fi = frow + (c >> 1);
+                    int wp = e.fw[fi] & 0xFF;
+                    if (wp == 0) continue;
+                    int h = wp >> 1;
+                    out[row + c] = 0xFF000000 | (((e.fr[fi] + h) / wp) << 16) | (((e.fg[fi] + h) / wp) << 8) | ((e.fb[fi] + h) / wp);
+                }
             }
         }
 

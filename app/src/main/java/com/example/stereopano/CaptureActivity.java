@@ -75,6 +75,7 @@ public class CaptureActivity extends Activity {
     private int jpegQualitaet = 90;
     private boolean audioAn = true;
     private double fPxBasis;
+    private int bewegung = 0;             // Empfindlichkeit der Erkennung bewegter Objekte (0 = aus)
     private float schaerfe = 0.5f;        // Nachschaerfung des fertigen Panoramas (0..1)
     private double maxNick = 6;          // Grad/s: schnellere Nick-/Kippbewegung -> Bild wird verworfen
     private volatile long expNs, skewNs;  // letzte Belichtungszeit / Rolling-Shutter-Versatz aus den Kamera-Ergebnissen
@@ -222,6 +223,7 @@ public class CaptureActivity extends Activity {
         audioAn = Settings.audio(this);
         maxNick = Settings.maxNickrate(this);
         schaerfe = Settings.schaerfe(this);
+        bewegung = Settings.bewegung(this);
         belichtungSperren = Settings.belichtungSperren(this);
         leitpunkte = Settings.leitpunkte(this);
         if (fPxBasis > 0) fPx = fPxBasis * fpxFaktor;
@@ -606,7 +608,7 @@ public class CaptureActivity extends Activity {
         }
         startYaw = gameYaw.latest();
         startKurs = hatKompass ? kompass.azimuth() : Double.NaN;
-        stitcher = new StereoStitcher(groesse.getHeight(), groesse.getWidth(), fPx, stereoWinkel, deltaGrad, startYaw);
+        stitcher = new StereoStitcher(groesse.getHeight(), groesse.getWidth(), fPx, stereoWinkel, deltaGrad, startYaw, true, bewegung);
 
         setzeSperren(true);
         starteAudio();
