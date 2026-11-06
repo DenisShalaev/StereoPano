@@ -43,6 +43,7 @@
     <string name="half_on">Half side-by-side on</string>
     <string name="hint_hold_upright">Hold the phone upright (tilt %1$d°).</string>
     <string name="hint_keep_turning">Keep turning …</string>
+    <string name="hint_slower">Low frame rate (dim light) – turn more slowly.</string>
     <string name="hint_start">Hold the phone upright with arms stretched out. Tap the shutter, then turn slowly to the right.</string>
     <string name="hint_turn_right">Please turn to the RIGHT.</string>
     <string name="invalid_jpeg">Not a valid JPEG.</string>
@@ -121,7 +122,7 @@
     <string name="set_sbsfov_t">Glasses field of view</string>
     <string name="set_sharp_d">Light sharpening of the finished panorama (brightness only, no colour fringes). Compensates the softness that comes from combining many frames. 0 = off. Default 50.</string>
     <string name="set_sharp_t">Sharpening</string>
-    <string name="set_stab_d">Skips frames while the phone tilts up/down or sideways faster than this. Lower = straighter horizons and fewer steps on horizontal edges, but needs a steadier hand and more light. Maximum = off. Default 6°/s.</string>
+    <string name="set_stab_d">Frames recorded while the phone tilts up/down or sideways faster than this count less (they are never discarded, so no gaps appear). Lower = straighter horizons and fewer steps on horizontal edges, but a steadier hand helps. Maximum = off. Default 6°/s.</string>
     <string name="set_stab_t">Motion filter</string>
     <string name="set_tempo_d">Speed of the red guide dot. 8°/s ≈ 45 s per revolution.</string>
     <string name="set_tempo_t">Target pace</string>

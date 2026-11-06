@@ -73,6 +73,7 @@ string half_off
 string half_on
 string hint_hold_upright
 string hint_keep_turning
+string hint_slower
 string hint_start
 string hint_turn_right
 string invalid_jpeg

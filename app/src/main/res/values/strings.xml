@@ -131,10 +131,11 @@
     <string name="reset_done">Settings reset.</string>
     <string name="off">Off</string>
     <string name="set_stab_t">Motion filter</string>
-    <string name="set_stab_d">Skips frames while the phone tilts up/down or sideways faster than this. Lower = straighter horizons and fewer steps on horizontal edges, but needs a steadier hand and more light. Maximum = off. Default 6°/s.</string>
+    <string name="set_stab_d">Frames recorded while the phone tilts up/down or sideways faster than this count less (they are never discarded, so no gaps appear). Lower = straighter horizons and fewer steps on horizontal edges, but a steadier hand helps. Maximum = off. Default 6°/s.</string>
     <string name="res_1920">1920 px (default, sharper)</string>
     <string name="set_sharp_t">Sharpening</string>
     <string name="set_sharp_d">Light sharpening of the finished panorama (brightness only, no colour fringes). Compensates the softness that comes from combining many frames. 0 = off. Default 50.</string>
     <string name="set_move_t">Moving objects</string>
     <string name="set_move_d">Detects people and other moving objects while you turn and fills the gaps with the background seen at another moment. Higher = more sensitive. Works best on textured objects; plain-coloured objects may be only partly removed. Uses about 50 MB extra memory and some processing. 0 = off. Experimental. Default 0 (off).</string>
+    <string name="hint_slower">Low frame rate (dim light) – turn more slowly.</string>
 </resources>

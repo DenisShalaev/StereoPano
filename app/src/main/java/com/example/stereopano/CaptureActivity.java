@@ -671,7 +671,8 @@ public class CaptureActivity extends Activity {
                 ruhig = Math.abs(nick - vorherNick) / dt <= maxNick && Math.abs(kipp - vorherKipp) / dt <= maxNick;
             }
             vorherNick = nick; vorherKipp = kipp; vorherTs = zeit;
-            if (ruhig) s.addFrame(new YuvFrame(img, sensorOrientierung), psi, rot);
+            // unruhige Bilder werden nicht verworfen (das riss Luecken, der Kreis wurde nie fertig), sondern zaehlen weniger
+            s.addFrame(new YuvFrame(img, sensorOrientierung), psi, rot, ruhig ? 1.0 : 0.25);
 
             long jetzt = System.currentTimeMillis();
             if (jetzt - letzteAnzeige > 100) {
@@ -679,19 +680,21 @@ public class CaptureActivity extends Activity {
                 final double fort = s.progress();
                 final double pitch = gameYaw.pitch();
                 final double p = psi;
-                runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p));
+                final double stp = s.stepDeg();
+                runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp));
             }
-            if (s.isComplete() || psi >= 372.0) runOnUiThread(this::beendeAufnahme);   // fertig, oder deutlich ueber 360 Grad hinaus
+            if (s.isComplete() || psi >= 365.0) runOnUiThread(this::beendeAufnahme);   // fertig, oder knapp ueber 360 Grad (Rest wird nicht mehr eingemischt)
         } finally {
             img.close();
         }
     }
 
-    private void aktualisiereAnzeige(double fort, double pitch, double psi) {
+    private void aktualisiereAnzeige(double fort, double pitch, double psi, double stepDeg) {
         fortschritt.setProgress((int) (fort * 1000));
         String hinweis;
         if (psi < -10) hinweis = getString(R.string.hint_turn_right);
         else if (Math.abs(pitch) > 15) hinweis = getString(R.string.hint_hold_upright, (int) Math.round(Math.abs(pitch)));
+        else if (stepDeg > 0.7) hinweis = getString(R.string.hint_slower);        // wenige Bilder pro Grad -> Luecken/Streifen
         else hinweis = getString(R.string.hint_keep_turning);
         info.setText(getString(R.string.progress_fmt, (int) Math.round(fort * 360), hinweis));
     }

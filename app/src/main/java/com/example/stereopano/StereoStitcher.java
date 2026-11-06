@@ -46,7 +46,7 @@ final class StereoStitcher {
     }
 
     private static final int W_FULL = 8;    // Gewicht in der Mitte des Dreiecks
-    private static final int W_MIN = 4;     // Mindestgewicht, ab dem eine Spalte als abgedeckt gilt
+    private static final int W_MIN = 1;     // Mindestgewicht, ab dem eine Spalte als abgedeckt gilt
     private static final int W_REF = 12;    // Spalten mit mindestens diesem Gewicht dienen als Referenz
     private static final int REG_COLS = 6;  // Anzahl Referenzspalten fuer die Ausrichtung
     private static final double REG_BACK_DEG = 3.0;   // so weit hinter der aktuellen Spalte wird verglichen
@@ -86,6 +86,11 @@ final class StereoStitcher {
     private boolean closed;
     private Result cached;
     private double maxPsi = -1e9;
+    private double lastPsiSeen = Double.NaN;
+    private boolean firstStep;
+    private double stepEma = 0.3;      // typischer Winkelabstand zwischen zwei Bildern (Grad)
+    private double curWs = 1.0;     // Gewichtsfaktor des aktuellen Bildes
+    private double win;                // aktuelle halbe Fensterbreite (mindestens deltaDeg, waechst bei niedriger Bildrate)
 
     // Arbeitsfelder der Feinausrichtung
     private final int regMax;
@@ -134,6 +139,7 @@ final class StereoStitcher {
         this.frameH = frameH;
         this.fPx = fPx;
         this.deltaDeg = deltaDeg;
+        this.win = deltaDeg;
         this.az0Deg = az0Deg;
         this.register = register;
         this.moveThresh = moveSens <= 0 ? 0 : Math.max(6, Math.min(40, 6 + (100 - moveSens) * 0.30));
@@ -161,6 +167,9 @@ final class StereoStitcher {
         this.sRef = new double[regMax];
     }
 
+    /** Typischer Winkelabstand zwischen zwei verarbeiteten Bildern in Grad (Mass fuer die tatsaechliche Bildrate). */
+    synchronized double stepDeg() { return stepEma; }
+
     synchronized void close() {
         closed = true;
     }
@@ -170,7 +179,28 @@ final class StereoStitcher {
      * @param rot Geraete->Welt-Rotation (3x3 zeilenweise, Welt = Ost/Nord/Oben) zum Aufnahmezeitpunkt
      */
     synchronized void addFrame(Frame f, double psi, float[] rot) {
+        addFrame(f, psi, rot, 1.0);
+    }
+
+    /**
+     * @param weightScale 1 = voller Beitrag; kleiner = unruhiges Bild (schnelles Nicken/Kippen) zaehlt weniger,
+     *                    wird aber NICHT verworfen, damit keine Luecken entstehen
+     */
+    synchronized void addFrame(Frame f, double psi, float[] rot, double weightScale) {
+        curWs = Math.max(0.05, Math.min(1.0, weightScale));
         if (closed || cached != null || rot == null || Double.isNaN(psi)) return;
+        // Bei niedriger Bildrate (Dunkelheit, lange Belichtung) wuerden sich die schmalen Streifen nicht mehr
+        // beruehren -> Luecken. Daher wird das Fenster so breit gewaehlt, dass aufeinanderfolgende Bilder ueberlappen.
+        double step = 0;
+        if (!Double.isNaN(lastPsiSeen)) {
+            step = Math.abs(psi - lastPsiSeen);
+            if (step < 4.0) stepEma = firstStep ? 0.8 * stepEma + 0.2 * step : step;   // erster Messwert direkt uebernehmen
+            if (step < 4.0) firstStep = true;
+        }
+        lastPsiSeen = psi;
+        win = Math.max(deltaDeg, 0.8 * Math.max(stepEma, step < 4.0 ? step : 0));
+        // Kreis geschlossen: weitere Bilder nicht mehr einmischen (sonst Doppelbilder durch Sensordrift)
+        if (psi > 360.0 + 2 * win) return;
         double dx = 0, dy = 0;
         if (register) {
             double[] s = estimateShift(f, psi, rot);
@@ -195,15 +225,16 @@ final class StereoStitcher {
 
     private void accumulate(Eye e, Frame f, double psi, float[] R, double sx, double sy) {
         double centre = psi + e.offsetDeg;
-        long x0 = (long) Math.ceil((centre - deltaDeg) / 360.0 * panoW - 0.5);
-        long x1 = (long) Math.floor((centre + deltaDeg) / 360.0 * panoW - 0.5);
+        long x0 = (long) Math.ceil((centre - win) / 360.0 * panoW - 0.5);
+        long x1 = (long) Math.floor((centre + win) / 360.0 * panoW - 0.5);
         double qx = R[6], qy = R[7], qz = R[8];   // Welt-"Oben" im Geraetesystem
 
         for (long x = x0; x <= x1; x++) {
             double phi = (x + 0.5) / panoW * 360.0;              // Panorama-Azimut relativ zum Start
             double a = phi - centre;                              // -delta .. +delta
-            int wt = (int) Math.round(W_FULL * (1 - Math.abs(a) / deltaDeg));
-            if (wt <= 0) continue;
+            double tri = 1 - Math.abs(a) / win;
+            if (tri <= 0) continue;
+            int wt = Math.max(1, (int) Math.round(W_FULL * curWs * tri));
             int col = (int) Math.floorMod(x, (long) panoW);
 
             double A = Math.toRadians(az0Deg + phi);              // Welt-Azimut des Strahls
@@ -245,16 +276,17 @@ final class StereoStitcher {
     /** Wie accumulate, aber nur Hintergrund (nicht bewegt), halbe Aufloesung, Mittelpunkt um offsetPlus verschoben. */
     private void accumulateFallback(Eye e, Frame f, double psi, float[] R, double sx, double sy, double offsetPlus) {
         double centre = psi + e.offsetDeg + offsetPlus;
-        long x0 = (long) Math.ceil((centre - deltaDeg) / 360.0 * panoW - 0.5);
-        long x1 = (long) Math.floor((centre + deltaDeg) / 360.0 * panoW - 0.5);
+        long x0 = (long) Math.ceil((centre - win) / 360.0 * panoW - 0.5);
+        long x1 = (long) Math.floor((centre + win) / 360.0 * panoW - 0.5);
         double qx = R[6], qy = R[7], qz = R[8];
         int fW = panoW >> 1;
         for (long x = x0; x <= x1; x++) {
             if ((x & 1L) != 0) continue;
             double phi = (x + 0.5) / panoW * 360.0;
             double a = phi - centre;
-            int wt = (int) Math.round(W_FULL * (1 - Math.abs(a) / deltaDeg));
-            if (wt <= 0) continue;
+            double tri = 1 - Math.abs(a) / win;
+            if (tri <= 0) continue;
+            int wt = Math.max(1, (int) Math.round(W_FULL * curWs * tri));
             int col = (int) Math.floorMod(x, (long) panoW);
             double A = Math.toRadians(az0Deg + phi);
             double sA = Math.sin(A), cA = Math.cos(A);
@@ -479,7 +511,7 @@ final class StereoStitcher {
         Eye e = eyeL;
         double centre = psi + e.offsetDeg;
         long xa = (long) Math.floor((centre - REG_BACK_DEG) / 360.0 * panoW - 0.5);
-        long xb = (long) Math.floor((centre + deltaDeg) / 360.0 * panoW - 0.5);
+        long xb = (long) Math.floor((centre + win) / 360.0 * panoW - 0.5);
 
         // Spalten mit ausreichend Gewicht (also bereits "fertig") auswaehlen
         int[] cols = new int[REG_COLS];
@@ -583,7 +615,7 @@ final class StereoStitcher {
 
     /** Fertig: alle Spalten beider Augen abgedeckt UND mindestens 360 Grad + Ueberlappung gedreht. */
     synchronized boolean isComplete() {
-        return eyeL.covered >= panoW && eyeR.covered >= panoW && maxPsi >= 360.0 + deltaDeg;
+        return eyeL.covered >= panoW && eyeR.covered >= panoW && maxPsi >= 360.0 + win;
     }
 
     /** Fortschritt 0..1 (Anteil abgedeckter Spalten des schwaecheren Auges). */
@@ -607,7 +639,7 @@ final class StereoStitcher {
         r.panoH = panoH;
 
         // abgedeckte Spalten (beide Augen); kleine Luecken (bis 2 %) werden ueberbrueckt, grosse nicht erfunden
-        int gapMax = Math.max(8, (int) (panoW * 0.02));
+        int gapMax = Math.max(4, (int) (panoW * 0.004));      // nur winzige Luecken (<0.4 %) werden interpoliert
         boolean[] ok = new boolean[panoW];
         int nOk = 0;
         for (int x = 0; x < panoW; x++) {

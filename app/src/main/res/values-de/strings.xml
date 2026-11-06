@@ -121,10 +121,11 @@
     <string name="reset_done">Zurückgesetzt.</string>
     <string name="off">Aus</string>
     <string name="set_stab_t">Bewegungsfilter</string>
-    <string name="set_stab_d">Verwirft Bilder, während das Telefon schneller als dieser Wert nickt oder kippt. Niedriger = geradere Horizonte und weniger Treppen an waagerechten Kanten, aber ruhigere Hand und mehr Licht nötig. Maximum = aus. Standard 6°/s.</string>
+    <string name="set_stab_d">Bilder, die aufgenommen werden, während das Telefon schneller als dieser Wert nickt oder kippt, zählen weniger (sie werden nie verworfen, daher entstehen keine Lücken). Niedriger = geradere Horizonte und weniger Treppen an waagerechten Kanten, aber eine ruhigere Hand hilft. Maximum = aus. Standard 6°/s.</string>
     <string name="res_1920">1920 px (Standard, schärfer)</string>
     <string name="set_sharp_t">Nachschärfung</string>
     <string name="set_sharp_d">Leichte Nachschärfung des fertigen Panoramas (nur Helligkeit, keine Farbsäume). Gleicht die Weichheit durch das Zusammensetzen vieler Bilder aus. 0 = aus. Standard 50.</string>
     <string name="set_move_t">Bewegte Objekte</string>
     <string name="set_move_d">Erkennt Personen und andere bewegte Objekte während des Drehens und füllt die Lücken mit dem Hintergrund aus einem anderen Moment. Höher = empfindlicher. Funktioniert am besten bei strukturierten Objekten; einfarbige Objekte werden evtl. nur teilweise entfernt. Braucht ca. 50 MB zusätzlichen Speicher und etwas Rechenzeit. 0 = aus. Experimentell. Standard 0 (aus).</string>
+    <string name="hint_slower">Wenig Bilder (schwaches Licht) – langsamer drehen.</string>
 </resources>

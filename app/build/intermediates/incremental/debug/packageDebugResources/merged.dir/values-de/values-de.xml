@@ -40,6 +40,7 @@
     <string name="half_on">Half-SBS an</string>
     <string name="hint_hold_upright">Telefon senkrecht halten (Neigung %1$d°).</string>
     <string name="hint_keep_turning">Weiter drehen …</string>
+    <string name="hint_slower">Wenig Bilder (schwaches Licht) – langsamer drehen.</string>
     <string name="hint_start">Telefon hochkant halten, Arme ausstrecken. Auslöser tippen, dann langsam nach rechts drehen.</string>
     <string name="hint_turn_right">Bitte nach RECHTS drehen.</string>
     <string name="invalid_jpeg">Kein gültiges JPEG.</string>
@@ -115,7 +116,7 @@
     <string name="set_sbsfov_t">Sichtfeld SBS-Brille</string>
     <string name="set_sharp_d">Leichte Nachschärfung des fertigen Panoramas (nur Helligkeit, keine Farbsäume). Gleicht die Weichheit durch das Zusammensetzen vieler Bilder aus. 0 = aus. Standard 50.</string>
     <string name="set_sharp_t">Nachschärfung</string>
-    <string name="set_stab_d">Verwirft Bilder, während das Telefon schneller als dieser Wert nickt oder kippt. Niedriger = geradere Horizonte und weniger Treppen an waagerechten Kanten, aber ruhigere Hand und mehr Licht nötig. Maximum = aus. Standard 6°/s.</string>
+    <string name="set_stab_d">Bilder, die aufgenommen werden, während das Telefon schneller als dieser Wert nickt oder kippt, zählen weniger (sie werden nie verworfen, daher entstehen keine Lücken). Niedriger = geradere Horizonte und weniger Treppen an waagerechten Kanten, aber eine ruhigere Hand hilft. Maximum = aus. Standard 6°/s.</string>
     <string name="set_stab_t">Bewegungsfilter</string>
     <string name="set_tempo_d">Geschwindigkeit des roten Leitpunkts. 8°/s ≈ 45 s pro Umdrehung.</string>
     <string name="set_tempo_t">Ziel-Tempo</string>
