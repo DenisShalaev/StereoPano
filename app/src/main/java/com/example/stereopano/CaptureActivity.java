@@ -683,7 +683,7 @@ public class CaptureActivity extends Activity {
                 final double stp = s.stepDeg();
                 runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp));
             }
-            if (s.isComplete() || psi >= 365.0) runOnUiThread(this::beendeAufnahme);   // fertig, oder knapp ueber 360 Grad (Rest wird nicht mehr eingemischt)
+            if (s.isComplete() || psi >= 370.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad (Erweiterung fuer den Kreisschluss reicht bis ca. 369)
         } finally {
             img.close();
         }

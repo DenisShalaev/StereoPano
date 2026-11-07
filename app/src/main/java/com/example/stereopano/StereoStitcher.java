@@ -18,6 +18,9 @@ package com.example.stereopano;
  *  4. Strenge Fertig-Bedingung (alle Spalten abgedeckt UND 360 Grad + Ueberlappung erreicht). Kleine Luecken
  *     (bis 2 % der Breite) werden interpoliert, groessere werden nicht erfunden, sondern abgeschnitten.
  *  5. Optionale Nachschaerfung (Unsharp-Mask nur auf der Helligkeit, keine Farbsaeume).
+ *  7. NEU - Kreisschluss: Nur bei VOLLEM Kreis (360 Grad) wird der Sensordrift gemessen (Vergleich der letzten Bilder
+ *     mit dem Anfang des Panoramas) und gleichmaessig ueber das ganze Bild verteilt. Dadurch verschwindet die Stufe am
+ *     Nahtpunkt. Teilpanoramen werden nicht veraendert.
  *  6. NEU - Bewegte Objekte: Jedes Bild wird (drehungskompensiert) mit einem Bild von vor ca. 0.2 s verglichen.
  *     Zellen, die sich staerker veraendert haben als die Kamerabewegung erklaert, gelten als "bewegt" und
  *     werden nicht ins Panorama geschrieben. Die entstehenden Luecken werden aus einer Hilfsebene gefuellt, die
@@ -43,11 +46,12 @@ final class StereoStitcher {
         int panoW, panoH;      // Groesse des vollen 360-Grad-Arrays
         int x0, width;         // verwertbarer Ausschnitt (Spalten)
         boolean complete;
+        double closureShiftPx;   // angewandter Kreisschluss (0 = keiner)
     }
 
     private static final int W_FULL = 8;    // Gewicht in der Mitte des Dreiecks
     private static final int W_MIN = 1;     // Mindestgewicht, ab dem eine Spalte als abgedeckt gilt
-    private static final int W_REF = 12;    // Spalten mit mindestens diesem Gewicht dienen als Referenz
+    private static final int W_REF = 5;     // Spalten mit mindestens diesem Gewicht dienen als Referenz (bei 30 fps/0.3 Grad sind es ca. 9)
     private static final int REG_COLS = 6;  // Anzahl Referenzspalten fuer die Ausrichtung
     private static final double REG_BACK_DEG = 3.0;   // so weit hinter der aktuellen Spalte wird verglichen
     private static final int MV_STRIDE = 8;           // Rasterweite der Bewegungserkennung (Bildpixel)
@@ -57,18 +61,25 @@ final class StereoStitcher {
     /** Akkumulator eines Auges. */
     private static final class Eye {
         final double offsetDeg;
+        final long start, end;   // Spaltenbereich des vollen Kreises dieses Auges (ungewickelt)
         char[] r, g, b;      // gewichtete Summen (max 255 * 255 = 65025 passt in char)
         byte[] w;            // Gewicht je Pixel (0..255)
         final int[] colW;    // Gewicht je Spalte
         int covered;         // Anzahl Spalten mit colW >= W_MIN
         char[] fr, fg, fb;   // Hilfsebene (halbe Aufloesung) fuer Hintergrund hinter bewegten Objekten
         byte[] fw;
+        char[] er, eg, eb;   // Erweiterung: Spalten >= panoW (ueber 360 Grad hinaus), getrennt vom Anfang
+        byte[] ew;
 
-        Eye(double offsetDeg, int n, int panoW, boolean fallback) {
+        Eye(double offsetDeg, int n, int panoW, boolean fallback, int extN) {
             this.offsetDeg = offsetDeg;
+            this.start = (long) Math.floor(offsetDeg / 360.0 * panoW);
+            this.end = start + panoW - 1;
             r = new char[n]; g = new char[n]; b = new char[n];
             w = new byte[n];
             colW = new int[panoW];
+            er = new char[extN]; eg = new char[extN]; eb = new char[extN];
+            ew = new byte[extN];
             if (fallback) {
                 int m = n / 4;
                 fr = new char[m]; fg = new char[m]; fb = new char[m];
@@ -78,6 +89,7 @@ final class StereoStitcher {
     }
 
     final int frameW, frameH, panoW, panoH;
+    private int extW;
     final double fPx, deltaDeg, az0Deg;
     private final double[] sinE, cosE;
     private final Eye eyeL, eyeR;
@@ -88,6 +100,11 @@ final class StereoStitcher {
     private double maxPsi = -1e9;
     private double lastPsiSeen = Double.NaN;
     private boolean firstStep;
+    private final java.util.ArrayList<Double> closureSamples = new java.util.ArrayList<>();
+    /** Zum Testen abschaltbar. */
+    static boolean closureEnabled = true;
+    private static final double CLOSE_FROM_DEG = 357.0;   // ab hier werden die Bilder mit dem Anfang verglichen
+    private static final double EXT_DEG = 9.0;             // so weit ueber 360 Grad hinaus wird getrennt gespeichert (Erweiterung)
     private double stepEma = 0.3;      // typischer Winkelabstand zwischen zwei Bildern (Grad)
     private double curWs = 1.0;     // Gewichtsfaktor des aktuellen Bildes
     private double win;                // aktuelle halbe Fensterbreite (mindestens deltaDeg, waechst bei niedriger Bildrate)
@@ -155,8 +172,9 @@ final class StereoStitcher {
             cosE[v] = Math.cos(el);
         }
         int n = panoW * panoH;
-        this.eyeL = new Eye(+alphaDeg, n, panoW, moveThresh > 0);
-        this.eyeR = new Eye(-alphaDeg, n, panoW, moveThresh > 0);
+        this.extW = (int) Math.ceil(EXT_DEG * panoW / 360.0) + 2;
+        this.eyeL = new Eye(+alphaDeg, n, panoW, moveThresh > 0, extW * panoH);
+        this.eyeR = new Eye(-alphaDeg, n, panoW, moveThresh > 0, extW * panoH);
         this.gw = frameW / MV_STRIDE;
         this.gh = frameH / MV_STRIDE;
         this.regRY = Math.max(6, frameH / 160);
@@ -199,8 +217,13 @@ final class StereoStitcher {
         }
         lastPsiSeen = psi;
         win = Math.max(deltaDeg, 0.8 * Math.max(stepEma, step < 4.0 ? step : 0));
+        // Drift des Kreises messen: letzte Bilder gegen den Anfang des Panoramas (nur kurz vor/nach 360 Grad)
+        if (closureEnabled && psi >= CLOSE_FROM_DEG && psi <= 372.0 && closureSamples.size() < 40) {
+            double m = measureClosure(f, rot);
+            if (!Double.isNaN(m)) closureSamples.add(m);
+        }
         // Kreis geschlossen: weitere Bilder nicht mehr einmischen (sonst Doppelbilder durch Sensordrift)
-        if (psi > 360.0 + 2 * win) return;
+        if (psi > 360.0 + EXT_DEG + 0.5) return;
         double dx = 0, dy = 0;
         if (register) {
             double[] s = estimateShift(f, psi, rot);
@@ -235,6 +258,8 @@ final class StereoStitcher {
             double tri = 1 - Math.abs(a) / win;
             if (tri <= 0) continue;
             int wt = Math.max(1, (int) Math.round(W_FULL * curWs * tri));
+            boolean inExt = x > e.end;                            // hinter dem Kreis dieses Auges: getrennt speichern
+            if (inExt && x - e.end - 1 >= extW) continue;
             int col = (int) Math.floorMod(x, (long) panoW);
 
             double A = Math.toRadians(az0Deg + phi);              // Welt-Azimut des Strahls
@@ -252,18 +277,23 @@ final class StereoStitcher {
                 double uy = frameH / 2.0 - fPx * cy / -cz + sy;
                 if (ux < 0 || uy < 0 || ux > frameW - 1.001 || uy > frameH - 1.001) continue;
                 if (isMoving(ux - sx, uy - sy)) continue;          // bewegtes Objekt: nicht ins Panorama schreiben
+                char[] rr = e.r, gg = e.g, bb = e.b;
+                byte[] ww = e.w;
                 int idx = v * panoW + col;
-                int wp = e.w[idx] & 0xFF;
+                if (inExt) { rr = e.er; gg = e.eg; bb = e.eb; ww = e.ew; idx = v * extW + (int) (x - e.end - 1); }
+                int wp = ww[idx] & 0xFF;
                 if (wp + wt > 255) continue;                       // Ueberlaufschutz bei sehr langsamer Drehung
                 int c = bilinear(f, ux, uy);
-                e.r[idx] += (char) (wt * ((c >> 16) & 255));
-                e.g[idx] += (char) (wt * ((c >> 8) & 255));
-                e.b[idx] += (char) (wt * (c & 255));
-                e.w[idx] = (byte) (wp + wt);
+                rr[idx] += (char) (wt * ((c >> 16) & 255));
+                gg[idx] += (char) (wt * ((c >> 8) & 255));
+                bb[idx] += (char) (wt * (c & 255));
+                ww[idx] = (byte) (wp + wt);
             }
-            int before = e.colW[col];
-            e.colW[col] = before + wt;
-            if (before < W_MIN && before + wt >= W_MIN) e.covered++;
+            if (!inExt) {
+                int before = e.colW[col];
+                e.colW[col] = before + wt;
+                if (before < W_MIN && before + wt >= W_MIN) e.covered++;
+            }
         }
     }
 
@@ -281,7 +311,7 @@ final class StereoStitcher {
         double qx = R[6], qy = R[7], qz = R[8];
         int fW = panoW >> 1;
         for (long x = x0; x <= x1; x++) {
-            if ((x & 1L) != 0) continue;
+            if ((x & 1L) != 0 || x > e.end) continue;
             double phi = (x + 0.5) / panoW * 360.0;
             double a = phi - centre;
             double tri = 1 - Math.abs(a) / win;
@@ -310,6 +340,121 @@ final class StereoStitcher {
                 e.fg[idx] += (char) (wt * ((c >> 8) & 255));
                 e.fb[idx] += (char) (wt * (c & 255));
                 e.fw[idx] = (byte) (wp + wt);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ Kreisschluss
+
+    /**
+     * Vergleicht das aktuelle Bild (Lage kurz vor/nach 360 Grad) mit den zuerst geschriebenen Spalten des linken Auges
+     * (Strahlen 0.3..3 Grad hinter der Startstreifenmitte). Dort sieht das Bild dieselben Strahlen aus fast derselben
+     * Kameraposition (kaum Parallaxe). Rueckgabe: horizontaler Versatz in Bildpixeln, den die Sensorlage gegenueber dem
+     * Anfang hat (positiv = Sensor-Blickwinkel ist zu weit im Uhrzeigersinn). NaN, wenn nichts Sicheres gefunden wird.
+     */
+    private double measureClosure(Frame f, float[] R) {
+        Eye e = eyeL;
+        long xa = (long) Math.ceil((e.offsetDeg + 0.3) / 360.0 * panoW - 0.5);
+        long xb = (long) Math.floor((e.offsetDeg + 3.0) / 360.0 * panoW - 0.5);
+        int rng = (int) Math.round(5.0 * panoW / 360.0);              // Suchbereich +-5 Grad
+        if (xb < xa) return Double.NaN;
+        int[] cols = new int[REG_COLS];
+        long[] xs = new long[REG_COLS];
+        int nc = 0;
+        long step = Math.max(1, (xb - xa + 1) / REG_COLS);
+        for (long x = xa; x <= xb && nc < REG_COLS; x += step) {
+            int col = (int) Math.floorMod(x, (long) panoW);
+            if (e.colW[col] >= W_REF) { cols[nc] = col; xs[nc] = x; nc++; }
+        }
+        if (nc < 3) return Double.NaN;
+
+        double qx = R[6], qy = R[7], qz = R[8];
+        double margin = rng + 4;
+        int n = 0;
+        for (int k = 0; k < nc; k++) {
+            double phi = (xs[k] + 0.5) / panoW * 360.0;
+            double A = Math.toRadians(az0Deg + phi);
+            double sA = Math.sin(A), cA = Math.cos(A);
+            double px = sA * R[0] + cA * R[3];
+            double py = sA * R[1] + cA * R[4];
+            double pz = sA * R[2] + cA * R[5];
+            for (int v = 3; v < panoH - 3 && n < regMax; v += 3) {
+                int idx = v * panoW + cols[k];
+                int wp = e.w[idx] & 0xFF;
+                if (wp < 3) continue;
+                double cx = cosE[v] * px + sinE[v] * qx;
+                double cy = cosE[v] * py + sinE[v] * qy;
+                double cz = cosE[v] * pz + sinE[v] * qz;
+                if (cz > -1e-3) continue;
+                double ux = frameW / 2.0 + fPx * cx / -cz;
+                double uy = frameH / 2.0 - fPx * cy / -cz;
+                if (ux < margin || uy < 8 || ux > frameW - 1 - margin || uy > frameH - 9) continue;
+                sUx[n] = ux;
+                sUy[n] = uy;
+                sRef[n] = (77.0 * e.r[idx] + 150.0 * e.g[idx] + 29.0 * e.b[idx]) / (256.0 * wp);
+                n++;
+            }
+        }
+        if (n < 300) return Double.NaN;
+        double m = 0, m2 = 0;
+        for (int i = 0; i < n; i++) { m += sRef[i]; m2 += sRef[i] * sRef[i]; }
+        m /= n;
+        if (m2 / n - m * m < 36) return Double.NaN;                   // zu wenig Struktur
+
+        double cost0 = cost(f, n, 0, 0);
+        double bestS = 0, bestC = cost0;
+        for (int sx = -rng; sx <= rng; sx += 2) {                    // grob
+            double c = cost(f, n, sx, 0);
+            if (c < bestC) { bestC = c; bestS = sx; }
+        }
+        double[] c3 = new double[3];                                  // fein (+-1 px) + Teilpixel
+        for (int k = -1; k <= 1; k++) c3[k + 1] = cost(f, n, bestS + k, 0);
+        double sub = subpixel(c3, 1, bestS);
+        if (Math.abs(bestS) >= rng - 2) return Double.NaN;            // am Rand des Suchbereichs -> unsicher
+        double costFine = cost(f, n, sub, 0);
+        if (costFine > 0.85 * cost0 && Math.abs(sub) > 2) return Double.NaN;   // keine klare Verbesserung
+        return sub;
+    }
+
+    /** Erweiterung (Spalten ueber 360 Grad hinaus) in RGB umrechnen. */
+    private int[] finishExt(Eye e) {
+        int[] out = new int[extW * panoH];
+        for (int i = 0; i < out.length; i++) {
+            int wp = e.ew[i] & 0xFF;
+            if (wp == 0) continue;
+            int h = wp >> 1;
+            out[i] = 0xFF000000 | (((e.er[i] + h) / wp) << 16) | (((e.eg[i] + h) / wp) << 8) | ((e.eb[i] + h) / wp);
+        }
+        return out;
+    }
+
+    /**
+     * Kreisschluss: Der Sensor-Drift waechst ungefaehr linear mit dem Winkel. Ein Panoramapunkt in Spalte t liegt im
+     * aufgenommenen Bild bei x = t * W / (W - d) (d = Drift am Ende, in Spalten; positiv = Sensor eilt voraus).
+     * Dadurch schliesst sich der Kreis genau bei der Spaltenzahl W:
+     *  - d < 0 (Sensor hinkt nach): ueberzaehliges Stueck am Ende wird nicht verwendet (x < W).
+     *  - d > 0 (Sensor eilt voraus): fehlendes Stueck stammt aus der getrennten Erweiterung (x >= W).
+     */
+    static void closeLoop(int[] px, int[] ext, int extW, int w, int h, double d, int startCol) {
+        int[] lin = new int[w];                       // Kreis des Auges, linear ab Startspalte
+        double scale = w / (w - d);
+        for (int v = 0; v < h; v++) {
+            int base = v * w, ebase = v * extW;
+            for (int u = 0; u < w; u++) lin[u] = px[base + Math.floorMod(startCol + u, w)];
+            for (int t = 0; t < w; t++) {
+                double src = t * scale;
+                int i0 = (int) src;
+                double fr = src - i0;
+                int a = i0 < w ? lin[i0] : (i0 - w < extW ? ext[ebase + i0 - w] : 0);
+                int i1 = i0 + 1;
+                int b = i1 < w ? lin[i1] : (i1 - w < extW ? ext[ebase + i1 - w] : 0);
+                int out;
+                if (a == 0 || b == 0) out = a != 0 ? a : b;
+                else out = 0xFF000000
+                        | ((int) (((a >> 16) & 255) * (1 - fr) + ((b >> 16) & 255) * fr + 0.5) << 16)
+                        | ((int) (((a >> 8) & 255) * (1 - fr) + ((b >> 8) & 255) * fr + 0.5) << 8)
+                        | (int) ((a & 255) * (1 - fr) + (b & 255) * fr + 0.5);
+                px[base + Math.floorMod(startCol + t, w)] = out;
             }
         }
     }
@@ -539,7 +684,7 @@ final class StereoStitcher {
             for (int v = 3; v < panoH - 3 && n < regMax; v += 3) {
                 int idx = v * panoW + cols[k];
                 int wp = e.w[idx] & 0xFF;
-                if (wp < 6) continue;
+                if (wp < 3) continue;
                 double cx = cosE[v] * px + sinE[v] * qx;
                 double cy = cosE[v] * py + sinE[v] * qy;
                 double cz = cosE[v] * pz + sinE[v] * qz;
@@ -615,7 +760,25 @@ final class StereoStitcher {
 
     /** Fertig: alle Spalten beider Augen abgedeckt UND mindestens 360 Grad + Ueberlappung gedreht. */
     synchronized boolean isComplete() {
-        return eyeL.covered >= panoW && eyeR.covered >= panoW && maxPsi >= 360.0 + win;
+        if (!(eyeL.covered >= panoW && eyeR.covered >= panoW)) return false;
+        return maxPsi >= 360.0 + win + closureNeedDeg();
+    }
+
+    /**
+     * Eilt der Sensor voraus (positiver Drift), zeigt er 360 Grad, bevor der echte Kreis geschlossen ist. Dann fehlt am
+     * Ende noch ein Stueck; es wird weiter aufgenommen (in die getrennte Erweiterung), bis die Drift-Strecke gedeckt ist.
+     */
+    private double closureNeedDeg() {
+        if (!closureEnabled || closureSamples.size() < 3) return 0;
+        double med = median(closureSamples);
+        if (med <= 1.5) return 0;
+        return Math.min(EXT_DEG - 1.0, med / (panoW / 360.0) + 0.4);
+    }
+
+    private static double median(java.util.List<Double> l) {
+        java.util.List<Double> c = new java.util.ArrayList<>(l);
+        java.util.Collections.sort(c);
+        return c.get(c.size() / 2);
     }
 
     /** Fortschritt 0..1 (Anteil abgedeckter Spalten des schwaecheren Auges). */
@@ -686,16 +849,42 @@ final class StereoStitcher {
             r.width = bestLen;
         }
 
-        r.left = finish(eyeL, gapMax, sharpen);
+        int[] extL = finishExt(eyeL), extR = finishExt(eyeR);
+        r.left = finish(eyeL, gapMax, 0f);
         eyeL.r = eyeL.g = eyeL.b = null;
         eyeL.w = null;
+        eyeL.er = eyeL.eg = eyeL.eb = null;
+        eyeL.ew = null;
         eyeL.fr = eyeL.fg = eyeL.fb = null;
         eyeL.fw = null;
-        r.right = finish(eyeR, gapMax, sharpen);
+        r.right = finish(eyeR, gapMax, 0f);
         eyeR.r = eyeR.g = eyeR.b = null;
         eyeR.w = null;
+        eyeR.er = eyeR.eg = eyeR.eb = null;
+        eyeR.ew = null;
         eyeR.fr = eyeR.fg = eyeR.fb = null;
         eyeR.fw = null;
+        // Kreisschluss nur bei vollem Kreis (Teilpanoramen werden nicht veraendert)
+        r.closureShiftPx = 0;
+        if (r.complete && closureEnabled && closureSamples.size() >= 4) {
+            java.util.List<Double> sv = new java.util.ArrayList<>(closureSamples);
+            java.util.Collections.sort(sv);
+            double med = sv.get(sv.size() / 2);
+            java.util.List<Double> dev = new java.util.ArrayList<>();
+            for (double q : sv) dev.add(Math.abs(q - med));
+            java.util.Collections.sort(dev);
+            double mad = dev.get(dev.size() / 2);
+            double maxShift = (EXT_DEG - 0.5) * panoW / 360.0;       // mehr als ~8 Grad Drift ist unplausibel
+            if (Math.abs(med) >= 1.5 && Math.abs(med) <= maxShift && mad <= Math.max(3.0, 0.35 * Math.abs(med))) {
+                closeLoop(r.left, extL, extW, panoW, panoH, med, (int) eyeL.start);
+                closeLoop(r.right, extR, extW, panoW, panoH, med, (int) eyeR.start);
+                r.closureShiftPx = med;
+            }
+        }
+        if (sharpen > 0.01f) {
+            sharpenLuma(r.left, panoW, panoH, sharpen);
+            sharpenLuma(r.right, panoW, panoH, sharpen);
+        }
         cached = r;
         return r;
     }
