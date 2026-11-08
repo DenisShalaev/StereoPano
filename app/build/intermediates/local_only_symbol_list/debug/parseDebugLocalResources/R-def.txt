@@ -71,6 +71,8 @@ string exporting
 string finish_first
 string gallery_empty
 string gallery_title
+string group_no_author
+string group_no_place
 string guides_off
 string guides_on
 string gyro_off
@@ -175,6 +177,7 @@ string set_tempo_d
 string set_tempo_t
 string settings_title
 string share_title
+string sort_author
 string sort_date_new
 string sort_date_old
 string sort_name

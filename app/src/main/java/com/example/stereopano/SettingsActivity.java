@@ -127,7 +127,7 @@ public class SettingsActivity extends Activity {
 
         abschnitt(R.string.sec_about);
         TextView info = new TextView(this);
-        info.setText(getString(R.string.about_text, version()));
+        info.setText(getString(R.string.about_text, version()) + "\nBuild " + BuildInfo.NUMBER);
         info.setTextColor(GRAU);
         info.setTextSize(13);
         info.setPadding(dp(4), dp(4), dp(4), dp(12));

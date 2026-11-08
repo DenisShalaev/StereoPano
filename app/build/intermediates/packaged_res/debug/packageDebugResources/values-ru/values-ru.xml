@@ -35,6 +35,8 @@
     <string name="finish_first">Сначала завершите съёмку.</string>
     <string name="gallery_empty">Пока нет снимков.</string>
     <string name="gallery_title">Мои панорамы</string>
+    <string name="group_no_author">Без автора</string>
+    <string name="group_no_place">Без места</string>
     <string name="guides_off">Ориентиры выключены</string>
     <string name="guides_on">Ориентиры включены</string>
     <string name="gyro_off">Гироскоп выключен</string>
@@ -136,6 +138,7 @@
     <string name="set_tempo_t">Целевой темп</string>
     <string name="settings_title">Настройки</string>
     <string name="share_title">Поделиться панорамой</string>
+    <string name="sort_author">Автор</string>
     <string name="sort_date_new">Дата (сначала новые)</string>
     <string name="sort_date_old">Дата (сначала старые)</string>
     <string name="sort_name">Имя (А–Я)</string>

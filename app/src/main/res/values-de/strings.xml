@@ -141,6 +141,9 @@
     <string name="sort_name">Name (A–Z)</string>
     <string name="sort_place">Ort</string>
     <string name="sort_size">Dateigröße</string>
+    <string name="sort_author">Autor</string>
+    <string name="group_no_place">Ohne Ort</string>
+    <string name="group_no_author">Ohne Autor</string>
     <string name="storage_permission_needed">Zum Lesen von Panoramen anderer Apps wird die Berechtigung zum Lesen von Fotos benötigt.</string>
     <string name="sec_files">Dateien &amp; Metadaten</string>
     <string name="set_author_t">Autorenname</string>

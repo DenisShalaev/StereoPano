@@ -936,6 +936,7 @@ public class CaptureActivity extends Activity {
         m.author = Settings.author(this);
         java.util.List<String> tags = new java.util.ArrayList<>();
         tags.add("StereoPano");
+        tags.add(BuildInfo.TAG);                      // Programmversion, mit der die Datei erzeugt wurde
         tags.addAll(java.util.Arrays.asList(ortTags));
         m.tags = tags.toArray(new String[0]);
         m.lat = ortLat;

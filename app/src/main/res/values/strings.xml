@@ -151,6 +151,9 @@
     <string name="sort_name">Name (A–Z)</string>
     <string name="sort_place">Place</string>
     <string name="sort_size">File size</string>
+    <string name="sort_author">Author</string>
+    <string name="group_no_place">No place</string>
+    <string name="group_no_author">No author</string>
     <string name="storage_permission_needed">Reading other apps\' panoramas needs permission to read photos.</string>
     <string name="sec_files">Files &amp; metadata</string>
     <string name="set_author_t">Author name</string>

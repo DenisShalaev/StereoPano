@@ -38,6 +38,8 @@
     <string name="finish_first">Finish the recording first.</string>
     <string name="gallery_empty">No panoramas yet.</string>
     <string name="gallery_title">My panoramas</string>
+    <string name="group_no_author">No author</string>
+    <string name="group_no_place">No place</string>
     <string name="guides_off">Guides off</string>
     <string name="guides_on">Guides on</string>
     <string name="gyro_off">Gyroscope off</string>
@@ -142,6 +144,7 @@
     <string name="set_tempo_t">Target pace</string>
     <string name="settings_title">Settings</string>
     <string name="share_title">Share panorama</string>
+    <string name="sort_author">Author</string>
     <string name="sort_date_new">Date (newest first)</string>
     <string name="sort_date_old">Date (oldest first)</string>
     <string name="sort_name">Name (A–Z)</string>

@@ -23,13 +23,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
-import android.widget.GridView;
+import android.widget.ListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -49,10 +56,11 @@ public class GalleryActivity extends Activity {
     private static final class Item {
         long id, datum, groesse;
         Uri uri;
-        String name, ort;
+        String name, ort, autor = "";
     }
 
-    private final List<Item> items = new ArrayList<>();
+    /** Zeilen der Liste: String = Gruppenueberschrift, Item[2] = zwei Miniaturen nebeneinander. */
+    private final List<Object> zeilen = new ArrayList<>();
     private final LruCache<Long, Bitmap> cache = new LruCache<>(48);
     private final ExecutorService pool = Executors.newFixedThreadPool(2);
     private BaseAdapter adapter;
@@ -129,40 +137,48 @@ public class GalleryActivity extends Activity {
         leer.setPadding(32, 64, 32, 64);
         root.addView(leer);
 
-        GridView grid = new GridView(this);
-        grid.setNumColumns(2);
-        grid.setHorizontalSpacing(8);
-        grid.setVerticalSpacing(8);
+        ListView grid = new ListView(this);
+        grid.setDivider(null);
         grid.setPadding(8, 0, 8, 8);
+        grid.setClipToPadding(false);
         adapter = new BaseAdapter() {
-            @Override public int getCount() { return items.size(); }
-            @Override public Object getItem(int i) { return items.get(i); }
-            @Override public long getItemId(int i) { return items.get(i).id; }
+            @Override public int getCount() { return zeilen.size(); }
+            @Override public Object getItem(int i) { return zeilen.get(i); }
+            @Override public long getItemId(int i) { return i; }
+            @Override public int getViewTypeCount() { return 2; }
+            @Override public int getItemViewType(int i) { return zeilen.get(i) instanceof String ? 0 : 1; }
+            @Override public boolean isEnabled(int i) { return false; }
             @Override public View getView(int i, View v, ViewGroup p) {
-                ImageView iv = v instanceof ImageView ? (ImageView) v : new ImageView(GalleryActivity.this);
-                int h = (getResources().getDisplayMetrics().widthPixels / 2 - 16) / 2;    // Seitenverhaeltnis 2:1
-                iv.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h));
-                iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                iv.setBackgroundColor(0xFF222222);
-                final Item it = items.get(i);
-                iv.setTag(it.id);
-                Bitmap bm = cache.get(it.id);
-                if (bm != null) { iv.setImageBitmap(bm); return iv; }
-                iv.setImageDrawable(null);
-                pool.execute(() -> {
-                    try {
-                        Bitmap t = getContentResolver().loadThumbnail(it.uri, new Size(640, 320), null);
-                        cache.put(it.id, t);
-                        runOnUiThread(() -> { if (it.id == (Long) iv.getTag()) iv.setImageBitmap(t); });
-                    } catch (Exception ignored) { }
-                });
-                return iv;
+                Object z = zeilen.get(i);
+                if (z instanceof String) {
+                    TextView t = v instanceof TextView ? (TextView) v : new TextView(GalleryActivity.this);
+                    t.setText((String) z);
+                    t.setTextColor(0xFF4FC3F7);
+                    t.setTextSize(15);
+                    t.setPadding(12, i == 0 ? 8 : 28, 12, 8);
+                    return t;
+                }
+                Item[] paar = (Item[]) z;
+                LinearLayout r = v instanceof LinearLayout ? (LinearLayout) v : null;
+                if (r == null) {
+                    r = new LinearLayout(GalleryActivity.this);
+                    r.setOrientation(LinearLayout.HORIZONTAL);
+                    for (int k = 0; k < 2; k++) {
+                        ImageView iv = new ImageView(GalleryActivity.this);
+                        iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        iv.setBackgroundColor(0xFF222222);
+                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+                        lp.setMargins(4, 4, 4, 4);
+                        r.addView(iv, lp);
+                    }
+                }
+                int h = (getResources().getDisplayMetrics().widthPixels / 2 - 16) / 2 + 8;    // Seitenverhaeltnis 2:1
+                r.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h));
+                for (int k = 0; k < 2; k++) bindeMiniatur((ImageView) r.getChildAt(k), paar[k]);
+                return r;
             }
         };
         grid.setAdapter(adapter);
-        grid.setOnItemClickListener((p, v, i, id) ->
-                startActivity(new Intent(this, ViewerActivity.class).setAction(Intent.ACTION_VIEW).setData(items.get(i).uri).putExtra("von_galerie", true)));
-        grid.setOnItemLongClickListener((p, v, i, id) -> { zeigeMenue(items.get(i)); return true; });
         root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         setContentView(root);
@@ -203,6 +219,67 @@ public class GalleryActivity extends Activity {
         super.onDestroy();
     }
 
+    private void bindeMiniatur(ImageView iv, Item it) {
+        if (it == null) {
+            iv.setVisibility(View.INVISIBLE);
+            iv.setOnClickListener(null);
+            iv.setOnLongClickListener(null);
+            iv.setTag(null);
+            return;
+        }
+        iv.setVisibility(View.VISIBLE);
+        iv.setTag(it.id);
+        iv.setOnClickListener(v -> startActivity(new Intent(this, ViewerActivity.class)
+                .setAction(Intent.ACTION_VIEW).setData(it.uri).putExtra("von_galerie", true)));
+        iv.setOnLongClickListener(v -> { zeigeMenue(it); return true; });
+        Bitmap bm = cache.get(it.id);
+        if (bm != null) { iv.setImageBitmap(bm); return; }
+        iv.setImageDrawable(null);
+        pool.execute(() -> {
+            try {
+                Bitmap t = getContentResolver().loadThumbnail(it.uri, new Size(640, 320), null);
+                cache.put(it.id, t);
+                runOnUiThread(() -> { Object tag = iv.getTag(); if (tag != null && it.id == (Long) tag) iv.setImageBitmap(t); });
+            } catch (Exception ignored) { }
+        });
+    }
+
+    private static final Pattern AUTOR = Pattern.compile("<dc:creator>.*?<rdf:li[^>]*>([^<]*)</rdf:li>", Pattern.DOTALL);
+
+    /** Autor aus dem XMP am Dateianfang (dc:creator); leer, wenn keiner gesetzt ist. */
+    private String leseAutor(Uri uri) {
+        try (InputStream in = getContentResolver().openInputStream(uri)) {
+            if (in == null) return "";
+            byte[] b = new byte[65536];
+            int n = 0, r;
+            while (n < b.length && (r = in.read(b, n, b.length - n)) > 0) n += r;
+            Matcher m = AUTOR.matcher(new String(b, 0, n, StandardCharsets.UTF_8));
+            if (m.find()) {
+                return m.group(1).replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"")
+                        .replace("&apos;", "'").replace("&amp;", "&").trim();
+            }
+        } catch (Exception ignored) { }
+        return "";
+    }
+
+    /** Gruppenname (Ueberschrift) eines Bildes passend zur Sortierung. */
+    private String gruppe(Item it, int modus, DateFormat df) {
+        switch (modus) {
+            case 2: return it.name.isEmpty() ? "#" : it.name.substring(0, 1).toUpperCase(Locale.getDefault());
+            case 3: return it.ort.isEmpty() ? getString(R.string.group_no_place) : it.ort;
+            case 4: {
+                double mb = it.groesse / 1048576.0;
+                if (mb >= 20) return "\u2265 20 MB";
+                if (mb >= 10) return "10\u201320 MB";
+                if (mb >= 5) return "5\u201310 MB";
+                if (mb >= 2) return "2\u20135 MB";
+                return "< 2 MB";
+            }
+            case 5: return it.autor.isEmpty() ? getString(R.string.group_no_author) : it.autor;
+            default: return df.format(new Date(it.datum * 1000L));
+        }
+    }
+
     // ------------------------------------------------------------------ Laden und Sortieren
 
     private void laden() {
@@ -221,6 +298,7 @@ public class GalleryActivity extends Activity {
                 }
             }
             final int modus = sortModus;
+            if (modus == 5) for (Item it : neu) it.autor = leseAutor(it.uri);
             Collections.sort(neu, (a, b) -> {
                 switch (modus) {
                     case 1: return Long.compare(a.datum, b.datum);                               // Datum: aelteste zuerst
@@ -231,21 +309,38 @@ public class GalleryActivity extends Activity {
                         return k != 0 ? k : Long.compare(b.datum, a.datum);
                     }
                     case 4: return Long.compare(b.groesse, a.groesse);                           // Groesse: groesste zuerst
+                    case 5: {                                                                    // Autor A-Z, ohne Autor am Ende, dann neueste zuerst
+                        if (a.autor.isEmpty() != b.autor.isEmpty()) return a.autor.isEmpty() ? 1 : -1;
+                        int k = a.autor.compareToIgnoreCase(b.autor);
+                        return k != 0 ? k : Long.compare(b.datum, a.datum);
+                    }
                     default: return Long.compare(b.datum, a.datum);                              // Datum: neueste zuerst
                 }
             });
+            // Zeilen bilden: Ueberschrift (Gruppe + Anzahl), darunter je zwei Miniaturen pro Zeile
+            final DateFormat df = DateFormat.getDateInstance(DateFormat.LONG);
+            final List<Object> neueZeilen = new ArrayList<>();
+            int i = 0;
+            while (i < neu.size()) {
+                String g = gruppe(neu.get(i), modus, df);
+                int j = i;
+                while (j < neu.size() && gruppe(neu.get(j), modus, df).equals(g)) j++;
+                neueZeilen.add(g + "  \u00B7  " + (j - i));
+                for (int k = i; k < j; k += 2) neueZeilen.add(new Item[]{neu.get(k), k + 1 < j ? neu.get(k + 1) : null});
+                i = j;
+            }
             runOnUiThread(() -> {
-                items.clear();
-                items.addAll(neu);
+                zeilen.clear();
+                zeilen.addAll(neueZeilen);
                 adapter.notifyDataSetChanged();
-                leer.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                leer.setVisibility(zeilen.isEmpty() ? View.VISIBLE : View.GONE);
             });
         }).start();
     }
 
     private void zeigeSortierMenue() {
         String[] opt = {getString(R.string.sort_date_new), getString(R.string.sort_date_old), getString(R.string.sort_name),
-                getString(R.string.sort_place), getString(R.string.sort_size)};
+                getString(R.string.sort_place), getString(R.string.sort_size), getString(R.string.sort_author)};
         new AlertDialog.Builder(this).setTitle(R.string.sort_title)
                 .setSingleChoiceItems(opt, sortModus, (d, w) -> {
                     sortModus = w;

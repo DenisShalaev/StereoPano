@@ -141,6 +141,9 @@
     <string name="sort_name">Имя (А–Я)</string>
     <string name="sort_place">Место</string>
     <string name="sort_size">Размер файла</string>
+    <string name="sort_author">Автор</string>
+    <string name="group_no_place">Без места</string>
+    <string name="group_no_author">Без автора</string>
     <string name="storage_permission_needed">Чтобы читать панорамы других приложений, нужно разрешение на чтение фото.</string>
     <string name="sec_files">Файлы и метаданные</string>
     <string name="set_author_t">Имя автора</string>

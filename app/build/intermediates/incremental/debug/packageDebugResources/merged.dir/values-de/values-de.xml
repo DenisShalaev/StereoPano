@@ -35,6 +35,8 @@
     <string name="finish_first">Bitte zuerst die Aufnahme beenden.</string>
     <string name="gallery_empty">Noch keine Aufnahmen.</string>
     <string name="gallery_title">Meine Panoramen</string>
+    <string name="group_no_author">Ohne Autor</string>
+    <string name="group_no_place">Ohne Ort</string>
     <string name="guides_off">Leitpunkte aus</string>
     <string name="guides_on">Leitpunkte an</string>
     <string name="gyro_off">Gyroskop aus</string>
@@ -136,6 +138,7 @@
     <string name="set_tempo_t">Ziel-Tempo</string>
     <string name="settings_title">Einstellungen</string>
     <string name="share_title">Panorama teilen</string>
+    <string name="sort_author">Autor</string>
     <string name="sort_date_new">Datum (neueste zuerst)</string>
     <string name="sort_date_old">Datum (älteste zuerst)</string>
     <string name="sort_name">Name (A–Z)</string>
