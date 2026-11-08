@@ -465,8 +465,86 @@ final class StereoStitcher {
      *  - d > 0 (Sensor eilt voraus): fehlendes Stueck stammt aus der getrennten Erweiterung (x >= W).
      */
     static void closeLoop(int[] px, int[] ext, int extW, int w, int h, double d, int startCol) {
-        int[] lin = new int[w];                       // Kreis des Auges, linear ab Startspalte
+        closeLoop(px, ext, extW, w, h, d, startCol, null);
+    }
+
+    /** Pixel an der (gebrochenen) Position label des Kreises (label >= w: Erweiterung); 0 = keine Daten. */
+    private static int sampleLabel(int[] px, int[] ext, int extW, int w, int startCol, int v, double label) {
+        if (label < 0) return 0;
+        int i0 = (int) label;
+        double fr = label - i0;
+        int a = rawAt(px, ext, extW, w, startCol, v, i0);
+        int b = rawAt(px, ext, extW, w, startCol, v, i0 + 1);
+        if (a == 0 || b == 0) return a != 0 ? a : b;
+        return 0xFF000000
+                | ((int) (((a >> 16) & 255) * (1 - fr) + ((b >> 16) & 255) * fr + 0.5) << 16)
+                | ((int) (((a >> 8) & 255) * (1 - fr) + ((b >> 8) & 255) * fr + 0.5) << 8)
+                | (int) ((a & 255) * (1 - fr) + (b & 255) * fr + 0.5);
+    }
+
+    private static int rawAt(int[] px, int[] ext, int extW, int w, int startCol, int v, int i) {
+        if (i < w) return px[v * w + Math.floorMod(startCol + i, w)];
+        return i - w < extW ? ext[v * extW + i - w] : 0;
+    }
+
+    /**
+     * Wie viele Spalten (ab Kreisanfang) liegen auch am Ende des Kreises vor (Erweiterung)? Dort sieht man dieselben
+     * Strahlen zweimal: am Anfang und am Ende der Aufnahme.
+     */
+    static int seamLength(int[] ext, int extW, int w, int h, double d) {
         double scale = w / (w - d);
+        int maxJ = -1;
+        for (int j = extW - 1; j >= 0 && maxJ < 0; j--) {
+            int cnt = 0;
+            for (int v = h / 4; v < 3 * h / 4; v += 4) if (ext[v * extW + j] != 0) cnt++;
+            if (cnt > (h / 2 / 4) * 0.6) maxJ = j;
+        }
+        if (maxJ < 0) return 0;
+        double ppd = w / 360.0;
+        double o = Math.min((w + maxJ - 1) / scale - w, Math.min(EXT_DEG * ppd - 2, w / 4.0));
+        return o < ppd ? 0 : (int) o;
+    }
+
+    private static int lum(int c) { return (77 * ((c >> 16) & 255) + 150 * ((c >> 8) & 255) + 29 * (c & 255)) >> 8; }
+
+    private static double smooth01(double x) { x = x < 0 ? 0 : (x > 1 ? 1 : x); return x * x * (3 - 2 * x); }
+
+    /**
+     * Kreisschluss (siehe oben) und - wenn seam != null - Nahtglaettung: Am Anfang des Kreises sind dieselben Strahlen
+     * zweimal aufgenommen (Anfang und Ende). Weicht die Kameraposition am Ende etwas ab (Parallaxe naher Objekte,
+     * Hand wandert), passen beide nicht zusammen: Doppelbilder und Versatz an der Naht. Hier wird die Fortsetzung des
+     * Endes (Erweiterung) ueber die Strecke O allmaehlich so verschoben, dass sie bei t = O genau auf den Anfang passt,
+     * und dort uebergeblendet. Es gibt keinen Sprung mehr, nur eine leichte Streckung ueber O Spalten.
+     * seam = {Zustand (0 = noch zu messen), O, rx, ry, gain}; beide Augen verwenden dieselbe Verschiebung.
+     */
+    static void closeLoop(int[] px, int[] ext, int extW, int w, int h, double d, int startCol, double[] seam) {
+        double scale = w / (w - d);
+        final int O = seam == null ? 0 : (int) seam[1];
+        final int Rm = O > 0 ? (int) Math.max(8, Math.min(0.6 * O, 5.0 * w / 360.0)) : 0;
+        final int Ry = O > 0 ? (int) Math.max(6, 3.0 * w / 360.0) : 0;
+        int[] aL = null, bL = null;          // Luma von A (Anfang) und B (Fortsetzung des Endes), -1 = keine Daten
+        int bw = O + 2 * Rm;
+        int[] aRGB = null, bRGB = null;
+        if (O > 0) {
+            aRGB = new int[O * h];
+            bRGB = new int[bw * h];
+            for (int v = 0; v < h; v++) {
+                for (int t = 0; t < O; t++) aRGB[v * O + t] = sampleLabel(px, ext, extW, w, startCol, v, t * scale);
+                for (int j = 0; j < bw; j++) bRGB[v * bw + j] = sampleLabel(px, ext, extW, w, startCol, v, (w + j - Rm) * scale);
+            }
+            if (seam[0] == 0) {
+                aL = new int[O * h];
+                bL = new int[bw * h];
+                for (int i = 0; i < aL.length; i++) aL[i] = aRGB[i] == 0 ? -1 : lum(aRGB[i]);
+                for (int i = 0; i < bL.length; i++) bL[i] = bRGB[i] == 0 ? -1 : lum(bRGB[i]);
+                seam[2] = 0; seam[3] = 0; seam[4] = 1;
+                double[] r = alignSeam(aL, bL, O, bw, h, Rm, Ry);
+                if (r != null) { seam[2] = r[0]; seam[3] = r[1]; seam[4] = r[2]; }
+                seam[0] = 1;
+            }
+        }
+
+        int[] lin = new int[w];                       // Kreis des Auges, linear ab Startspalte
         for (int v = 0; v < h; v++) {
             int base = v * w, ebase = v * extW;
             for (int u = 0; u < w; u++) lin[u] = px[base + Math.floorMod(startCol + u, w)];
@@ -486,6 +564,106 @@ final class StereoStitcher {
                 px[base + Math.floorMod(startCol + t, w)] = out;
             }
         }
+
+        if (O > 0 && seam[0] == 1 && (seam[2] != 0 || seam[3] != 0 || Math.abs(seam[4] - 1) > 0.02)) {
+            double rx = seam[2], ry = seam[3], g = seam[4];
+            for (int v = 0; v < h; v++) {
+                for (int t = 0; t < O; t++) {
+                    double wgt = smooth01((double) t / O);
+                    double bx = t + wgt * rx + Rm, by = v + wgt * ry;
+                    int c = bilinearRGB(bRGB, bw, h, bx, by);
+                    if (c == 0) continue;                                  // keine Daten: Anfang (A) bleibt stehen
+                    double gain = Math.pow(g, wgt);
+                    double al = smooth01(((double) t / O - 0.7) / 0.3);    // letztes Drittel: in A uebergehen
+                    int a = aRGB[v * O + t];
+                    int rr = (int) (((c >> 16) & 255) * gain), gg = (int) (((c >> 8) & 255) * gain), bb = (int) ((c & 255) * gain);
+                    if (a != 0 && al > 0) {
+                        rr = (int) (rr * (1 - al) + ((a >> 16) & 255) * al);
+                        gg = (int) (gg * (1 - al) + ((a >> 8) & 255) * al);
+                        bb = (int) (bb * (1 - al) + (a & 255) * al);
+                    }
+                    px[v * w + Math.floorMod(startCol + t, w)] = 0xFF000000 | (Math.min(255, rr) << 16) | (Math.min(255, gg) << 8) | Math.min(255, bb);
+                }
+            }
+        }
+    }
+
+    private static int bilinearRGB(int[] a, int aw, int h, double x, double y) {
+        int x0 = (int) Math.floor(x), y0 = (int) Math.floor(y);
+        if (x0 < 0 || y0 < 0 || x0 + 1 >= aw || y0 + 1 >= h) return 0;
+        double fx = x - x0, fy = y - y0;
+        int c00 = a[y0 * aw + x0], c10 = a[y0 * aw + x0 + 1], c01 = a[(y0 + 1) * aw + x0], c11 = a[(y0 + 1) * aw + x0 + 1];
+        if (c00 == 0 || c10 == 0 || c01 == 0 || c11 == 0) return 0;
+        int out = 0xFF000000;
+        for (int s = 0; s <= 16; s += 8) {
+            double top = ((c00 >> s) & 255) * (1 - fx) + ((c10 >> s) & 255) * fx;
+            double bot = ((c01 >> s) & 255) * (1 - fx) + ((c11 >> s) & 255) * fx;
+            out |= ((int) (top * (1 - fy) + bot * fy + 0.5)) << s;
+        }
+        return out;
+    }
+
+    /**
+     * Sucht die Verschiebung (rx, ry), mit der die Fortsetzung des Endes (B) auf den Anfang (A) passt, sowie einen
+     * Helligkeitsfaktor. null, wenn nichts Sicheres gefunden wird (dann bleibt es bei der reinen Ueberblendung ohne Verschiebung).
+     */
+    private static double[] alignSeam(int[] a, int[] b, int O, int bw, int h, int Rm, int Ry) {
+        final int ts = 3, vs = 4;
+        double ma = 0, mb = 0;
+        int na = 0, nb = 0;
+        for (int v = 0; v < h; v += vs) for (int t = 0; t < O; t += ts) {
+            int x = a[v * O + t]; if (x >= 0) { ma += x; na++; }
+            int y = b[v * bw + t + Rm]; if (y >= 0) { mb += y; nb++; }
+        }
+        if (na < 200 || nb < 200) return null;
+        ma /= na; mb /= nb;
+        // Struktur im Anfang? (ohne Struktur ist die Suche wertlos)
+        double va = 0;
+        for (int v = 0; v < h; v += vs) for (int t = 0; t < O; t += ts) { int x = a[v * O + t]; if (x >= 0) va += (x - ma) * (x - ma); }
+        if (va / na < 25) return new double[]{0, 0, clampG(ma / Math.max(1, mb))};
+
+        double c0 = seamCost(a, b, O, bw, h, 0, 0, ma, mb, ts, vs, Rm);
+        if (Double.isNaN(c0)) return null;
+        double best = c0; int bx = 0, by = 0;
+        for (int dy = -Ry; dy <= Ry; dy += 4) for (int dx = -Rm; dx <= Rm; dx += 4) {
+            double c = seamCost(a, b, O, bw, h, dx, dy, ma, mb, ts, vs, Rm);
+            if (!Double.isNaN(c) && c < best) { best = c; bx = dx; by = dy; }
+        }
+        int cx = bx, cy = by;
+        for (int dy = cy - 3; dy <= cy + 3; dy++) for (int dx = cx - 3; dx <= cx + 3; dx++) {
+            if (Math.abs(dx) > Rm || Math.abs(dy) > Ry) continue;
+            double c = seamCost(a, b, O, bw, h, dx, dy, ma, mb, ts, vs, Rm);
+            if (!Double.isNaN(c) && c < best) { best = c; bx = dx; by = dy; }
+        }
+        if (best > 0.85 * c0 || Math.abs(bx) >= Rm || Math.abs(by) >= Ry) { bx = 0; by = 0; }   // keine klare Verbesserung / Rand
+        // Helligkeitsfaktor bei der gefundenen Verschiebung
+        double sb = 0; int nn = 0;
+        for (int v = 0; v < h; v += vs) for (int t = 0; t < O; t += ts) {
+            int vy = v + by; if (vy < 0 || vy >= h) continue;
+            int y = b[vy * bw + t + bx + Rm]; int x = a[v * O + t];
+            if (x >= 0 && y >= 0) { sb += y; nn++; }
+        }
+        double g = nn > 100 ? ma / Math.max(1, sb / nn) : 1;
+        return new double[]{bx, by, clampG(g)};
+    }
+
+    private static double clampG(double g) { return g < 0.7 ? 0.7 : (g > 1.4 ? 1.4 : g); }
+
+    /** Mittlere absolute Differenz (nach Abzug der Mittelwerte) von A und B(t+dx, v+dy); NaN bei zu wenig Ueberlappung. */
+    private static double seamCost(int[] a, int[] b, int O, int bw, int h, int dx, int dy, double ma, double mb, int ts, int vs, int Rm) {
+        double s = 0; int n = 0, tot = 0;
+        for (int v = 0; v < h; v += vs) {
+            int vy = v + dy;
+            for (int t = 0; t < O; t += ts) {
+                tot++;
+                if (vy < 0 || vy >= h) continue;
+                int x = a[v * O + t], y = b[vy * bw + t + dx + Rm];
+                if (x < 0 || y < 0) continue;
+                s += Math.abs((x - ma) - (y - mb));
+                n++;
+            }
+        }
+        return n < 0.5 * tot || n < 200 ? Double.NaN : s / n;
     }
 
     // ------------------------------------------------------------------ Bewegte Objekte
@@ -907,20 +1085,25 @@ final class StereoStitcher {
         eyeR.fw = null;
         // Kreisschluss nur bei vollem Kreis (Teilpanoramen werden nicht veraendert)
         r.closureShiftPx = 0;
-        if (r.complete && closureEnabled && closureSamples.size() >= 4) {
-            java.util.List<Double> sv = new java.util.ArrayList<>(closureSamples);
-            java.util.Collections.sort(sv);
-            double med = sv.get(sv.size() / 2);
-            java.util.List<Double> dev = new java.util.ArrayList<>();
-            for (double q : sv) dev.add(Math.abs(q - med));
-            java.util.Collections.sort(dev);
-            double mad = dev.get(dev.size() / 2);
-            double maxShift = (EXT_DEG - 0.5) * panoW / 360.0;       // mehr als ~8 Grad Drift ist unplausibel
-            if (Math.abs(med) >= 1.5 && Math.abs(med) <= maxShift && mad <= Math.max(3.0, 0.35 * Math.abs(med))) {
-                closeLoop(r.left, extL, extW, panoW, panoH, med, (int) eyeL.start);
-                closeLoop(r.right, extR, extW, panoW, panoH, med, (int) eyeR.start);
-                r.closureShiftPx = med;
+        if (r.complete && closureEnabled) {
+            double d = 0;
+            if (closureSamples.size() >= 4) {
+                java.util.List<Double> sv = new java.util.ArrayList<>(closureSamples);
+                java.util.Collections.sort(sv);
+                double med = sv.get(sv.size() / 2);
+                java.util.List<Double> dev = new java.util.ArrayList<>();
+                for (double q : sv) dev.add(Math.abs(q - med));
+                java.util.Collections.sort(dev);
+                double mad = dev.get(dev.size() / 2);
+                double maxShift = (EXT_DEG - 0.5) * panoW / 360.0;       // mehr als ~8 Grad Drift ist unplausibel
+                if (Math.abs(med) >= 1.5 && Math.abs(med) <= maxShift && mad <= Math.max(3.0, 0.35 * Math.abs(med))) d = med;
             }
+            // Nahtglaettung: gemeinsame Strecke O beider Augen
+            int oL = seamLength(extL, extW, panoW, panoH, d), oR = seamLength(extR, extW, panoW, panoH, d);
+            double[] seam = {0, Math.min(oL, oR), 0, 0, 1};
+            closeLoop(r.left, extL, extW, panoW, panoH, d, (int) eyeL.start, seam);
+            closeLoop(r.right, extR, extW, panoW, panoH, d, (int) eyeR.start, seam);
+            r.closureShiftPx = d;
         }
         if (sharpen > 0.01f) {
             sharpenLuma(r.left, panoW, panoH, sharpen);
