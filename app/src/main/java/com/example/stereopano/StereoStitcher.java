@@ -1464,6 +1464,9 @@ final class StereoStitcher {
             sharpenLuma(r.left, panoW, panoH, sharpen);
             sharpenLuma(r.right, panoW, panoH, sharpen);
         }
+        r.diag += String.format(java.util.Locale.US, " | stop: cov=%d/%d/%d win=%.2f mp=%.1f ed=%s hint=%s cn=%.1f",
+                eyeL.covered, eyeR.covered, panoW, win, maxPsi, Double.isNaN(loopEd) ? "nan" : String.format(java.util.Locale.US, "%.2f", loopEd),
+                Double.isNaN(recentHint()) ? "nan" : String.format(java.util.Locale.US, "%.1f", recentHint()), closureNeedDeg());
         trimRows(r);
         cached = r;
         return r;
