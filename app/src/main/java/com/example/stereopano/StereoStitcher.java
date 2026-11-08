@@ -643,8 +643,13 @@ final class StereoStitcher {
         return (int) Math.max(1, Math.min(panoW, Math.ceil(L * panoW / 360.0)));
     }
 
+    /** Zulaessig fehlende Spalten (wie die Luecken, die result() ueberbrueckt): meist die ersten Spalten, bevor die Drehung begann. */
+    private int gapTol() { return Math.max(4, (int) (panoW * 0.004)); }
+
     private boolean coveredUpTo(Eye e, int need) {
-        for (int i = 0; i < need; i++) if (e.colW[(int) Math.floorMod(e.start + i, (long) panoW)] < W_MIN) return false;
+        int miss = 0, tol = gapTol();
+        for (int i = 0; i < need; i++)
+            if (e.colW[(int) Math.floorMod(e.start + i, (long) panoW)] < W_MIN && ++miss > tol) return false;
         return true;
     }
 
@@ -1313,7 +1318,7 @@ final class StereoStitcher {
             double hint = recentHint();
             if (!Double.isNaN(hint) && maxRaw + hint < 360.0 + win + LOOP_MARGIN_DEG && maxRaw < hintCap) return false;
         }
-        if (!(eyeL.covered >= panoW && eyeR.covered >= panoW)) return false;
+        if (!(eyeL.covered >= panoW - gapTol() && eyeR.covered >= panoW - gapTol())) return false;
         return maxPsi >= 360.0 + win + closureNeedDeg();
     }
 
@@ -1339,9 +1344,9 @@ final class StereoStitcher {
         double ed = loopEnabled ? loopError() : Double.NaN;
         if (!Double.isNaN(ed) && ed > 0) {                 // Sensor hinkt nach: der Kreis ist schon bei weniger als 360 Sensorgrad zu
             int need = needCols(ed);
-            return Math.min(1.0, Math.min(eyeL.covered, eyeR.covered) / (double) need);
+            return Math.min(1.0, (Math.min(eyeL.covered, eyeR.covered) + gapTol()) / (double) need);
         }
-        return Math.min(eyeL.covered, eyeR.covered) / (double) panoW;
+        return Math.min(1.0, (Math.min(eyeL.covered, eyeR.covered) + gapTol()) / (double) panoW);
     }
 
     // ------------------------------------------------------------------ Ergebnis
