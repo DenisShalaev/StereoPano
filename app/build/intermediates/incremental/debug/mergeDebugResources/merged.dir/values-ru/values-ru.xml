@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about_text">StereoPano %1$s\nИзменения сохраняются сразу.</string>
+    <string name="account_failed">Не удалось открыть выбор аккаунта.</string>
     <string name="camera_error">Ошибка камеры %1$d</string>
     <string name="camera_permission_needed">Нужно разрешение на использование камеры.</string>
     <string name="camera_session_failed">Не удалось открыть сеанс камеры.</string>
@@ -33,6 +34,7 @@
     <string name="exported">Сохранено в Pictures/PanoExport</string>
     <string name="exporting">Экспорт …</string>
     <string name="finish_first">Сначала завершите съёмку.</string>
+    <string name="from_google">Аккаунт Google</string>
     <string name="gallery_empty">Пока нет снимков.</string>
     <string name="gallery_title">Мои панорамы</string>
     <string name="group_no_author">Без автора</string>
@@ -98,7 +100,7 @@
     <string name="set_angle_t">Стереоугол</string>
     <string name="set_audio_d">Записывать окружающий звук (сохраняется внутри .vr.jpg).</string>
     <string name="set_audio_t">Записывать звук</string>
-    <string name="set_author_d">Записывается в каждую новую панораму (ищется в галереях и Google Фото). Оставьте пустым, чтобы имя не сохранялось.</string>
+    <string name="set_author_d">Записывается в каждую новую панораму (ищется в галереях и Google Фото). Оставьте пустым, чтобы имя не сохранялось. Подставляет адрес электронной почты выбранного аккаунта Google.</string>
     <string name="set_author_t">Имя автора</string>
     <string name="set_compass_d">Ориентировать панораму по сторонам света (если это сохранено в снимке).</string>
     <string name="set_compass_t">Компас</string>

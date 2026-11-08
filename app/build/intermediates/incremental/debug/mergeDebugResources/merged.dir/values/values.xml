@@ -3,6 +3,7 @@
     <color name="ic_launcher_background">#0B1F3A</color>
     <color name="launcher_background">#1565C0</color>
     <string name="about_text">StereoPano %1$s\nChanges are saved immediately.</string>
+    <string name="account_failed">Could not open the account chooser.</string>
     <string name="app_name" translatable="false">StereoPano</string>
     <string name="camera_error">Camera error %1$d</string>
     <string name="camera_permission_needed">The camera permission is required.</string>
@@ -36,6 +37,7 @@
     <string name="exported">Saved to Pictures/PanoExport</string>
     <string name="exporting">Exporting …</string>
     <string name="finish_first">Finish the recording first.</string>
+    <string name="from_google">Google account</string>
     <string name="gallery_empty">No panoramas yet.</string>
     <string name="gallery_title">My panoramas</string>
     <string name="group_no_author">No author</string>
@@ -104,7 +106,7 @@
     <string name="set_angle_t">Stereo angle</string>
     <string name="set_audio_d">Also record ambient sound (stored in the .vr.jpg).</string>
     <string name="set_audio_t">Record sound</string>
-    <string name="set_author_d">Stored in every new panorama (searchable in galleries and Google Photos). Leave empty to store no name.</string>
+    <string name="set_author_d">Stored in every new panorama (searchable in galleries and Google Photos). Leave empty to store no name. Inserts the e-mail address of the chosen Google account.</string>
     <string name="set_author_t">Author name</string>
     <string name="set_compass_d">Align the panorama to real compass directions (if stored in the image).</string>
     <string name="set_compass_t">Compass</string>

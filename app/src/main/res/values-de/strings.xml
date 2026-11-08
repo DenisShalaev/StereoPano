@@ -147,9 +147,11 @@
     <string name="storage_permission_needed">Zum Lesen von Panoramen anderer Apps wird die Berechtigung zum Lesen von Fotos benötigt.</string>
     <string name="sec_files">Dateien &amp; Metadaten</string>
     <string name="set_author_t">Autorenname</string>
-    <string name="set_author_d">Wird in jedes neue Panorama geschrieben (in Galerien und Google Fotos durchsuchbar). Leer lassen, um keinen Namen zu speichern.</string>
+    <string name="set_author_d">Wird in jedes neue Panorama geschrieben (in Galerien und Google Fotos durchsuchbar). Leer lassen, um keinen Namen zu speichern. Fügt die E-Mail-Adresse des gewählten Google-Kontos ein.</string>
     <string name="set_loc_t">Ort speichern</string>
     <string name="set_loc_d">Schreibt GPS-Position und Ortsnamen (Stadt, Region) als Tags und EXIF in die Datei. Ausschalten, wenn Sie Panoramen öffentlich teilen und Ihren Standort nicht speichern wollen.</string>
     <string name="set_all_t">Panoramen anderer Apps zeigen</string>
     <string name="set_all_d">Listet zusätzlich jede .vr.jpg auf dem Gerät (z. B. von Cardboard Camera oder älteren Pixel-Handys). Benötigt die Berechtigung zum Lesen von Fotos.</string>
+    <string name="from_google">Google-Konto</string>
+    <string name="account_failed">Kontoauswahl konnte nicht geöffnet werden.</string>
 </resources>

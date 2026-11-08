@@ -1,7 +1,9 @@
 package com.example.stereopano;
 
 import android.app.Activity;
+import android.accounts.AccountManager;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -265,6 +267,33 @@ public class SettingsActivity extends Activity {
                 }).show());
     }
 
+    private static final int REQ_KONTO = 21;
+    private TextView autorWert;
+
+    @SuppressWarnings("deprecation")
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req == REQ_KONTO && res == RESULT_OK && data != null) {
+            String n = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+            if (n != null && !n.trim().isEmpty()) {
+                sp.edit().putString(Settings.K_AUTHOR, n.trim()).apply();
+                if (autorWert != null) autorWert.setText(n.trim());
+            }
+        }
+    }
+
+    /** Google-Konto waehlen (Systemdialog, keine Berechtigung noetig); liefert die E-Mail-Adresse des Kontos. */
+    @SuppressWarnings("deprecation")
+    private void waehleKonto() {
+        try {
+            Intent i = AccountManager.newChooseAccountIntent(null, null, new String[]{"com.google"}, null, null, null, null);
+            startActivityForResult(i, REQ_KONTO);
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.account_failed, Toast.LENGTH_SHORT).show();
+        }
+    }
+
     /** Zeile mit einem Textwert (z. B. Autorenname); Antippen oeffnet ein Eingabefenster. */
     private void textfeld(int titel, int info, String key) {
         LinearLayout k = karte();
@@ -274,6 +303,7 @@ public class SettingsActivity extends Activity {
         String cur = sp.getString(key, "");
         TextView wert = text(cur == null || cur.isEmpty() ? "\u2014" : cur, AKZENT, 14);
         zeile.addView(wert);
+        if (Settings.K_AUTHOR.equals(key)) autorWert = wert;
         k.addView(zeile);
         TextView i = text(getString(info), GRAU, 12);
         i.setPadding(0, dp(2), 0, 0);
@@ -283,8 +313,10 @@ public class SettingsActivity extends Activity {
             et.setSingleLine(true);
             et.setText(sp.getString(key, ""));
             et.setSelection(et.getText().length());
-            new AlertDialog.Builder(this).setTitle(getString(titel)).setView(et)
-                    .setNegativeButton(R.string.cancel, null)
+            AlertDialog.Builder db = new AlertDialog.Builder(this).setTitle(getString(titel)).setView(et)
+                    .setNegativeButton(R.string.cancel, null);
+            if (Settings.K_AUTHOR.equals(key)) db.setNeutralButton(R.string.from_google, (dlg, w) -> waehleKonto());
+            db
                     .setPositiveButton(android.R.string.ok, (dlg, w) -> {
                         String t = et.getText().toString().trim();
                         sp.edit().putString(key, t).apply();

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about_text">StereoPano %1$s\nÄnderungen werden sofort gespeichert.</string>
+    <string name="account_failed">Kontoauswahl konnte nicht geöffnet werden.</string>
     <string name="camera_error">Kamerafehler %1$d</string>
     <string name="camera_permission_needed">Die Kamera-Berechtigung wird benötigt.</string>
     <string name="camera_session_failed">Kamera-Sitzung fehlgeschlagen.</string>
@@ -33,6 +34,7 @@
     <string name="exported">Gespeichert in Bilder/PanoExport</string>
     <string name="exporting">Exportiere …</string>
     <string name="finish_first">Bitte zuerst die Aufnahme beenden.</string>
+    <string name="from_google">Google-Konto</string>
     <string name="gallery_empty">Noch keine Aufnahmen.</string>
     <string name="gallery_title">Meine Panoramen</string>
     <string name="group_no_author">Ohne Autor</string>
@@ -98,7 +100,7 @@
     <string name="set_angle_t">Stereo-Winkel</string>
     <string name="set_audio_d">Umgebungston mit aufzeichnen (wird im .vr.jpg gespeichert).</string>
     <string name="set_audio_t">Ton aufnehmen</string>
-    <string name="set_author_d">Wird in jedes neue Panorama geschrieben (in Galerien und Google Fotos durchsuchbar). Leer lassen, um keinen Namen zu speichern.</string>
+    <string name="set_author_d">Wird in jedes neue Panorama geschrieben (in Galerien und Google Fotos durchsuchbar). Leer lassen, um keinen Namen zu speichern. Fügt die E-Mail-Adresse des gewählten Google-Kontos ein.</string>
     <string name="set_author_t">Autorenname</string>
     <string name="set_compass_d">Panorama nach Himmelsrichtungen ausrichten (falls im Bild gespeichert).</string>
     <string name="set_compass_t">Kompass</string>

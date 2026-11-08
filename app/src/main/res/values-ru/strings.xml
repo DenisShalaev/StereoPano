@@ -147,9 +147,11 @@
     <string name="storage_permission_needed">Чтобы читать панорамы других приложений, нужно разрешение на чтение фото.</string>
     <string name="sec_files">Файлы и метаданные</string>
     <string name="set_author_t">Имя автора</string>
-    <string name="set_author_d">Записывается в каждую новую панораму (ищется в галереях и Google Фото). Оставьте пустым, чтобы имя не сохранялось.</string>
+    <string name="set_author_d">Записывается в каждую новую панораму (ищется в галереях и Google Фото). Оставьте пустым, чтобы имя не сохранялось. Подставляет адрес электронной почты выбранного аккаунта Google.</string>
     <string name="set_loc_t">Сохранять место</string>
     <string name="set_loc_d">Записывает GPS-координаты и названия мест (город, регион) в файл как теги и EXIF. Выключите, если делитесь панорамами публично и не хотите сохранять своё местоположение.</string>
     <string name="set_all_t">Показывать панорамы других приложений</string>
     <string name="set_all_d">Дополнительно показывает все файлы .vr.jpg на устройстве (например, от Cardboard Camera или старых Pixel). Нужно разрешение на чтение фото.</string>
+    <string name="from_google">Аккаунт Google</string>
+    <string name="account_failed">Не удалось открыть выбор аккаунта.</string>
 </resources>
