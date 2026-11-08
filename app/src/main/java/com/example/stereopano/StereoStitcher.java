@@ -106,8 +106,11 @@ final class StereoStitcher {
     private final java.util.ArrayList<Double> closureSamples = new java.util.ArrayList<>();
     /** Zum Testen abschaltbar. */
     static boolean closureEnabled = true;
+    static boolean loopEnabled = true;               // Kreisschluss-Erkennung durch Bildvergleich mit dem Anfang
+    private static final double LOOP_FROM_DEG = 280.0;   // ab hier wird nach dem Anfang des Panoramas gesucht
+    private static final double LOOP_MARGIN_DEG = 3.0;   // so weit hinter den Anfang weiterdrehen (Ueberlappung fuer die Naht)
     private static final double CLOSE_FROM_DEG = 357.0;   // ab hier werden die Bilder mit dem Anfang verglichen
-    private static final double EXT_DEG = 9.0;             // so weit ueber 360 Grad hinaus wird getrennt gespeichert (Erweiterung)
+    private static final double EXT_DEG = 24.0;             // so weit ueber 360 Grad hinaus wird getrennt gespeichert (Erweiterung)
     private double stepEma = 0.3;      // typischer Winkelabstand zwischen zwei Bildern (Grad)
     private double curWs = 1.0;     // Gewichtsfaktor des aktuellen Bildes
     private double win;                // aktuelle halbe Fensterbreite (mindestens deltaDeg, waechst bei niedriger Bildrate)
@@ -237,8 +240,14 @@ final class StereoStitcher {
         curEps = eps;
         double psi0 = psiRaw + eps;
         win = Math.max(deltaDeg, 0.8 * Math.max(stepEma, step < 4.0 ? step : 0));
-        // Drift des Kreises messen: letzte Bilder gegen den Anfang des Panoramas (nur kurz vor/nach 360 Grad)
-        if (closureEnabled && psi0 >= CLOSE_FROM_DEG && psi0 <= 372.0 && closureSamples.size() < 40) {
+        // Kreisschluss erkennen: Das Bild wird mit dem Anfang des Panoramas verglichen. Kommt die Kamera in die Startlage
+        // zurueck, ist dort KEINE Parallaxe (gleicher Ort, gleiche Richtung): der Winkelfehler des Sensors laesst sich direkt messen.
+        if (loopEnabled && psiRaw >= LOOP_FROM_DEG && psiRaw <= 400.0 && loopSamples.size() < 400) {
+            double ed = measureLoop(f, rot);
+            if (!Double.isNaN(ed)) loopSamples.add(new double[]{psiRaw, ed});
+        }
+        // (alte, eng begrenzte Messung - nur noch Reserve, wenn die neue nichts findet)
+        if (closureEnabled && !loopEnabled && psi0 >= CLOSE_FROM_DEG && psi0 <= 372.0 && closureSamples.size() < 40) {
             double m = measureClosure(f, rot);
             if (!Double.isNaN(m)) closureSamples.add(m);
         }
@@ -468,6 +477,149 @@ final class StereoStitcher {
         return sub;
     }
 
+    // ------------------------------------------------------------------ Kreisschluss-Erkennung
+
+    /**
+     * Sucht die ersten Spalten des Panoramas (Anfang) im aktuellen Bild, in einem weiten Bereich (+-45 Grad). Rueckgabe:
+     * Fehler des Sensorwinkels in Grad (wirklicher Winkel = Sensorwinkel + Rueckgabe; positiv = Sensor hinkt nach) oder NaN.
+     */
+    private double measureLoop(Frame f, float[] R) {
+        Eye e = eyeL;
+        final int NC = 10;
+        long xa = (long) Math.ceil((e.offsetDeg + 0.3) / 360.0 * panoW - 0.5);
+        long xb = (long) Math.floor((e.offsetDeg + 12.0) / 360.0 * panoW - 0.5);
+        if (xb < xa) return Double.NaN;
+        int[] cols = new int[NC];
+        long[] xs = new long[NC];
+        int nc = 0;
+        long step = Math.max(1, (xb - xa + 1) / NC);
+        for (long x = xa; x <= xb && nc < NC; x += step) {
+            int col = (int) Math.floorMod(x, (long) panoW);
+            if (e.colW[col] >= W_REF) { cols[nc] = col; xs[nc] = x; nc++; }
+        }
+        if (nc < 4) return Double.NaN;
+        int vs = Math.max(3, (NC * panoH) / 1200);
+        int cap = NC * (panoH / vs + 2);
+        double[] lx = new double[cap], ly = new double[cap], lr = new double[cap];
+        double qx = R[6], qy = R[7], qz = R[8];
+        int n = 0;
+        double ppd = panoW / 360.0;
+        int rng = (int) Math.round(45.0 * ppd);
+        for (int k = 0; k < nc; k++) {
+            double phi = (xs[k] + 0.5) / panoW * 360.0;
+            double A = Math.toRadians(az0Deg + phi - curEps);
+            double sA = Math.sin(A), cA = Math.cos(A);
+            double px = sA * R[0] + cA * R[3];
+            double py = sA * R[1] + cA * R[4];
+            double pz = sA * R[2] + cA * R[5];
+            for (int v = 3; v < panoH - 3 && n < cap; v += vs) {
+                int idx = v * panoW + cols[k];
+                int wp = e.w[idx] & 0xFF;
+                if (wp < 3) continue;
+                double cx = cosE[v] * px + sinE[v] * qx;
+                double cy = cosE[v] * py + sinE[v] * qy;
+                double cz = cosE[v] * pz + sinE[v] * qz;
+                if (cz > -1e-3) continue;
+                double ux = frameW / 2.0 + fPx * cx / -cz;
+                double uy = frameH / 2.0 - fPx * cy / -cz;
+                if (uy < 8 || uy > frameH - 9 || ux < -rng - 8 || ux > frameW + rng + 8) continue;
+                lx[n] = ux; ly[n] = uy;
+                lr[n] = (77.0 * e.r[idx] + 150.0 * e.g[idx] + 29.0 * e.b[idx]) / (256.0 * wp);
+                n++;
+            }
+        }
+        if (n < 300) return Double.NaN;
+        double m = 0, m2 = 0;
+        for (int i = 0; i < n; i++) { m += lr[i]; m2 += lr[i] * lr[i]; }
+        m /= n;
+        if (m2 / n - m * m < 36) return Double.NaN;                   // zu wenig Struktur
+
+        int nS = (2 * rng) / 4 + 1;
+        double[] ncc = new double[nS];
+        double best = -2; int bi = -1;
+        for (int i = 0; i < nS; i++) {
+            ncc[i] = nccAt(f, lx, ly, lr, n, -rng + 4 * i);
+            if (ncc[i] > best) { best = ncc[i]; bi = i; }
+        }
+        if (bi < 0 || best < 0.5) return Double.NaN;
+        int bestS = -rng + 4 * bi;
+        double bv = best;
+        for (int s = bestS - 3; s <= bestS + 3; s++) {
+            double c = nccAt(f, lx, ly, lr, n, s);
+            if (c > bv) { bv = c; bestS = s; }
+        }
+        double second = -2;                                           // zweitbester, deutlich entfernter Treffer
+        for (int i = 1; i < nS - 1; i++) {                           // nur echte lokale Maxima zaehlen (glatter Abfall neben dem Treffer ist kein Zweiter)
+            if (Math.abs((-rng + 4 * i) - bestS) < 24) continue;
+            if (ncc[i] >= ncc[i - 1] && ncc[i] >= ncc[i + 1] && ncc[i] > second) second = ncc[i];
+        }
+        if (bv - second < 0.08) return Double.NaN;                    // nicht eindeutig (sich wiederholende Struktur)
+        double cm = nccAt(f, lx, ly, lr, n, bestS - 1), cp = nccAt(f, lx, ly, lr, n, bestS + 1);
+        double den = cm - 2 * bv + cp, sub = bestS;
+        if (den < -1e-9) sub += Math.max(-0.5, Math.min(0.5, 0.5 * (cm - cp) / den));
+        // Pixelverschiebung -> Winkel (an der mittleren Bildposition der Stichproben)
+        double ux0 = 0; int cnt = 0;
+        for (int i = 0; i < n; i += 5) { ux0 += lx[i]; cnt++; }
+        ux0 /= Math.max(1, cnt);
+        double a0 = Math.atan((ux0 - frameW / 2.0) / fPx), a1 = Math.atan((ux0 + sub - frameW / 2.0) / fPx);
+        double err = -Math.toDegrees(a1 - a0);
+        return Math.abs(err) > 46 ? Double.NaN : err;
+    }
+
+    /** Normierte Kreuzkorrelation der Referenz mit dem um s Pixel verschobenen Bild (-2 = zu wenig Ueberlappung). */
+    private double nccAt(Frame f, double[] lx, double[] ly, double[] lr, int n, int s) {
+        double sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0;
+        int cnt = 0;
+        for (int i = 0; i < n; i++) {
+            double ux = lx[i] + s;
+            if (ux < 4 || ux > frameW - 5) continue;
+            double a = lumaBilinear(f, ux, ly[i]), b = lr[i];
+            sa += a; sb += b; saa += a * a; sbb += b * b; sab += a * b;
+            cnt++;
+        }
+        if (cnt < Math.max(150, 0.3 * n)) return -2;
+        double va = saa - sa * sa / cnt, vb = sbb - sb * sb / cnt;
+        if (va < 1e-6 || vb < 1e-6) return -2;
+        return (sab - sa * sb / cnt) / Math.sqrt(va * vb);
+    }
+
+    /** Sensorfehler aus den Messungen nahe der Startlage (dort stoert keine Parallaxe); NaN = noch nicht sicher. */
+    private double loopError() {
+        java.util.ArrayList<Double> near = new java.util.ArrayList<>();
+        for (int i = loopSamples.size() - 1; i >= 0 && near.size() < 6; i--) {
+            double[] q = loopSamples.get(i);
+            if (Math.abs(q[0] + q[1] - 360.0) <= 6.0) near.add(q[1]);
+        }
+        if (near.size() < 3) return Double.NaN;
+        double mn = 1e9, mx = -1e9;
+        for (double v : near) { mn = Math.min(mn, v); mx = Math.max(mx, v); }
+        if (mx - mn > 4.0) return Double.NaN;            // Messungen widersprechen sich (Parallaxe/falscher Treffer): nicht verwenden
+        return median(near);
+    }
+
+    /** Grobe Schaetzung aus den allerletzten Messungen (auch weit vom Anfang, evtl. mit etwas Parallaxe); NaN = keine. */
+    private double recentHint() {
+        java.util.ArrayList<Double> r = new java.util.ArrayList<>();
+        for (int i = loopSamples.size() - 1; i >= 0 && r.size() < 4; i--) {
+            double[] q = loopSamples.get(i);
+            if (q[0] >= maxRaw - 6.0) r.add(q[1]);
+        }
+        return r.size() >= 2 ? median(r) : Double.NaN;
+    }
+
+    private boolean loopReady() { return loopEnabled && !Double.isNaN(loopError()); }
+
+    /** Spalten (ab Augen-Start), die fuer den geschlossenen Kreis gebraucht werden. */
+    private int needCols(double err) {
+        double L = 360.0 - err;
+        return (int) Math.max(1, Math.min(panoW, Math.ceil(L * panoW / 360.0)));
+    }
+
+    private boolean coveredUpTo(Eye e, int need) {
+        for (int i = 0; i < need; i++) if (e.colW[(int) Math.floorMod(e.start + i, (long) panoW)] < W_MIN) return false;
+        return true;
+    }
+
     /** Erweiterung (Spalten ueber 360 Grad hinaus) in RGB umrechnen. */
     private int[] finishExt(Eye e) {
         int[] out = new int[extW * panoH];
@@ -514,7 +666,7 @@ final class StereoStitcher {
      * Wie viele Spalten (ab Kreisanfang) liegen auch am Ende des Kreises vor (Erweiterung)? Dort sieht man dieselben
      * Strahlen zweimal: am Anfang und am Ende der Aufnahme.
      */
-    static int seamLength(int[] ext, int extW, int w, int h, double d) {
+    static int seamLength(int[] ext, int extW, int w, int h, double d, int lastMainLabel) {
         double scale = w / (w - d);
         int maxJ = -1;
         for (int j = extW - 1; j >= 0 && maxJ < 0; j--) {
@@ -522,9 +674,9 @@ final class StereoStitcher {
             for (int v = h / 4; v < 3 * h / 4; v += 4) if (ext[v * extW + j] != 0) cnt++;
             if (cnt > (h / 2 / 4) * 0.6) maxJ = j;
         }
-        if (maxJ < 0) return 0;
+        int maxLabel = maxJ >= 0 ? w + maxJ : lastMainLabel;     // ohne Erweiterung: Daten reichen bis zur letzten Spalte des Kreises
         double ppd = w / 360.0;
-        double o = Math.min((w + maxJ - 1) / scale - w, Math.min(EXT_DEG * ppd - 2, w / 4.0));
+        double o = Math.min((maxLabel - 1) / scale - w, Math.min(EXT_DEG * ppd - 2, w / 4.0));
         return o < ppd ? 0 : (int) o;
     }
 
@@ -881,11 +1033,12 @@ final class StereoStitcher {
      * Schaetzt, um wie viele Bildpixel (dx, dy) das neue Bild gegenueber dem Sensorwert verschoben werden muss,
      * damit es zum bereits aufgebauten Panorama (linkes Auge) passt. Rueckgabe {0,0}, wenn nichts Sicheres gefunden wird.
      */
+    private final java.util.ArrayList<double[]> loopSamples = new java.util.ArrayList<>();   // {Sensorwinkel, Fehler in Grad}
     private int regCalls = 0, regOk = 0;
     private double maxRaw = 0, epsMin = 0, epsMax = 0;
     private double smDx = 0, smDy = 0;
     private double eps = 0, curEps = 0;                 // gelernte Korrektur des Sensorwinkels (Grad) bzw. der aktuell benutzte Wert
-    static boolean epsEnabled = true;                // Winkelkorrektur nach Bild (zum Testen abschaltbar)
+    static boolean epsEnabled = false;                // Winkelkorrektur nach Bild (zum Testen abschaltbar)
     static double EPS_GAIN = 1.0;          // gemessener Rest ist differenziell (gegen schon korrigierten Inhalt) -> Einheitsverstaerkung, sonst geht Drift verloren
     private static final double EPS_MAX_STEP = 0.4;      // max. Korrektur pro Bild (Grad)
 
@@ -1011,10 +1164,27 @@ final class StereoStitcher {
     /** Fertig: alle Spalten beider Augen abgedeckt UND mindestens 360 Grad + Ueberlappung gedreht. */
     /** Wie viele Grad muss noch gedreht werden, bis isComplete() erreicht ist (nur wenn alle Spalten schon abgedeckt sind). */
     synchronized double remainingDeg() {
+        double ed = loopEnabled ? loopError() : Double.NaN;
+        if (!Double.isNaN(ed)) return Math.max(0, 360.0 + win + LOOP_MARGIN_DEG - (maxRaw + ed));
+        if (loopEnabled) {
+            double hint = recentHint();
+            if (!Double.isNaN(hint)) return Math.max(0, 360.0 + win + LOOP_MARGIN_DEG - (maxRaw + hint));
+        }
         return Math.max(0, 360.0 + win + closureNeedDeg() - maxPsi);
     }
 
     synchronized boolean isComplete() {
+        double ed = loopEnabled ? loopError() : Double.NaN;
+        if (!Double.isNaN(ed)) {
+            // Der Kreis ist geschlossen, sobald der WIRKLICHE Winkel (Sensor + Fehler) den Anfang um die Ueberlappung passiert hat
+            int need = needCols(ed);
+            if (!coveredUpTo(eyeL, need) || !coveredUpTo(eyeR, need)) return false;
+            return maxRaw + ed >= 360.0 + win + LOOP_MARGIN_DEG;
+        }
+        if (loopEnabled) {                                   // noch nicht gesichert: deutet die grobe Schaetzung auf "Anfang noch nicht erreicht"?
+            double hint = recentHint();
+            if (!Double.isNaN(hint) && maxRaw + hint < 360.0 + win + LOOP_MARGIN_DEG && maxRaw < 394.0) return false;
+        }
         if (!(eyeL.covered >= panoW && eyeR.covered >= panoW)) return false;
         return maxPsi >= 360.0 + win + closureNeedDeg();
     }
@@ -1038,6 +1208,11 @@ final class StereoStitcher {
 
     /** Fortschritt 0..1 (Anteil abgedeckter Spalten des schwaecheren Auges). */
     synchronized double progress() {
+        double ed = loopEnabled ? loopError() : Double.NaN;
+        if (!Double.isNaN(ed) && ed > 0) {                 // Sensor hinkt nach: der Kreis ist schon bei weniger als 360 Sensorgrad zu
+            int need = needCols(ed);
+            return Math.min(1.0, Math.min(eyeL.covered, eyeR.covered) / (double) need);
+        }
         return Math.min(eyeL.covered, eyeR.covered) / (double) panoW;
     }
 
@@ -1061,8 +1236,13 @@ final class StereoStitcher {
         int gapMax = Math.max(4, (int) (panoW * 0.004));      // nur winzige Luecken (<0.4 %) werden interpoliert
         boolean[] ok = new boolean[panoW];
         int nOk = 0;
+        // Kreisschluss erkannt und Sensor hinkt nach: der Kreis ist schon vor Spalte panoW zu; der Rest wird nicht gebraucht
+        final double loopEd = loopEnabled ? loopError() : Double.NaN;
+        final int needL = Double.isNaN(loopEd) ? panoW : needCols(loopEd);
         for (int x = 0; x < panoW; x++) {
-            ok[x] = eyeL.colW[x] >= W_MIN && eyeR.colW[x] >= W_MIN;
+            boolean unusedL = needL < panoW && Math.floorMod(x - eyeL.start, (long) panoW) >= needL;
+            boolean unusedR = needL < panoW && Math.floorMod(x - eyeR.start, (long) panoW) >= needL;
+            ok[x] = (unusedL || eyeL.colW[x] >= W_MIN) && (unusedR || eyeR.colW[x] >= W_MIN);
             if (ok[x]) nOk++;
         }
         boolean[] okb = ok.clone();
@@ -1124,7 +1304,11 @@ final class StereoStitcher {
         r.closureShiftPx = 0;
         if (r.complete && closureEnabled) {
             double d = 0;
-            if (closureSamples.size() >= 4) {
+            if (!Double.isNaN(loopEd)) {
+                // gemessener Sensorfehler -> wirkliche Kreislaenge L (in Sensorgrad) -> lineare Streckung auf genau panoW Spalten
+                double scaleL = (360.0 - loopEd) / 360.0;
+                d = panoW * (1.0 - 1.0 / scaleL);
+            } else if (closureSamples.size() >= 4) {
                 java.util.List<Double> sv = new java.util.ArrayList<>(closureSamples);
                 java.util.Collections.sort(sv);
                 double med = sv.get(sv.size() / 2);
@@ -1136,16 +1320,17 @@ final class StereoStitcher {
                 if (Math.abs(med) >= 1.5 && Math.abs(med) <= maxShift && mad <= Math.max(3.0, 0.35 * Math.abs(med))) d = med;
             }
             // Nahtglaettung: gemeinsame Strecke O beider Augen
-            int oL = seamLength(extL, extW, panoW, panoH, d), oR = seamLength(extR, extW, panoW, panoH, d);
+            int hint = (int) Math.min(panoW - 1, Math.floor(maxRaw * panoW / 360.0));
+            int oL = seamLength(extL, extW, panoW, panoH, d, hint), oR = seamLength(extR, extW, panoW, panoH, d, hint);
             double[] seam = {0, Math.min(oL, oR), 0, 0, 1};
             closeLoop(r.left, extL, extW, panoW, panoH, d, (int) eyeL.start, seam);
             closeLoop(r.right, extR, extW, panoW, panoH, d, (int) eyeR.start, seam);
             r.closureShiftPx = d;
-            r.diag = String.format(java.util.Locale.US, "raw=%.1f eff=%.1f eps=%.1f[%.1f..%.1f] reg=%d/%d clo=%.1fpx n=%d seam=%d,%.0f,%.0f,%.2f ppd=%.1f",
-                    maxRaw, maxPsi, eps, epsMin, epsMax, regOk, regCalls, d, closureSamples.size(), (int) seam[1], seam[2], seam[3], seam[4], panoW / 360.0);
+            r.diag = String.format(java.util.Locale.US, "raw=%.1f err=%.1f loopN=%d d=%.1fpx seam=%d,%.0f,%.0f,%.2f reg=%d/%d ppd=%.1f",
+                    maxRaw, Double.isNaN(loopEd) ? 0.0 : loopEd, loopSamples.size(), d, (int) seam[1], seam[2], seam[3], seam[4], regOk, regCalls, panoW / 360.0);
         }
         if (r.diag.isEmpty())
-            r.diag = String.format(java.util.Locale.US, "partial raw=%.1f eff=%.1f eps=%.1f reg=%d/%d", maxRaw, maxPsi, eps, regOk, regCalls);
+            r.diag = String.format(java.util.Locale.US, "partial raw=%.1f loopN=%d reg=%d/%d", maxRaw, loopSamples.size(), regOk, regCalls);
         if (sharpen > 0.01f) {
             sharpenLuma(r.left, panoW, panoH, sharpen);
             sharpenLuma(r.right, panoW, panoH, sharpen);

@@ -861,7 +861,7 @@ public class CaptureActivity extends Activity {
             final double rest = j.s.remainingDeg();
             runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp, rest));
         }
-        if (j.s.isComplete() || j.s.effPsi(j.psi) >= 370.0 || j.psi >= 385.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad
+        if (j.s.isComplete() || j.s.effPsi(j.psi) >= 370.0 || j.psi >= 395.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad
     }
 
     private void aktualisiereAnzeige(double fort, double pitch, double psi, double stepDeg, double rest) {
