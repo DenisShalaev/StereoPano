@@ -976,11 +976,11 @@ public class CaptureActivity extends Activity {
         m.fullW = e.panoW;
         m.fullH = e.panoW / 2;
         m.cropW = e.width;
-        m.cropH = e.panoH;
+        m.cropH = e.height;
         m.cropLeft = e.x0;
         // Fenster um die Sollneigung nach oben (oder unten) verschieben; Zeilen = echte, schwerkraftausgerichtete Elevation
         int shift = (int) Math.round(e.elCenterDeg * e.panoW / 360.0);
-        m.cropTop = Math.max(0, Math.min(m.fullH - e.panoH, (m.fullH - e.panoH) / 2 - shift));
+        m.cropTop = Math.max(0, Math.min(m.fullH - e.height, (m.fullH - e.panoH) / 2 - shift + e.y0));
         m.author = Settings.author(this);
         java.util.List<String> tags = new java.util.ArrayList<>();
         tags.add("StereoPano");
@@ -1014,7 +1014,7 @@ public class CaptureActivity extends Activity {
     }
 
     private static byte[] jpeg(int[] pixel, StereoStitcher.Result e, int qualitaet) {
-        Bitmap bmp = Bitmap.createBitmap(pixel, e.x0, e.panoW, e.width, e.panoH, Bitmap.Config.ARGB_8888);
+        Bitmap bmp = Bitmap.createBitmap(pixel, e.y0 * e.panoW + e.x0, e.panoW, e.width, e.height, Bitmap.Config.ARGB_8888);
         ByteArrayOutputStream bo = new ByteArrayOutputStream(4_000_000);
         bmp.compress(Bitmap.CompressFormat.JPEG, qualitaet, bo);
         bmp.recycle();

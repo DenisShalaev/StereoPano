@@ -45,6 +45,7 @@ final class StereoStitcher {
         int[] left, right;
         int panoW, panoH;      // Groesse des vollen 360-Grad-Arrays
         int x0, width;         // verwertbarer Ausschnitt (Spalten)
+        int y0 = 0, height;    // verwertbare Zeilen (ohne schwarze Raender oben/unten); height 0 = noch nicht bestimmt
         boolean complete;
         double closureShiftPx;   // angewandter Kreisschluss (0 = keiner)
         String diag = "";        // Kurzprotokoll der Aufnahme (fuer die Fehlersuche, steht in den Tags)
@@ -1335,8 +1336,40 @@ final class StereoStitcher {
             sharpenLuma(r.left, panoW, panoH, sharpen);
             sharpenLuma(r.right, panoW, panoH, sharpen);
         }
+        trimRows(r);
         cached = r;
         return r;
+    }
+
+    /**
+     * Beschnitt oben und unten: laengster Zeilenbereich, in dem beide Augen (fast) keine unbedeckten Pixel haben.
+     * Schwarze, ausgefranste Raender (Neigung, Sichtfeld-Ende) fallen so weg; Miniatur und Betrachter zeigen ein gerades Bild.
+     */
+    private void trimRows(Result r) {
+        r.y0 = 0;
+        r.height = panoH;
+        if (r.width <= 0 || r.left == null || r.right == null) return;
+        int tol = Math.max(1, (int) (r.width * 0.003));
+        int bestStart = 0, bestLen = 0, runStart = 0, runLen = 0;
+        for (int y = 0; y < panoH; y++) {
+            int holes = 0;
+            int base = y * panoW + r.x0;
+            for (int x = 0; x < r.width && holes <= tol; x++) {
+                if ((r.left[base + x] >>> 24) == 0) holes++;
+                if ((r.right[base + x] >>> 24) == 0) holes++;
+            }
+            if (holes <= tol) {
+                if (runLen == 0) runStart = y;
+                runLen++;
+                if (runLen > bestLen) { bestLen = runLen; bestStart = runStart; }
+            } else {
+                runLen = 0;
+            }
+        }
+        final int margin = 3;                                  // Randzeilen sind oft unsauber (Interpolation, Schaerfen)
+        if (bestLen - 2 * margin < panoH / 2) return;          // Bild kaum nutzbar: lieber nichts abschneiden
+        r.y0 = bestStart + margin;
+        r.height = bestLen - 2 * margin;
     }
 
     private int[] finish(Eye e, int gapMax, float sharpen) {
