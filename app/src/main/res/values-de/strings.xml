@@ -154,4 +154,5 @@
     <string name="set_all_d">Listet zusätzlich jede .vr.jpg auf dem Gerät (z. B. von Cardboard Camera oder älteren Pixel-Handys). Benötigt die Berechtigung zum Lesen von Fotos.</string>
     <string name="from_google">Google-Konto</string>
     <string name="account_failed">Kontoauswahl konnte nicht geöffnet werden.</string>
+    <string name="hint_finish">Fast fertig – noch etwa %1$d° weiter drehen.</string>
 </resources>

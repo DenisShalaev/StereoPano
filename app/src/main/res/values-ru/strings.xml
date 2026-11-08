@@ -154,4 +154,5 @@
     <string name="set_all_d">Дополнительно показывает все файлы .vr.jpg на устройстве (например, от Cardboard Camera или старых Pixel). Нужно разрешение на чтение фото.</string>
     <string name="from_google">Аккаунт Google</string>
     <string name="account_failed">Не удалось открыть выбор аккаунта.</string>
+    <string name="hint_finish">Почти готово – поверните ещё примерно на %1$d°.</string>
 </resources>

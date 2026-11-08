@@ -45,6 +45,7 @@
     <string name="gyro_on">Гироскоп включён</string>
     <string name="half_off">Half-SBS выключен</string>
     <string name="half_on">Half-SBS включён</string>
+    <string name="hint_finish">Почти готово – поверните ещё примерно на %1$d°.</string>
     <string name="hint_hold_upright">Держите телефон вертикально (наклон %1$d°).</string>
     <string name="hint_keep_turning">Продолжайте поворот …</string>
     <string name="hint_slower">Мало кадров (слабый свет) – поворачивайтесь медленнее.</string>

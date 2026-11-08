@@ -6,7 +6,7 @@ package com.example.stereopano;
  * damit sich jede Datei einer bestimmten Programmversion zuordnen laesst.
  */
 final class BuildInfo {
-    static final int NUMBER = 13;
+    static final int NUMBER = 14;
     static final String TAG = "build:" + NUMBER;
 
     private BuildInfo() { }

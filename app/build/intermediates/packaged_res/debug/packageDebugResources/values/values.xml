@@ -48,6 +48,7 @@
     <string name="gyro_on">Gyroscope on</string>
     <string name="half_off">Half side-by-side off</string>
     <string name="half_on">Half side-by-side on</string>
+    <string name="hint_finish">Almost done – turn about %1$d° more.</string>
     <string name="hint_hold_upright">Hold the phone upright (tilt %1$d°).</string>
     <string name="hint_keep_turning">Keep turning …</string>
     <string name="hint_slower">Low frame rate (dim light) – turn more slowly.</string>

@@ -164,4 +164,5 @@
     <string name="set_all_d">Also lists every .vr.jpg on the device (e.g. from Cardboard Camera or older Pixel phones). Needs permission to read photos.</string>
     <string name="from_google">Google account</string>
     <string name="account_failed">Could not open the account chooser.</string>
+    <string name="hint_finish">Almost done – turn about %1$d° more.</string>
 </resources>

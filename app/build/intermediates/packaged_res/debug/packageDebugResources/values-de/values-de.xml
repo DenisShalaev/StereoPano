@@ -45,6 +45,7 @@
     <string name="gyro_on">Gyroskop an</string>
     <string name="half_off">Half-SBS aus</string>
     <string name="half_on">Half-SBS an</string>
+    <string name="hint_finish">Fast fertig – noch etwa %1$d° weiter drehen.</string>
     <string name="hint_hold_upright">Telefon senkrecht halten (Neigung %1$d°).</string>
     <string name="hint_keep_turning">Weiter drehen …</string>
     <string name="hint_slower">Wenig Bilder (schwaches Licht) – langsamer drehen.</string>

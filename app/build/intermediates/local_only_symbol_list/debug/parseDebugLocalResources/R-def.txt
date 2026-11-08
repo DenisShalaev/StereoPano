@@ -81,6 +81,7 @@ string gyro_off
 string gyro_on
 string half_off
 string half_on
+string hint_finish
 string hint_hold_upright
 string hint_keep_turning
 string hint_slower

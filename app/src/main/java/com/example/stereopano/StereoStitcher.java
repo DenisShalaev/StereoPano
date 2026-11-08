@@ -264,6 +264,9 @@ final class StereoStitcher {
             }
             dy = smDy;
         }
+        // Plausibilitaet: Sensorfehler liegen im Bereich weniger Prozent; die Korrektur bleibt in diesem Rahmen
+        double lim = 0.15 * Math.max(psiRaw, 30.0) + 2.0;
+        eps = clampD(eps, lim);
         curEps = eps;
         final double psi = psiRaw + eps;
         lastDx = dx;
@@ -998,6 +1001,11 @@ final class StereoStitcher {
     // ------------------------------------------------------------------ Status
 
     /** Fertig: alle Spalten beider Augen abgedeckt UND mindestens 360 Grad + Ueberlappung gedreht. */
+    /** Wie viele Grad muss noch gedreht werden, bis isComplete() erreicht ist (nur wenn alle Spalten schon abgedeckt sind). */
+    synchronized double remainingDeg() {
+        return Math.max(0, 360.0 + win + closureNeedDeg() - maxPsi);
+    }
+
     synchronized boolean isComplete() {
         if (!(eyeL.covered >= panoW && eyeR.covered >= panoW)) return false;
         return maxPsi >= 360.0 + win + closureNeedDeg();
@@ -1011,7 +1019,7 @@ final class StereoStitcher {
         if (!closureEnabled || closureSamples.size() < 3) return 0;
         double med = median(closureSamples);
         if (med <= 1.5) return 0;
-        return Math.min(EXT_DEG - 1.0, med / (panoW / 360.0) + 0.4);
+        return Math.min(3.0, med / (panoW / 360.0) + 0.4);       // hoechstens 3 Grad zusaetzlich drehen (Rest glaettet die Naht)
     }
 
     private static double median(java.util.List<Double> l) {

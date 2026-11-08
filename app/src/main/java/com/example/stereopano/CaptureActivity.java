@@ -858,17 +858,19 @@ public class CaptureActivity extends Activity {
             final double pitch = gameYaw.pitch() - startEl;
             final double p = j.psi;
             final double stp = j.s.stepDeg();
-            runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp));
+            final double rest = j.s.remainingDeg();
+            runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp, rest));
         }
-        if (j.s.isComplete() || j.s.effPsi(j.psi) >= 370.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad
+        if (j.s.isComplete() || j.s.effPsi(j.psi) >= 370.0 || j.psi >= 385.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad
     }
 
-    private void aktualisiereAnzeige(double fort, double pitch, double psi, double stepDeg) {
+    private void aktualisiereAnzeige(double fort, double pitch, double psi, double stepDeg, double rest) {
         fortschritt.setProgress((int) (fort * 1000));
         String hinweis;
         if (psi < -10) hinweis = getString(R.string.hint_turn_right);
         else if (Math.abs(pitch) > 15) hinweis = getString(R.string.hint_hold_upright, (int) Math.round(Math.abs(pitch)));
         else if (stepDeg > 0.7) hinweis = getString(R.string.hint_slower);        // wenige Bilder pro Grad -> Luecken/Streifen
+        else if (fort > 0.995 && rest > 0) hinweis = getString(R.string.hint_finish, (int) Math.ceil(rest));   // fast fertig: wie weit noch
         else hinweis = getString(R.string.hint_keep_turning);
         info.setText(getString(R.string.progress_fmt, (int) Math.round(fort * 360), hinweis));
     }
