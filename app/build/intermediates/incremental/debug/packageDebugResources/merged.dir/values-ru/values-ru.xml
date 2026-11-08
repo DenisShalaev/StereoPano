@@ -145,7 +145,7 @@
     <string name="set_stab_t">Фильтр движения</string>
     <string name="set_tempo_d">Скорость красной точки-ориентира. 8°/с ≈ 45 с на оборот.</string>
     <string name="set_tempo_t">Целевой темп</string>
-    <string name="set_wcorr_d">Датчик поворота занижает поворот (на этом телефоне около 4,5 %). Увеличьте, если конец панорамы заходит на начало; уменьшите, если остаётся разрыв.</string>
+    <string name="set_wcorr_d">Датчик поворота занижает поворот (на этом телефоне около 3,5 %). Увеличьте, если конец панорамы заходит на начало; уменьшите, если остаётся разрыв.</string>
     <string name="set_wcorr_t">Поправка угла</string>
     <string name="settings_title">Настройки</string>
     <string name="share_title">Поделиться панорамой</string>

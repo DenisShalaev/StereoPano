@@ -580,7 +580,7 @@ final class StereoStitcher {
             if (Math.abs((-rng + 4 * i) - bestS) < 24) continue;
             if (ncc[i] >= ncc[i - 1] && ncc[i] >= ncc[i + 1] && ncc[i] > second) second = ncc[i];
         }
-        if (bv - second < 0.08) { ldbg[4]++; return Double.NaN; }     // nicht eindeutig (sich wiederholende Struktur)
+        if (bv - second < 0.05) { ldbg[4]++; return Double.NaN; }     // nicht eindeutig (sich wiederholende Struktur)
         double cm = nccAt(f, lx, ly, lr, n, bestS - 1), cp = nccAt(f, lx, ly, lr, n, bestS + 1);
         double den = cm - 2 * bv + cp, sub = bestS;
         if (den < -1e-9) sub += Math.max(-0.5, Math.min(0.5, 0.5 * (cm - cp) / den));

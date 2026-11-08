@@ -54,7 +54,7 @@ final class Settings {
     static double zielTempo(Context c) { return p(c).getInt(K_TEMPO, 8); }
     static int maxBreite(Context c) { return p(c).getInt(K_BREITE, 1920); }
     static long latenzNs(Context c) { return p(c).getInt(K_LATENZ, 0) * 1_000_000L; }
-    static double winkelKorr(Context c) { return p(c).getInt(K_WKORR, 45) / 1000.0; }
+    static double winkelKorr(Context c) { return p(c).getInt(K_WKORR, 35) / 1000.0; }
     static double fpxFaktor(Context c) { return p(c).getInt(K_FPX, 100) / 100.0; }
     /** Maximale Nick-/Kippgeschwindigkeit in Grad/s, bei der ein Bild noch verwendet wird. */
     static double maxNickrate(Context c) {
