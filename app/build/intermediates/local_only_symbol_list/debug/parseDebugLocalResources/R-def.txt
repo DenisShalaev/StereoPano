@@ -37,6 +37,7 @@ mipmap ic_launcher
 mipmap ic_launcher_round
 string about_text
 string account_failed
+string actions
 string app_name
 string camera_error
 string camera_permission_needed
@@ -69,6 +70,7 @@ string export_failed
 string export_no_stereo
 string export_unreadable
 string exported
+string exported_many
 string exporting
 string finish_first
 string from_google

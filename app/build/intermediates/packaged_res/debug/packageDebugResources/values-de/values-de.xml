@@ -2,6 +2,7 @@
 <resources>
     <string name="about_text">StereoPano %1$s\nÄnderungen werden sofort gespeichert.</string>
     <string name="account_failed">Kontoauswahl konnte nicht geöffnet werden.</string>
+    <string name="actions">Aktionen</string>
     <string name="camera_error">Kamerafehler %1$d</string>
     <string name="camera_permission_needed">Die Kamera-Berechtigung wird benötigt.</string>
     <string name="camera_session_failed">Kamera-Sitzung fehlgeschlagen.</string>
@@ -33,6 +34,7 @@
     <string name="export_no_stereo">Kein Stereo-Bild (rechtes Auge) in der Datei.</string>
     <string name="export_unreadable">Bild nicht lesbar.</string>
     <string name="exported">Gespeichert in Bilder/PanoExport</string>
+    <string name="exported_many">%1$d Bilder exportiert</string>
     <string name="exporting">Exportiere …</string>
     <string name="finish_first">Bitte zuerst die Aufnahme beenden.</string>
     <string name="from_google">Google-Konto</string>

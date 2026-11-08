@@ -159,4 +159,6 @@
     <string name="select_all">Alle</string>
     <string name="selected_count">%1$d ausgewählt</string>
     <string name="delete_many_confirm">%1$d Bilder löschen?</string>
+    <string name="actions">Aktionen</string>
+    <string name="exported_many">%1$d Bilder exportiert</string>
 </resources>

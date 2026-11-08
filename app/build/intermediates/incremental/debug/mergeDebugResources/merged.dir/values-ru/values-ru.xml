@@ -2,6 +2,7 @@
 <resources>
     <string name="about_text">StereoPano %1$s\nИзменения сохраняются сразу.</string>
     <string name="account_failed">Не удалось открыть выбор аккаунта.</string>
+    <string name="actions">Действия</string>
     <string name="camera_error">Ошибка камеры %1$d</string>
     <string name="camera_permission_needed">Нужно разрешение на использование камеры.</string>
     <string name="camera_session_failed">Не удалось открыть сеанс камеры.</string>
@@ -33,6 +34,7 @@
     <string name="export_no_stereo">В файле нет стереоизображения (правого глаза).</string>
     <string name="export_unreadable">Не удалось прочитать изображение.</string>
     <string name="exported">Сохранено в Pictures/PanoExport</string>
+    <string name="exported_many">Экспортировано: %1$d</string>
     <string name="exporting">Экспорт …</string>
     <string name="finish_first">Сначала завершите съёмку.</string>
     <string name="from_google">Аккаунт Google</string>

@@ -4,6 +4,7 @@
     <color name="launcher_background">#1565C0</color>
     <string name="about_text">StereoPano %1$s\nChanges are saved immediately.</string>
     <string name="account_failed">Could not open the account chooser.</string>
+    <string name="actions">Actions</string>
     <string name="app_name" translatable="false">StereoPano</string>
     <string name="camera_error">Camera error %1$d</string>
     <string name="camera_permission_needed">The camera permission is required.</string>
@@ -36,6 +37,7 @@
     <string name="export_no_stereo">This file contains no stereo image (right eye).</string>
     <string name="export_unreadable">The image could not be read.</string>
     <string name="exported">Saved to Pictures/PanoExport</string>
+    <string name="exported_many">%1$d images exported</string>
     <string name="exporting">Exporting …</string>
     <string name="finish_first">Finish the recording first.</string>
     <string name="from_google">Google account</string>

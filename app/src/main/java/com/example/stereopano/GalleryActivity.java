@@ -151,8 +151,8 @@ public class GalleryActivity extends Activity {
         });
         auswahlLeiste.addView(alle);
         android.widget.Button del = new android.widget.Button(this);
-        del.setText(R.string.menu_delete);
-        del.setOnClickListener(v -> frageLoeschenAuswahl());
+        del.setText(R.string.actions);
+        del.setOnClickListener(v -> zeigeAuswahlMenue());
         auswahlLeiste.addView(del);
         android.widget.Button abbr = new android.widget.Button(this);
         abbr.setText(R.string.cancel);
@@ -423,6 +423,56 @@ public class GalleryActivity extends Activity {
             }
             final String msg = m;
             runOnUiThread(() -> Toast.makeText(this, msg, Toast.LENGTH_LONG).show());
+        }).start();
+    }
+
+    /** Aktionen fuer alle ausgewaehlten Bilder: dieselben wie im Menue eines einzelnen Bildes. */
+    private void zeigeAuswahlMenue() {
+        if (gewaehlt.isEmpty()) return;
+        String[] eintraege = {getString(R.string.menu_share), getString(R.string.menu_flat), getString(R.string.menu_sbs),
+                getString(R.string.menu_anaglyph), getString(R.string.menu_delete)};
+        new AlertDialog.Builder(this).setTitle(getString(R.string.selected_count, gewaehlt.size())).setItems(eintraege, (d, w) -> {
+            List<Item> sel = ausgewaehlteItems();
+            if (sel.isEmpty()) return;
+            if (w == 0) teilenViele(sel);
+            else if (w == 4) frageLoeschenAuswahl();
+            else exportiereViele(sel, w - 1);
+        }).show();
+    }
+
+    private List<Item> ausgewaehlteItems() {
+        List<Item> out = new ArrayList<>();
+        for (Object z : zeilen)
+            if (z instanceof Item[]) for (Item it : (Item[]) z) if (it != null && gewaehlt.contains(it.id)) out.add(it);
+        return out;
+    }
+
+    private void teilenViele(List<Item> sel) {
+        ArrayList<Uri> uris = new ArrayList<>();
+        for (Item it : sel) uris.add(it.uri);
+        Intent s = new Intent(uris.size() == 1 ? Intent.ACTION_SEND : Intent.ACTION_SEND_MULTIPLE);
+        s.setType("image/jpeg");
+        if (uris.size() == 1) s.putExtra(Intent.EXTRA_STREAM, uris.get(0));
+        else s.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+        s.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(s, getString(R.string.share_title)));
+    }
+
+    private void exportiereViele(List<Item> sel, int art) {
+        Toast.makeText(this, R.string.exporting, Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            int ok = 0;
+            String fehler = null;
+            for (Item it : sel) {
+                try {
+                    Exporter.exportiere(this, it.uri, it.name, art);
+                    ok++;
+                } catch (Exception | OutOfMemoryError e) {
+                    fehler = getString(R.string.export_failed, String.valueOf(e.getMessage()));
+                }
+            }
+            final String m = fehler == null ? getString(R.string.exported_many, ok) : fehler + " (" + ok + "/" + sel.size() + ")";
+            runOnUiThread(() -> { Toast.makeText(this, m, Toast.LENGTH_LONG).show(); beendeAuswahl(); });
         }).start();
     }
 

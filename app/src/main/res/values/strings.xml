@@ -169,4 +169,6 @@
     <string name="select_all">Select all</string>
     <string name="selected_count">%1$d selected</string>
     <string name="delete_many_confirm">Delete %1$d images?</string>
+    <string name="actions">Actions</string>
+    <string name="exported_many">%1$d images exported</string>
 </resources>
