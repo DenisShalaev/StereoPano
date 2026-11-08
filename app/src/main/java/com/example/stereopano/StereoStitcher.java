@@ -426,7 +426,7 @@ final class StereoStitcher {
         long step = Math.max(1, (xb - xa + 1) / REG_COLS);
         for (long x = xa; x <= xb && nc < REG_COLS; x += step) {
             int col = (int) Math.floorMod(x, (long) panoW);
-            if (e.colW[col] >= W_REF) { cols[nc] = col; xs[nc] = x; nc++; }
+            if (e.colW[col] >= 3) { cols[nc] = col; xs[nc] = x; nc++; }
         }
         if (nc < 3) return Double.NaN;
 
@@ -443,7 +443,7 @@ final class StereoStitcher {
             for (int v = 3; v < panoH - 3 && n < regMax; v += 3) {
                 int idx = v * panoW + cols[k];
                 int wp = e.w[idx] & 0xFF;
-                if (wp < 3) continue;
+                if (wp < 2) continue;
                 double cx = cosE[v] * px + sinE[v] * qx;
                 double cy = cosE[v] * py + sinE[v] * qy;
                 double cz = cosE[v] * pz + sinE[v] * qz;
@@ -457,11 +457,11 @@ final class StereoStitcher {
                 n++;
             }
         }
-        if (n < 300) return Double.NaN;
+        if (n < 300) { ldbg[1]++; return Double.NaN; }
         double m = 0, m2 = 0;
         for (int i = 0; i < n; i++) { m += sRef[i]; m2 += sRef[i] * sRef[i]; }
         m /= n;
-        if (m2 / n - m * m < 36) return Double.NaN;                   // zu wenig Struktur
+        if (m2 / n - m * m < 12) { ldbg[2]++; return Double.NaN; }    // zu wenig Struktur
 
         double cost0 = cost(f, n, 0, 0);
         double bestS = 0, bestC = cost0;
@@ -484,7 +484,17 @@ final class StereoStitcher {
      * Sucht die ersten Spalten des Panoramas (Anfang) im aktuellen Bild, in einem weiten Bereich (+-45 Grad). Rueckgabe:
      * Fehler des Sensorwinkels in Grad (wirklicher Winkel = Sensorwinkel + Rueckgabe; positiv = Sensor hinkt nach) oder NaN.
      */
+    /** Zaehler der Ablehnungsgruende von measureLoop (Diagnose): 0 zuwenig Spalten, 1 zuwenig Punkte, 2 flach, 3 NCC klein, 4 mehrdeutig, 5 Bereich, 6 ok, 7 Aufrufe */
+    private final int[] ldbg = new int[8];
+
     private double measureLoop(Frame f, float[] R) {
+        ldbg[7]++;
+        double r = measureLoop2(f, R);
+        if (!Double.isNaN(r)) ldbg[6]++;
+        return r;
+    }
+
+    private double measureLoop2(Frame f, float[] R) {
         Eye e = eyeL;
         final int NC = 10;
         long xa = (long) Math.ceil((e.offsetDeg + 0.3) / 360.0 * panoW - 0.5);
@@ -498,7 +508,7 @@ final class StereoStitcher {
             int col = (int) Math.floorMod(x, (long) panoW);
             if (e.colW[col] >= W_REF) { cols[nc] = col; xs[nc] = x; nc++; }
         }
-        if (nc < 4) return Double.NaN;
+        if (nc < 4) { ldbg[0]++; return Double.NaN; }
         int vs = Math.max(3, (NC * panoH) / 1200);
         int cap = NC * (panoH / vs + 2);
         double[] lx = new double[cap], ly = new double[cap], lr = new double[cap];
@@ -542,7 +552,7 @@ final class StereoStitcher {
             ncc[i] = nccAt(f, lx, ly, lr, n, -rng + 4 * i);
             if (ncc[i] > best) { best = ncc[i]; bi = i; }
         }
-        if (bi < 0 || best < 0.5) return Double.NaN;
+        if (bi < 0 || best < 0.4) { ldbg[3]++; return Double.NaN; }
         int bestS = -rng + 4 * bi;
         double bv = best;
         for (int s = bestS - 3; s <= bestS + 3; s++) {
@@ -554,7 +564,7 @@ final class StereoStitcher {
             if (Math.abs((-rng + 4 * i) - bestS) < 24) continue;
             if (ncc[i] >= ncc[i - 1] && ncc[i] >= ncc[i + 1] && ncc[i] > second) second = ncc[i];
         }
-        if (bv - second < 0.08) return Double.NaN;                    // nicht eindeutig (sich wiederholende Struktur)
+        if (bv - second < 0.08) { ldbg[4]++; return Double.NaN; }     // nicht eindeutig (sich wiederholende Struktur)
         double cm = nccAt(f, lx, ly, lr, n, bestS - 1), cp = nccAt(f, lx, ly, lr, n, bestS + 1);
         double den = cm - 2 * bv + cp, sub = bestS;
         if (den < -1e-9) sub += Math.max(-0.5, Math.min(0.5, 0.5 * (cm - cp) / den));
@@ -564,7 +574,8 @@ final class StereoStitcher {
         ux0 /= Math.max(1, cnt);
         double a0 = Math.atan((ux0 - frameW / 2.0) / fPx), a1 = Math.atan((ux0 + sub - frameW / 2.0) / fPx);
         double err = -Math.toDegrees(a1 - a0);
-        return Math.abs(err) > 46 ? Double.NaN : err;
+        if (Math.abs(err) > 46) { ldbg[5]++; return Double.NaN; }
+        return err;
     }
 
     /** Normierte Kreuzkorrelation der Referenz mit dem um s Pixel verschobenen Bild (-2 = zu wenig Ueberlappung). */
@@ -1327,11 +1338,11 @@ final class StereoStitcher {
             closeLoop(r.left, extL, extW, panoW, panoH, d, (int) eyeL.start, seam);
             closeLoop(r.right, extR, extW, panoW, panoH, d, (int) eyeR.start, seam);
             r.closureShiftPx = d;
-            r.diag = String.format(java.util.Locale.US, "raw=%.1f err=%.1f loopN=%d d=%.1fpx seam=%d,%.0f,%.0f,%.2f reg=%d/%d ppd=%.1f",
-                    maxRaw, Double.isNaN(loopEd) ? 0.0 : loopEd, loopSamples.size(), d, (int) seam[1], seam[2], seam[3], seam[4], regOk, regCalls, panoW / 360.0);
+            r.diag = String.format(java.util.Locale.US, "raw=%.1f err=%.1f loopN=%d d=%.1fpx seam=%d,%.0f,%.0f,%.2f reg=%d/%d ppd=%.1f ld=%s",
+                    maxRaw, Double.isNaN(loopEd) ? 0.0 : loopEd, loopSamples.size(), d, (int) seam[1], seam[2], seam[3], seam[4], regOk, regCalls, panoW / 360.0, java.util.Arrays.toString(ldbg));
         }
         if (r.diag.isEmpty())
-            r.diag = String.format(java.util.Locale.US, "partial raw=%.1f loopN=%d reg=%d/%d", maxRaw, loopSamples.size(), regOk, regCalls);
+            r.diag = String.format(java.util.Locale.US, "partial raw=%.1f loopN=%d reg=%d/%d ld=%s", maxRaw, loopSamples.size(), regOk, regCalls, java.util.Arrays.toString(ldbg));
         if (sharpen > 0.01f) {
             sharpenLuma(r.left, panoW, panoH, sharpen);
             sharpenLuma(r.right, panoW, panoH, sharpen);
