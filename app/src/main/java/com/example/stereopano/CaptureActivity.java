@@ -885,6 +885,8 @@ public class CaptureActivity extends Activity {
         fortschritt.setProgress(0);
     }
 
+    private volatile String lastDiag = "";
+
     private void beendeAufnahme() {
         if (!nimmtAuf) return;
         nimmtAuf = false;
@@ -901,7 +903,7 @@ public class CaptureActivity extends Activity {
             String meldung;
             try {
                 Uri uri = speichere(s, ton, kurs);
-                meldung = getString(R.string.saved_toast);
+                meldung = getString(R.string.saved_toast) + "\n#" + BuildInfo.NUMBER + " " + lastDiag;
             } catch (Exception | OutOfMemoryError e) {
                 meldung = getString(R.string.save_error, String.valueOf(e.getMessage()));
             }
@@ -939,6 +941,8 @@ public class CaptureActivity extends Activity {
         java.util.List<String> tags = new java.util.ArrayList<>();
         tags.add("StereoPano");
         tags.add(BuildInfo.TAG);                      // Programmversion, mit der die Datei erzeugt wurde
+        tags.add("diag:" + e.diag);                   // Kurzprotokoll der Aufnahme (Winkelkorrektur, Kreisschluss, Naht)
+        lastDiag = e.diag;
         tags.addAll(java.util.Arrays.asList(ortTags));
         m.tags = tags.toArray(new String[0]);
         m.lat = ortLat;

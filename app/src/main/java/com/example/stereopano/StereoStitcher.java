@@ -47,6 +47,7 @@ final class StereoStitcher {
         int x0, width;         // verwertbarer Ausschnitt (Spalten)
         boolean complete;
         double closureShiftPx;   // angewandter Kreisschluss (0 = keiner)
+        String diag = "";        // Kurzprotokoll der Aufnahme (fuer die Fehlersuche, steht in den Tags)
         double elCenterDeg;      // Elevation der Panoramamitte (fuer die Metadaten)
     }
 
@@ -231,6 +232,7 @@ final class StereoStitcher {
             if (step < 4.0) firstStep = true;
         }
         lastPsiSeen = psiRaw;
+        if (psiRaw > maxRaw) maxRaw = psiRaw;
         // Wirklicher Drehwinkel = Sensorwinkel + gelernte Korrektur eps (siehe unten). Ab hier rechnen alle Spalten damit.
         curEps = eps;
         double psi0 = psiRaw + eps;
@@ -245,6 +247,8 @@ final class StereoStitcher {
         double dx = 0, dy = 0;
         if (register) {
             double[] s = estimateShift(f, psi0, rot);
+            regCalls++;
+            if (s != null) regOk++;
             if (s == null) {                      // keine Messung moeglich (kaum Struktur): Werte halten bzw. abklingen lassen
                 smDy *= 0.92;
                 smDx *= 0.92;
@@ -268,6 +272,8 @@ final class StereoStitcher {
         double lim = 0.15 * Math.max(psiRaw, 30.0) + 2.0;
         eps = clampD(eps, lim);
         curEps = eps;
+        if (eps > epsMax) epsMax = eps;
+        if (eps < epsMin) epsMin = eps;
         final double psi = psiRaw + eps;
         lastDx = dx;
         lastDy = dy;
@@ -875,6 +881,8 @@ final class StereoStitcher {
      * Schaetzt, um wie viele Bildpixel (dx, dy) das neue Bild gegenueber dem Sensorwert verschoben werden muss,
      * damit es zum bereits aufgebauten Panorama (linkes Auge) passt. Rueckgabe {0,0}, wenn nichts Sicheres gefunden wird.
      */
+    private int regCalls = 0, regOk = 0;
+    private double maxRaw = 0, epsMin = 0, epsMax = 0;
     private double smDx = 0, smDy = 0;
     private double eps = 0, curEps = 0;                 // gelernte Korrektur des Sensorwinkels (Grad) bzw. der aktuell benutzte Wert
     static boolean epsEnabled = true;                // Winkelkorrektur nach Bild (zum Testen abschaltbar)
@@ -1133,7 +1141,11 @@ final class StereoStitcher {
             closeLoop(r.left, extL, extW, panoW, panoH, d, (int) eyeL.start, seam);
             closeLoop(r.right, extR, extW, panoW, panoH, d, (int) eyeR.start, seam);
             r.closureShiftPx = d;
+            r.diag = String.format(java.util.Locale.US, "raw=%.1f eff=%.1f eps=%.1f[%.1f..%.1f] reg=%d/%d clo=%.1fpx n=%d seam=%d,%.0f,%.0f,%.2f ppd=%.1f",
+                    maxRaw, maxPsi, eps, epsMin, epsMax, regOk, regCalls, d, closureSamples.size(), (int) seam[1], seam[2], seam[3], seam[4], panoW / 360.0);
         }
+        if (r.diag.isEmpty())
+            r.diag = String.format(java.util.Locale.US, "partial raw=%.1f eff=%.1f eps=%.1f reg=%d/%d", maxRaw, maxPsi, eps, regOk, regCalls);
         if (sharpen > 0.01f) {
             sharpenLuma(r.left, panoW, panoH, sharpen);
             sharpenLuma(r.right, panoW, panoH, sharpen);
