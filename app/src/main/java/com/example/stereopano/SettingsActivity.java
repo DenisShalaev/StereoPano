@@ -120,6 +120,11 @@ public class SettingsActivity extends Activity {
         schalter(R.string.set_half_t, R.string.set_half_d, Settings.K_HALB, false);
         regler(R.string.set_sbsfov_t, R.string.set_sbsfov_d, Settings.K_SBSFOV, 30, 80, 1, 45, v -> v + "\u00B0");
 
+        abschnitt(R.string.sec_files);
+        textfeld(R.string.set_author_t, R.string.set_author_d, Settings.K_AUTHOR);
+        schalter(R.string.set_loc_t, R.string.set_loc_d, Settings.K_LOC, true);
+        schalter(R.string.set_all_t, R.string.set_all_d, Settings.K_ALL, false);
+
         abschnitt(R.string.sec_about);
         TextView info = new TextView(this);
         info.setText(getString(R.string.about_text, version()));
@@ -258,6 +263,34 @@ public class SettingsActivity extends Activity {
                     sp.edit().putInt(key, werte[w]).apply();
                     wert.setText(labels[w]);
                 }).show());
+    }
+
+    /** Zeile mit einem Textwert (z. B. Autorenname); Antippen oeffnet ein Eingabefenster. */
+    private void textfeld(int titel, int info, String key) {
+        LinearLayout k = karte();
+        LinearLayout zeile = new LinearLayout(this);
+        zeile.setOrientation(LinearLayout.HORIZONTAL);
+        zeile.addView(text(getString(titel), TEXT, 16), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        String cur = sp.getString(key, "");
+        TextView wert = text(cur == null || cur.isEmpty() ? "\u2014" : cur, AKZENT, 14);
+        zeile.addView(wert);
+        k.addView(zeile);
+        TextView i = text(getString(info), GRAU, 12);
+        i.setPadding(0, dp(2), 0, 0);
+        k.addView(i);
+        k.setOnClickListener(v -> {
+            final android.widget.EditText et = new android.widget.EditText(this);
+            et.setSingleLine(true);
+            et.setText(sp.getString(key, ""));
+            et.setSelection(et.getText().length());
+            new AlertDialog.Builder(this).setTitle(getString(titel)).setView(et)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(android.R.string.ok, (dlg, w) -> {
+                        String t = et.getText().toString().trim();
+                        sp.edit().putString(key, t).apply();
+                        wert.setText(t.isEmpty() ? "\u2014" : t);
+                    }).show();
+        });
     }
 
     private static int index(int[] werte, int v) {

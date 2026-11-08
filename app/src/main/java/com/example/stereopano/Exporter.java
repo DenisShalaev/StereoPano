@@ -46,6 +46,8 @@ final class Exporter {
                 VrJpgWriter.Meta mm = new VrJpgWriter.Meta();
                 mm.fullW = m.fullW; mm.fullH = m.fullH; mm.cropW = m.cropW; mm.cropH = m.cropH;
                 mm.cropLeft = m.cropLeft; mm.cropTop = m.cropTop; mm.poseHeading = m.poseHeading;
+                mm.author = m.author;
+                mm.tags = m.tags.toArray(new String[0]);
                 out = VrJpgWriter.flat(sauber, mm);
             } else {
                 out = sauber;

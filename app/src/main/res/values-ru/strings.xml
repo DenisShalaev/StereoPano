@@ -128,4 +128,25 @@
     <string name="set_move_t">Движущиеся объекты</string>
     <string name="set_move_d">Обнаруживает людей и другие движущиеся объекты во время съёмки и заполняет пустоты фоном, снятым в другой момент. Выше – чувствительнее. Лучше всего работает на объектах с текстурой; однотонные объекты могут убираться лишь частично. Требует около 50 МБ памяти и немного вычислений. 0 = выключено. Экспериментально. По умолчанию 0 (выключено).</string>
     <string name="hint_slower">Мало кадров (слабый свет) – поворачивайтесь медленнее.</string>
+    <string name="cd_flash">Фонарик</string>
+    <string name="cd_lens_switch">Сменить объектив</string>
+    <string name="cd_sort">Сортировка</string>
+    <string name="lens_main">Основная камера 1×</string>
+    <string name="lens_ultrawide">Сверхширокоугольная 0,5×</string>
+    <string name="lens_other">Камера %1$s</string>
+    <string name="lens_fmt">Объектив: %1$s</string>
+    <string name="sort_title">Сортировать по</string>
+    <string name="sort_date_new">Дата (сначала новые)</string>
+    <string name="sort_date_old">Дата (сначала старые)</string>
+    <string name="sort_name">Имя (А–Я)</string>
+    <string name="sort_place">Место</string>
+    <string name="sort_size">Размер файла</string>
+    <string name="storage_permission_needed">Чтобы читать панорамы других приложений, нужно разрешение на чтение фото.</string>
+    <string name="sec_files">Файлы и метаданные</string>
+    <string name="set_author_t">Имя автора</string>
+    <string name="set_author_d">Записывается в каждую новую панораму (ищется в галереях и Google Фото). Оставьте пустым, чтобы имя не сохранялось.</string>
+    <string name="set_loc_t">Сохранять место</string>
+    <string name="set_loc_d">Записывает GPS-координаты и названия мест (город, регион) в файл как теги и EXIF. Выключите, если делитесь панорамами публично и не хотите сохранять своё местоположение.</string>
+    <string name="set_all_t">Показывать панорамы других приложений</string>
+    <string name="set_all_d">Дополнительно показывает все файлы .vr.jpg на устройстве (например, от Cardboard Camera или старых Pixel). Нужно разрешение на чтение фото.</string>
 </resources>

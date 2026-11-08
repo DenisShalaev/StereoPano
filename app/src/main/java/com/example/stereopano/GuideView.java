@@ -30,7 +30,9 @@ final class GuideView extends View {
     private float[] rot;
     private double anchor, psi, ziel = Double.NaN, tempo;
     private boolean aufnahme;
-    private double focalRatio = 1;     // Brennweite in Pixeln / Breite des aufrechten Kamerabildes
+    private double focalRatio = 1;
+    private double elVirt;                 // Elevation des virtuellen Horizonts (Sollneigung, z. B. fuer hohe Gebaeude)
+    private final Paint lineReal = new Paint(Paint.ANTI_ALIAS_FLAG);     // Brennweite in Pixeln / Breite des aufrechten Kamerabildes
 
     GuideView(Context c) {
         super(c);
@@ -39,6 +41,9 @@ final class GuideView extends View {
         dot.setStyle(Paint.Style.FILL);
         line.setStyle(Paint.Style.STROKE);
         line.setStrokeWidth(2 * d);
+        lineReal.setStyle(Paint.Style.STROKE);
+        lineReal.setStrokeWidth(1 * d);
+        lineReal.setColor(0x8800BCD4);      // echter (Schwerkraft-)Horizont: duenn, halbtransparentes Cyan
         ring.setStyle(Paint.Style.STROKE);
         ring.setStrokeWidth(3 * d);
         text.setTextSize(11 * d);
@@ -58,7 +63,8 @@ final class GuideView extends View {
      * @param ziel     Soll-Winkel des Tempo-Punktes relativ zu anchor (NaN = keiner)
      * @param tempo    aktuelle Drehgeschwindigkeit in Grad/s (mit Vorzeichen)
      */
-    void setzen(float[] rot, double anchor, double psi, boolean aufnahme, double ziel, double tempo) {
+    void setzen(float[] rot, double anchor, double psi, boolean aufnahme, double ziel, double tempo, double elVirt) {
+        this.elVirt = elVirt;
         this.rot = rot;
         this.anchor = anchor;
         this.psi = psi;
@@ -88,13 +94,17 @@ final class GuideView extends View {
         double cam = anchor + psi;                        // Blickrichtung der Kamera (Welt-Azimut)
 
         // Ausrichtung: Neigung und Kippen aus der Matrix (Blick -Z, rechts +X des Geraetes)
-        double pitch = Math.toDegrees(Math.asin(Math.max(-1, Math.min(1, -rot[8]))));
+        double pitch = Math.toDegrees(Math.asin(Math.max(-1, Math.min(1, -rot[8])))) - elVirt;
         double roll = Math.toDegrees(Math.atan2(rot[6], rot[7]));          // Kippen um die Blickachse
         boolean gerade = Math.abs(pitch) < 3 && Math.abs(roll) < 3;
         int ok = gerade ? 0xFF66FF66 : 0xFFFFC107;
 
         // Horizontlinie
-        float[] l1 = project(cam - 40, 0), l2 = project(cam + 40, 0);
+        if (Math.abs(elVirt) >= 1) {                       // echter Horizont nur zeigen, wenn er vom virtuellen abweicht
+            float[] r1 = project(cam - 40, 0), r2 = project(cam + 40, 0);
+            if (r1 != null && r2 != null) c.drawLine(r1[0], r1[1], r2[0], r2[1], lineReal);
+        }
+        float[] l1 = project(cam - 40, elVirt), l2 = project(cam + 40, elVirt);
         if (l1 != null && l2 != null) {
             line.setColor(ok);
             c.drawLine(l1[0], l1[1], l2[0], l2[1], line);
@@ -103,7 +113,7 @@ final class GuideView extends View {
         // Punktreihe alle 15 Grad (fest im Raum)
         for (int k = 0; k < 24; k++) {
             double deg = k * 15;
-            float[] p = project(anchor + deg, 0);
+            float[] p = project(anchor + deg, elVirt);
             if (p == null || p[0] < -20 || p[0] > w + 20 || p[1] < -20 || p[1] > h + 20) continue;
             boolean gross = k % 6 == 0;
             dot.setColor(k == 0 ? 0xFF4FC3F7 : 0xCCFFFFFF);
@@ -116,7 +126,7 @@ final class GuideView extends View {
         if (aufnahme && !Double.isNaN(ziel)) {
             double delta = ziel - psi;
             farbe = Math.abs(delta) < 6 ? 0xFF66FF66 : Math.abs(delta) < 15 ? 0xFFFFC107 : 0xFFFF5252;
-            float[] p = project(anchor + ziel, 0);
+            float[] p = project(anchor + ziel, elVirt);
             if (p != null && p[0] > 16 * d && p[0] < w - 16 * d && p[1] > 0 && p[1] < h) {
                 fill.setColor(0xFFFF5252);
                 c.drawCircle(p[0], p[1], 10 * d, fill);

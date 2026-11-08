@@ -11,17 +11,20 @@
     <string name="cd_back">Back</string>
     <string name="cd_center">Re-center view</string>
     <string name="cd_compass">Compass</string>
+    <string name="cd_flash">Flashlight</string>
     <string name="cd_gallery">Gallery</string>
     <string name="cd_guides">Guides</string>
     <string name="cd_gyro">Gyroscope</string>
     <string name="cd_half">Half side-by-side</string>
     <string name="cd_lens">Lens correction</string>
+    <string name="cd_lens_switch">Switch lens</string>
     <string name="cd_lock">Lock exposure</string>
     <string name="cd_mode">View mode</string>
     <string name="cd_settings">Settings</string>
     <string name="cd_show_controls">Show controls</string>
     <string name="cd_shutter_start">Start recording</string>
     <string name="cd_shutter_stop">Stop and save</string>
+    <string name="cd_sort">Sort</string>
     <string name="compass_off">Compass off</string>
     <string name="compass_on">Compass on</string>
     <string name="delete_confirm">Delete %1$s?</string>
@@ -47,8 +50,12 @@
     <string name="hint_start">Hold the phone upright with arms stretched out. Tap the shutter, then turn slowly to the right.</string>
     <string name="hint_turn_right">Please turn to the RIGHT.</string>
     <string name="invalid_jpeg">Not a valid JPEG.</string>
+    <string name="lens_fmt">Lens: %1$s</string>
+    <string name="lens_main">Main camera 1×</string>
     <string name="lens_off">Lens correction off</string>
     <string name="lens_on">Lens correction on</string>
+    <string name="lens_other">Camera %1$s</string>
+    <string name="lens_ultrawide">Ultra-wide 0.5×</string>
     <string name="load_error">Could not load: %1$s</string>
     <string name="lock_off">Auto exposure</string>
     <string name="lock_on">Exposure locked while recording</string>
@@ -85,13 +92,18 @@
     <string name="sec_about">About</string>
     <string name="sec_calibration">Calibration</string>
     <string name="sec_capture">Capture</string>
+    <string name="sec_files">Files &amp; metadata</string>
     <string name="sec_viewer">Viewer</string>
     <string name="set_ae_d">Lock exposure and white balance while recording (fewer brightness jumps).</string>
     <string name="set_ae_t">Lock exposure</string>
+    <string name="set_all_d">Also lists every .vr.jpg on the device (e.g. from Cardboard Camera or older Pixel phones). Needs permission to read photos.</string>
+    <string name="set_all_t">Show panoramas of other apps</string>
     <string name="set_angle_d">Distance of the image strips from the image centre. Larger = stronger 3D effect (stereo base ≈ 2 × arm length × sin). Default 3.5°.</string>
     <string name="set_angle_t">Stereo angle</string>
     <string name="set_audio_d">Also record ambient sound (stored in the .vr.jpg).</string>
     <string name="set_audio_t">Record sound</string>
+    <string name="set_author_d">Stored in every new panorama (searchable in galleries and Google Photos). Leave empty to store no name.</string>
+    <string name="set_author_t">Author name</string>
     <string name="set_compass_d">Align the panorama to real compass directions (if stored in the image).</string>
     <string name="set_compass_t">Compass</string>
     <string name="set_delta_d">Width of the soft transition between camera frames. Larger = fewer seams but slightly softer. Default 0.6°.</string>
@@ -112,6 +124,8 @@
     <string name="set_latency_t">Sensor latency</string>
     <string name="set_lens_d">Barrel pre-distortion for Cardboard lenses.</string>
     <string name="set_lens_t">Lens correction (Cardboard)</string>
+    <string name="set_loc_d">Writes GPS position and place names (city, region) into the file as tags and EXIF. Turn off if you share panoramas publicly and do not want your position stored.</string>
+    <string name="set_loc_t">Save location</string>
     <string name="set_move_d">Detects people and other moving objects while you turn and fills the gaps with the background seen at another moment. Higher = more sensitive. Works best on textured objects; plain-coloured objects may be only partly removed. Uses about 50 MB extra memory and some processing. 0 = off. Experimental. Default 0 (off).</string>
     <string name="set_move_t">Moving objects</string>
     <string name="set_quality_d">Quality of the saved panoramas. Default 90.</string>
@@ -128,6 +142,13 @@
     <string name="set_tempo_t">Target pace</string>
     <string name="settings_title">Settings</string>
     <string name="share_title">Share panorama</string>
+    <string name="sort_date_new">Date (newest first)</string>
+    <string name="sort_date_old">Date (oldest first)</string>
+    <string name="sort_name">Name (A–Z)</string>
+    <string name="sort_place">Place</string>
+    <string name="sort_size">File size</string>
+    <string name="sort_title">Sort by</string>
     <string name="stereo_hint">Tap: toolbar · double tap: back to 2D</string>
+    <string name="storage_permission_needed">Reading other apps\' panoramas needs permission to read photos.</string>
     <string name="too_little">Too little captured – turn at least about 20°.</string>
 </resources>

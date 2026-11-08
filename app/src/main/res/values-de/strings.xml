@@ -128,4 +128,25 @@
     <string name="set_move_t">Bewegte Objekte</string>
     <string name="set_move_d">Erkennt Personen und andere bewegte Objekte während des Drehens und füllt die Lücken mit dem Hintergrund aus einem anderen Moment. Höher = empfindlicher. Funktioniert am besten bei strukturierten Objekten; einfarbige Objekte werden evtl. nur teilweise entfernt. Braucht ca. 50 MB zusätzlichen Speicher und etwas Rechenzeit. 0 = aus. Experimentell. Standard 0 (aus).</string>
     <string name="hint_slower">Wenig Bilder (schwaches Licht) – langsamer drehen.</string>
+    <string name="cd_flash">Taschenlampe</string>
+    <string name="cd_lens_switch">Objektiv wechseln</string>
+    <string name="cd_sort">Sortieren</string>
+    <string name="lens_main">Hauptkamera 1×</string>
+    <string name="lens_ultrawide">Ultraweitwinkel 0,5×</string>
+    <string name="lens_other">Kamera %1$s</string>
+    <string name="lens_fmt">Objektiv: %1$s</string>
+    <string name="sort_title">Sortieren nach</string>
+    <string name="sort_date_new">Datum (neueste zuerst)</string>
+    <string name="sort_date_old">Datum (älteste zuerst)</string>
+    <string name="sort_name">Name (A–Z)</string>
+    <string name="sort_place">Ort</string>
+    <string name="sort_size">Dateigröße</string>
+    <string name="storage_permission_needed">Zum Lesen von Panoramen anderer Apps wird die Berechtigung zum Lesen von Fotos benötigt.</string>
+    <string name="sec_files">Dateien &amp; Metadaten</string>
+    <string name="set_author_t">Autorenname</string>
+    <string name="set_author_d">Wird in jedes neue Panorama geschrieben (in Galerien und Google Fotos durchsuchbar). Leer lassen, um keinen Namen zu speichern.</string>
+    <string name="set_loc_t">Ort speichern</string>
+    <string name="set_loc_d">Schreibt GPS-Position und Ortsnamen (Stadt, Region) als Tags und EXIF in die Datei. Ausschalten, wenn Sie Panoramen öffentlich teilen und Ihren Standort nicht speichern wollen.</string>
+    <string name="set_all_t">Panoramen anderer Apps zeigen</string>
+    <string name="set_all_d">Listet zusätzlich jede .vr.jpg auf dem Gerät (z. B. von Cardboard Camera oder älteren Pixel-Handys). Benötigt die Berechtigung zum Lesen von Fotos.</string>
 </resources>

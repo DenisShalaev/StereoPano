@@ -8,17 +8,20 @@
     <string name="cd_back">Zurück</string>
     <string name="cd_center">Ansicht zentrieren</string>
     <string name="cd_compass">Kompass</string>
+    <string name="cd_flash">Taschenlampe</string>
     <string name="cd_gallery">Galerie</string>
     <string name="cd_guides">Leitpunkte</string>
     <string name="cd_gyro">Gyroskop</string>
     <string name="cd_half">Half-SBS</string>
     <string name="cd_lens">Linsenkorrektur</string>
+    <string name="cd_lens_switch">Objektiv wechseln</string>
     <string name="cd_lock">Belichtung fixieren</string>
     <string name="cd_mode">Ansichtsmodus</string>
     <string name="cd_settings">Einstellungen</string>
     <string name="cd_show_controls">Steuerung anzeigen</string>
     <string name="cd_shutter_start">Aufnahme starten</string>
     <string name="cd_shutter_stop">Stoppen und speichern</string>
+    <string name="cd_sort">Sortieren</string>
     <string name="compass_off">Kompass aus</string>
     <string name="compass_on">Kompass an</string>
     <string name="delete_confirm">%1$s löschen?</string>
@@ -44,8 +47,12 @@
     <string name="hint_start">Telefon hochkant halten, Arme ausstrecken. Auslöser tippen, dann langsam nach rechts drehen.</string>
     <string name="hint_turn_right">Bitte nach RECHTS drehen.</string>
     <string name="invalid_jpeg">Kein gültiges JPEG.</string>
+    <string name="lens_fmt">Objektiv: %1$s</string>
+    <string name="lens_main">Hauptkamera 1×</string>
     <string name="lens_off">Linsenkorrektur aus</string>
     <string name="lens_on">Linsenkorrektur an</string>
+    <string name="lens_other">Kamera %1$s</string>
+    <string name="lens_ultrawide">Ultraweitwinkel 0,5×</string>
     <string name="load_error">Fehler beim Laden: %1$s</string>
     <string name="lock_off">Automatische Belichtung</string>
     <string name="lock_on">Belichtung wird während der Aufnahme fixiert</string>
@@ -79,13 +86,18 @@
     <string name="sec_about">Info</string>
     <string name="sec_calibration">Kalibrierung</string>
     <string name="sec_capture">Aufnahme</string>
+    <string name="sec_files">Dateien &amp; Metadaten</string>
     <string name="sec_viewer">Betrachter</string>
     <string name="set_ae_d">Belichtung und Weißabgleich während der Aufnahme sperren (weniger Helligkeitssprünge).</string>
     <string name="set_ae_t">Belichtung fixieren</string>
+    <string name="set_all_d">Listet zusätzlich jede .vr.jpg auf dem Gerät (z. B. von Cardboard Camera oder älteren Pixel-Handys). Benötigt die Berechtigung zum Lesen von Fotos.</string>
+    <string name="set_all_t">Panoramen anderer Apps zeigen</string>
     <string name="set_angle_d">Abstand der Bildstreifen zur Bildmitte. Größer = stärkerer 3D-Effekt (Stereobasis ≈ 2 × Armlänge × sin). Standard 3,5°.</string>
     <string name="set_angle_t">Stereo-Winkel</string>
     <string name="set_audio_d">Umgebungston mit aufzeichnen (wird im .vr.jpg gespeichert).</string>
     <string name="set_audio_t">Ton aufnehmen</string>
+    <string name="set_author_d">Wird in jedes neue Panorama geschrieben (in Galerien und Google Fotos durchsuchbar). Leer lassen, um keinen Namen zu speichern.</string>
+    <string name="set_author_t">Autorenname</string>
     <string name="set_compass_d">Panorama nach Himmelsrichtungen ausrichten (falls im Bild gespeichert).</string>
     <string name="set_compass_t">Kompass</string>
     <string name="set_delta_d">Breite des weichen Übergangs zwischen Kamerabildern. Größer = weniger Nähte, aber leicht unschärfer. Standard 0,6°.</string>
@@ -106,6 +118,8 @@
     <string name="set_latency_t">Sensor-Latenz</string>
     <string name="set_lens_d">Tonnenförmige Vorverzerrung für Cardboard-Linsen.</string>
     <string name="set_lens_t">Linsenkorrektur (Cardboard)</string>
+    <string name="set_loc_d">Schreibt GPS-Position und Ortsnamen (Stadt, Region) als Tags und EXIF in die Datei. Ausschalten, wenn Sie Panoramen öffentlich teilen und Ihren Standort nicht speichern wollen.</string>
+    <string name="set_loc_t">Ort speichern</string>
     <string name="set_move_d">Erkennt Personen und andere bewegte Objekte während des Drehens und füllt die Lücken mit dem Hintergrund aus einem anderen Moment. Höher = empfindlicher. Funktioniert am besten bei strukturierten Objekten; einfarbige Objekte werden evtl. nur teilweise entfernt. Braucht ca. 50 MB zusätzlichen Speicher und etwas Rechenzeit. 0 = aus. Experimentell. Standard 0 (aus).</string>
     <string name="set_move_t">Bewegte Objekte</string>
     <string name="set_quality_d">Qualität der gespeicherten Panoramen. Standard 90.</string>
@@ -122,6 +136,13 @@
     <string name="set_tempo_t">Ziel-Tempo</string>
     <string name="settings_title">Einstellungen</string>
     <string name="share_title">Panorama teilen</string>
+    <string name="sort_date_new">Datum (neueste zuerst)</string>
+    <string name="sort_date_old">Datum (älteste zuerst)</string>
+    <string name="sort_name">Name (A–Z)</string>
+    <string name="sort_place">Ort</string>
+    <string name="sort_size">Dateigröße</string>
+    <string name="sort_title">Sortieren nach</string>
     <string name="stereo_hint">Tippen: Leiste · Doppeltippen: zurück zu 2D</string>
+    <string name="storage_permission_needed">Zum Lesen von Panoramen anderer Apps wird die Berechtigung zum Lesen von Fotos benötigt.</string>
     <string name="too_little">Zu wenig aufgenommen – mindestens ca. 20° drehen.</string>
 </resources>

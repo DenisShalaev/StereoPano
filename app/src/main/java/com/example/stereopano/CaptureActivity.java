@@ -110,9 +110,10 @@ public class CaptureActivity extends Activity {
                 letzteT = jetzt;
                 double anker = nimmtAuf ? startYaw : yaw;
                 double ziel = nimmtAuf ? Math.min(360, (jetzt - startZeit) / 1000.0 * zielTempo) : Double.NaN;
-                guide.setzen(R, anker, yaw - anker, nimmtAuf, ziel, tempo);
+                double elVirt = nimmtAuf ? startEl : snapElevation(Math.toDegrees(Math.asin(Math.max(-1, Math.min(1, -R[8])))));
+                guide.setzen(R, anker, yaw - anker, nimmtAuf, ziel, tempo, elVirt);
             } else {
-                guide.setzen(null, 0, 0, false, Double.NaN, 0);
+                guide.setzen(null, 0, 0, false, Double.NaN, 0, 0);
             }
             guide.postOnAnimation(this);
         }
@@ -144,6 +145,9 @@ public class CaptureActivity extends Activity {
     private volatile boolean nimmtAuf;
     private volatile StereoStitcher stitcher;
     private double startYaw, startKurs;
+    private double startEl;                   // Sollneigung (Elevation der Panoramamitte), beim Start festgelegt
+    private ImageView blitzKnopf, lensKnopf;
+    private boolean blitzAn;
     private long letzteAnzeige;
     private MediaRecorder recorder;
     private File audioDatei;
@@ -163,25 +167,60 @@ public class CaptureActivity extends Activity {
         }
         baueOberflaeche();
 
+        java.util.List<String> fehlend = new java.util.ArrayList<>();
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO}, 1);
+            fehlend.add(Manifest.permission.CAMERA);
+            fehlend.add(Manifest.permission.RECORD_AUDIO);
         }
+        if (Settings.ortSpeichern(this) && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            fehlend.add(Manifest.permission.ACCESS_COARSE_LOCATION);      // Ort ist optional: ohne Berechtigung wird nichts gespeichert
+            fehlend.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (!fehlend.isEmpty()) requestPermissions(fehlend.toArray(new String[0]), 1);
     }
 
     // ------------------------------------------------------------------ Aufbau
 
+    /** Ein waehlbares "Objektiv": Kamera-ID + Zoomfaktor (0.5 = Ultraweitwinkel ueber die logische Kamera, z. B. Pixel). */
+    private static final class Objektiv {
+        final String id;
+        final double zoom;
+        final String name;
+        Objektiv(String id, double zoom, String name) { this.id = id; this.zoom = zoom; this.name = name; }
+    }
+
+    private final java.util.List<Objektiv> objektive = new java.util.ArrayList<>();
+    private int objIndex = 0;
+    private double zoom = 1.0;
+    private boolean hatBlitz;
+
+    private void baueObjektivListe() throws CameraAccessException {
+        objektive.clear();
+        boolean erste = true;
+        for (String id : cm.getCameraIdList()) {
+            CameraCharacteristics c = cm.getCameraCharacteristics(id);
+            Integer facing = c.get(CameraCharacteristics.LENS_FACING);
+            if (facing == null || facing != CameraCharacteristics.LENS_FACING_BACK) continue;
+            if (erste) {
+                objektive.add(new Objektiv(id, 1.0, getString(R.string.lens_main)));
+                android.util.Range<Float> zr = c.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
+                if (zr != null && zr.getLower() <= 0.55f) objektive.add(new Objektiv(id, 0.5, getString(R.string.lens_ultrawide)));
+                erste = false;
+            } else {
+                objektive.add(new Objektiv(id, 1.0, getString(R.string.lens_other, id)));
+            }
+        }
+    }
+
     private boolean waehleKamera() {
         try {
-            for (String id : cm.getCameraIdList()) {
-                CameraCharacteristics c = cm.getCameraCharacteristics(id);
-                Integer facing = c.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
-                    kameraId = id;
-                    cc = c;
-                    break;
-                }
-            }
-            if (cc == null) return false;
+            if (objektive.isEmpty()) baueObjektivListe();
+            if (objektive.isEmpty()) return false;
+            if (objIndex >= objektive.size()) objIndex = 0;
+            Objektiv o = objektive.get(objIndex);
+            kameraId = o.id;
+            zoom = o.zoom;
+            cc = cm.getCameraCharacteristics(kameraId);
 
             StreamConfigurationMap map = cc.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             Size best = null;
@@ -197,20 +236,35 @@ public class CaptureActivity extends Activity {
             Integer ts = cc.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
             zeitstempelEchtzeit = ts != null && ts == CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
 
-            // Brennweite in Pixeln aus Sensorgroesse und Brennweite (lange Bildseite)
+            // Brennweite in Pixeln aus Sensorgroesse und Brennweite (lange Bildseite); der Zoomfaktor skaliert sie
             SizeF phys = cc.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
             float[] fl = cc.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
             double lang = Math.max(phys.getWidth(), phys.getHeight());
             double fovLang = 2 * Math.atan(lang / (2 * fl[0]));
-            fPxBasis = (groesse.getWidth() / 2.0) / Math.tan(fovLang / 2);
+            fPxBasis = (groesse.getWidth() / 2.0) / Math.tan(fovLang / 2) * zoom;
             fPx = fPxBasis * fpxFaktor;
+
+            Boolean fa = cc.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
+            hatBlitz = fa != null && fa;
+            aktualisiereKameraKnoepfe();
             return true;
         } catch (CameraAccessException | RuntimeException e) {
             return false;
         }
     }
 
-    /** Liest die Einstellungen (Zahnrad) neu ein. Waehrend einer Aufnahme wird nichts veraendert. */
+    /** Blitz-/Objektivknopf nur zeigen, wenn die Kamera das kann (laeuft immer im UI-Thread). */
+    private void aktualisiereKameraKnoepfe() {
+        runOnUiThread(() -> {
+            if (blitzKnopf != null) {
+                blitzKnopf.setVisibility(hatBlitz ? View.VISIBLE : View.GONE);
+                if (!hatBlitz) blitzAn = false;
+                Ui.zustand(blitzKnopf, blitzAn ? Ui.AN : Ui.AUS);
+            }
+            if (lensKnopf != null) lensKnopf.setVisibility(objektive.size() > 1 ? View.VISIBLE : View.GONE);
+        });
+    }
+
     private void ladeEinstellungen() {
         if (nimmtAuf) return;
         stereoWinkel = Settings.stereoWinkel(this);
@@ -294,6 +348,19 @@ public class CaptureActivity extends Activity {
         });
         LinearLayout.LayoutParams zlp = new LinearLayout.LayoutParams(dp(42), dp(42));
         zlp.setMargins(dp(6), dp(4), dp(8), 0);
+        blitzKnopf = Ui.runderKnopf(this, R.drawable.ic_flash, R.string.cd_flash);
+        blitzKnopf.setOnClickListener(v -> schalteBlitz());
+        blitzKnopf.setVisibility(hatBlitz ? View.VISIBLE : View.GONE);
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(42), dp(42));
+        blp.setMargins(dp(6), dp(4), 0, 0);
+        zeile.addView(blitzKnopf, blp);
+        lensKnopf = Ui.runderKnopf(this, R.drawable.ic_lens_switch, R.string.cd_lens_switch);
+        lensKnopf.setOnClickListener(v -> wechsleObjektiv());
+        lensKnopf.setVisibility(objektive.size() > 1 ? View.VISIBLE : View.GONE);
+        LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(dp(42), dp(42));
+        llp.setMargins(dp(6), dp(4), 0, 0);
+        zeile.addView(lensKnopf, llp);
+        Ui.zustand(blitzKnopf, blitzAn ? Ui.AN : Ui.AUS);
         zeile.addView(zahnrad, zlp);
         oben.addView(zeile);
         overlay.addView(oben, new FrameLayout.LayoutParams(
@@ -439,6 +506,83 @@ public class CaptureActivity extends Activity {
 
     // ------------------------------------------------------------------ Lebenszyklus
 
+    // ------------------------------------------------------------------ Blitz, Objektiv, Neigung, Ort
+
+    /** Sollneigung: kleine Neigungen (unter 6 Grad) gelten als "Horizont", sonst auf ganze Grad gerundet und begrenzt. */
+    private static double snapElevation(double pitchDeg) {
+        if (Math.abs(pitchDeg) < 6) return 0;
+        return Math.max(-40, Math.min(58, Math.round(pitchDeg)));
+    }
+
+    private void schalteBlitz() {
+        if (!hatBlitz) return;
+        blitzAn = !blitzAn;
+        Ui.zustand(blitzKnopf, blitzAn ? Ui.AN : Ui.AUS);
+        try {
+            if (anfrage != null && sitzung != null) {
+                anfrage.set(CaptureRequest.FLASH_MODE, blitzAn ? CaptureRequest.FLASH_MODE_TORCH : CaptureRequest.FLASH_MODE_OFF);
+                sitzung.setRepeatingRequest(anfrage.build(), ergebnisCallback, kameraHandler);
+            }
+        } catch (CameraAccessException | IllegalStateException ignored) { }
+    }
+
+    private void wechsleObjektiv() {
+        if (nimmtAuf || objektive.size() <= 1) {
+            if (nimmtAuf) Toast.makeText(this, R.string.finish_first, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        objIndex = (objIndex + 1) % objektive.size();
+        schliesseKamera();
+        if (!waehleKamera()) {
+            Toast.makeText(this, R.string.no_camera, Toast.LENGTH_LONG).show();
+            return;
+        }
+        surface.getHolder().setFixedSize(groesse.getWidth(), groesse.getHeight());   // je Kamera andere 4:3-Groesse moeglich
+        if (guide != null) guide.setFocalRatio(fPx / groesse.getHeight());
+        if (surfaceBereit) oeffneKamera();
+        Toast.makeText(this, getString(R.string.lens_fmt, objektive.get(objIndex).name), Toast.LENGTH_SHORT).show();
+    }
+
+    // Ort fuer die Metadaten (nur wenn erlaubt und in den Einstellungen aktiv)
+    private volatile double ortLat = Double.NaN, ortLon = Double.NaN;
+    private volatile String ortName = "";
+    private volatile String[] ortTags = new String[0];
+
+    @SuppressWarnings("deprecation")
+    private void ermittleOrt() {
+        ortLat = ortLon = Double.NaN;
+        ortName = "";
+        ortTags = new String[0];
+        if (!Settings.ortSpeichern(this)) return;
+        if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return;
+        android.location.LocationManager lm = (android.location.LocationManager) getSystemService(LOCATION_SERVICE);
+        android.location.Location best = null;
+        try {
+            for (String p : lm.getProviders(true)) {
+                android.location.Location l = lm.getLastKnownLocation(p);
+                if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
+            }
+        } catch (SecurityException ignored) { }
+        if (best == null || System.currentTimeMillis() - best.getTime() > 12L * 3600 * 1000) return;   // zu alt = falscher Ort
+        final double lat = best.getLatitude(), lon = best.getLongitude();
+        ortLat = lat;
+        ortLon = lon;
+        new Thread(() -> {                                   // Ortsnamen im Hintergrund (Netzwerk) nachladen
+            try {
+                if (!android.location.Geocoder.isPresent()) return;
+                java.util.List<android.location.Address> l = new android.location.Geocoder(this, Locale.getDefault()).getFromLocation(lat, lon, 1);
+                if (l == null || l.isEmpty()) return;
+                android.location.Address a = l.get(0);
+                java.util.LinkedHashSet<String> tags = new java.util.LinkedHashSet<>();
+                for (String t : new String[]{a.getLocality(), a.getSubLocality(), a.getAdminArea(), a.getCountryName()})
+                    if (t != null && !t.trim().isEmpty()) tags.add(t.trim());
+                ortTags = tags.toArray(new String[0]);
+                ortName = a.getLocality() != null ? a.getLocality() : (a.getAdminArea() != null ? a.getAdminArea() : "");
+            } catch (Exception ignored) { }
+        }).start();
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -542,6 +686,9 @@ public class CaptureActivity extends Activity {
             anfrage.addTarget(vorschau);
             anfrage.addTarget(leser.getSurface());
             anfrage.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            if (hatBlitz) anfrage.set(CaptureRequest.FLASH_MODE, blitzAn ? CaptureRequest.FLASH_MODE_TORCH : CaptureRequest.FLASH_MODE_OFF);
+            if (zoom != 1.0 && cc.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE) != null)
+                anfrage.set(CaptureRequest.CONTROL_ZOOM_RATIO, (float) zoom);          // 0.5 = Ultraweitwinkel
             // Schaerfe: Kantenanhebung der Kamera-Pipeline in hoechster Qualitaet
             if (hat(cc.get(CameraCharacteristics.EDGE_AVAILABLE_EDGE_MODES), CaptureRequest.EDGE_MODE_HIGH_QUALITY))
                 anfrage.set(CaptureRequest.EDGE_MODE, CaptureRequest.EDGE_MODE_HIGH_QUALITY);
@@ -608,7 +755,11 @@ public class CaptureActivity extends Activity {
         }
         startYaw = gameYaw.latest();
         startKurs = hatKompass ? kompass.azimuth() : Double.NaN;
-        stitcher = new StereoStitcher(groesse.getHeight(), groesse.getWidth(), fPx, stereoWinkel, deltaGrad, startYaw, true, bewegung);
+        // Sollneigung festhalten (z. B. 30 Grad nach oben fuer hohe Gebaeude): das Panorama-Fenster wird um diese Elevation
+        // verschoben, bleibt aber schwerkraftausgerichtet (kein Verdrehen der Matrix noetig).
+        startEl = snapElevation(gameYaw.pitch());
+        ermittleOrt();
+        stitcher = new StereoStitcher(groesse.getHeight(), groesse.getWidth(), fPx, stereoWinkel, deltaGrad, startYaw, true, bewegung, startEl);
 
         setzeSperren(true);
         starteAudio();
@@ -678,7 +829,7 @@ public class CaptureActivity extends Activity {
             if (jetzt - letzteAnzeige > 100) {
                 letzteAnzeige = jetzt;
                 final double fort = s.progress();
-                final double pitch = gameYaw.pitch();
+                final double pitch = gameYaw.pitch() - startEl;
                 final double p = psi;
                 final double stp = s.stepDeg();
                 runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp));
@@ -756,7 +907,16 @@ public class CaptureActivity extends Activity {
         m.cropW = e.width;
         m.cropH = e.panoH;
         m.cropLeft = e.x0;
-        m.cropTop = (m.fullH - e.panoH) / 2;
+        // Fenster um die Sollneigung nach oben (oder unten) verschieben; Zeilen = echte, schwerkraftausgerichtete Elevation
+        int shift = (int) Math.round(e.elCenterDeg * e.panoW / 360.0);
+        m.cropTop = Math.max(0, Math.min(m.fullH - e.panoH, (m.fullH - e.panoH) / 2 - shift));
+        m.author = Settings.author(this);
+        java.util.List<String> tags = new java.util.ArrayList<>();
+        tags.add("StereoPano");
+        tags.addAll(java.util.Arrays.asList(ortTags));
+        m.tags = tags.toArray(new String[0]);
+        m.lat = ortLat;
+        m.lon = ortLon;
         // Kompasskurs der Mitte des vollen Panoramas (Spalte 0 = Startrichtung)
         if (!Double.isNaN(kurs)) m.poseHeading = (kurs + 180) % 360;
         byte[] datei = VrJpgWriter.build(links, rechts, ton, m);
@@ -766,6 +926,7 @@ public class CaptureActivity extends Activity {
         v.put(MediaStore.Images.Media.DISPLAY_NAME, name);
         v.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
         v.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/StereoPano");
+        if (!ortName.isEmpty()) v.put(MediaStore.Images.Media.DESCRIPTION, ortName);      // Ort fuer die Galerie-Sortierung
         v.put(MediaStore.Images.Media.IS_PENDING, 1);
         Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
         if (uri == null) throw new Exception(getString(R.string.mediastore_failed));

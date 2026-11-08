@@ -138,4 +138,25 @@
     <string name="set_move_t">Moving objects</string>
     <string name="set_move_d">Detects people and other moving objects while you turn and fills the gaps with the background seen at another moment. Higher = more sensitive. Works best on textured objects; plain-coloured objects may be only partly removed. Uses about 50 MB extra memory and some processing. 0 = off. Experimental. Default 0 (off).</string>
     <string name="hint_slower">Low frame rate (dim light) – turn more slowly.</string>
+    <string name="cd_flash">Flashlight</string>
+    <string name="cd_lens_switch">Switch lens</string>
+    <string name="cd_sort">Sort</string>
+    <string name="lens_main">Main camera 1×</string>
+    <string name="lens_ultrawide">Ultra-wide 0.5×</string>
+    <string name="lens_other">Camera %1$s</string>
+    <string name="lens_fmt">Lens: %1$s</string>
+    <string name="sort_title">Sort by</string>
+    <string name="sort_date_new">Date (newest first)</string>
+    <string name="sort_date_old">Date (oldest first)</string>
+    <string name="sort_name">Name (A–Z)</string>
+    <string name="sort_place">Place</string>
+    <string name="sort_size">File size</string>
+    <string name="storage_permission_needed">Reading other apps\' panoramas needs permission to read photos.</string>
+    <string name="sec_files">Files &amp; metadata</string>
+    <string name="set_author_t">Author name</string>
+    <string name="set_author_d">Stored in every new panorama (searchable in galleries and Google Photos). Leave empty to store no name.</string>
+    <string name="set_loc_t">Save location</string>
+    <string name="set_loc_d">Writes GPS position and place names (city, region) into the file as tags and EXIF. Turn off if you share panoramas publicly and do not want your position stored.</string>
+    <string name="set_all_t">Show panoramas of other apps</string>
+    <string name="set_all_d">Also lists every .vr.jpg on the device (e.g. from Cardboard Camera or older Pixel phones). Needs permission to read photos.</string>
 </resources>

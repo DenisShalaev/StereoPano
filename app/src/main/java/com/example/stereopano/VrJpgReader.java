@@ -16,6 +16,8 @@ final class VrJpgReader {
         byte[] audio;         // null, falls kein Ton vorhanden
         int fullW, fullH, cropW, cropH, cropLeft, cropTop;   // 0, falls keine GPano-Daten
         double poseHeading = Double.NaN;
+        String author;
+        java.util.List<String> tags = new java.util.ArrayList<>();
     }
 
     private static final byte[] HDR_XMP = "http://ns.adobe.com/xap/1.0/\0".getBytes(StandardCharsets.US_ASCII);
@@ -71,6 +73,9 @@ final class VrJpgReader {
             res.cropH = toInt(attr(mainXml, "GPano:CroppedAreaImageHeightPixels"));
             res.cropLeft = toInt(attr(mainXml, "GPano:CroppedAreaLeftPixels"));
             res.cropTop = toInt(attr(mainXml, "GPano:CroppedAreaTopPixels"));
+            java.util.List<String> a = items(mainXml, "dc:creator");
+            if (!a.isEmpty()) res.author = a.get(0);
+            res.tags = items(mainXml, "dc:subject");
             String pose = attr(mainXml, "GPano:PoseHeadingDegrees");
             if (pose != null) {
                 try { res.poseHeading = Double.parseDouble(pose.trim()); } catch (NumberFormatException ignored) { }
@@ -101,6 +106,28 @@ final class VrJpgReader {
             return e > 0 ? xml.substring(s, e) : null;
         }
         return null;
+    }
+
+    /** Liest die rdf:li-Eintraege innerhalb von <container>...</container> (XML-Entities werden aufgeloest). */
+    static java.util.List<String> items(String xml, String container) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        int a = xml.indexOf("<" + container + ">");
+        if (a < 0) return out;
+        int b = xml.indexOf("</" + container + ">", a);
+        if (b < 0) return out;
+        String part = xml.substring(a, b);
+        int i = 0;
+        while ((i = part.indexOf("<rdf:li>", i)) >= 0) {
+            int e = part.indexOf("</rdf:li>", i);
+            if (e < 0) break;
+            out.add(unesc(part.substring(i + 8, e)));
+            i = e + 9;
+        }
+        return out;
+    }
+
+    private static String unesc(String s) {
+        return s.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&");
     }
 
     private static byte[] decode(String base64) {

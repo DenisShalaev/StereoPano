@@ -47,6 +47,7 @@ final class StereoStitcher {
         int x0, width;         // verwertbarer Ausschnitt (Spalten)
         boolean complete;
         double closureShiftPx;   // angewandter Kreisschluss (0 = keiner)
+        double elCenterDeg;      // Elevation der Panoramamitte (fuer die Metadaten)
     }
 
     private static final int W_FULL = 8;    // Gewicht in der Mitte des Dreiecks
@@ -88,6 +89,7 @@ final class StereoStitcher {
         }
     }
 
+    final double elCenterDeg;
     final int frameW, frameH, panoW, panoH;
     private int extW;
     final double fPx, deltaDeg, az0Deg;
@@ -152,6 +154,17 @@ final class StereoStitcher {
     /** @param moveSens Empfindlichkeit der Erkennung bewegter Objekte 0 (aus) .. 100 */
     StereoStitcher(int frameW, int frameH, double fPx, double alphaDeg, double deltaDeg, double az0Deg,
                    boolean register, int moveSens) {
+        this(frameW, frameH, fPx, alphaDeg, deltaDeg, az0Deg, register, moveSens, 0.0);
+    }
+
+    /**
+     * @param elCenterDeg Elevation (ueber dem Horizont) der Panoramamitte. 0 = Standard (Horizont in der Mitte);
+     *                    z. B. 30 fuer hohe Gebaeude: das Fenster ist um 30 Grad nach oben verschoben, bleibt aber
+     *                    schwerkraftausgerichtet (Zeilen = echte Elevation). Die Metadaten verschiebt der Aufrufer.
+     */
+    StereoStitcher(int frameW, int frameH, double fPx, double alphaDeg, double deltaDeg, double az0Deg,
+                   boolean register, int moveSens, double elCenterDeg) {
+        this.elCenterDeg = elCenterDeg;
         this.frameW = frameW;
         this.frameH = frameH;
         this.fPx = fPx;
@@ -167,7 +180,7 @@ final class StereoStitcher {
         this.sinE = new double[panoH];
         this.cosE = new double[panoH];
         for (int v = 0; v < panoH; v++) {
-            double el = Math.toRadians((panoH / 2.0 - (v + 0.5)) / ppd);   // Elevation ueber dem Horizont
+            double el = Math.toRadians(elCenterDeg + (panoH / 2.0 - (v + 0.5)) / ppd);   // Elevation ueber dem Horizont
             sinE[v] = Math.sin(el);
             cosE[v] = Math.cos(el);
         }
@@ -798,6 +811,7 @@ final class StereoStitcher {
         if (cached != null) return cached;
         closed = true;
         Result r = new Result();
+        r.elCenterDeg = elCenterDeg;
         r.panoW = panoW;
         r.panoH = panoH;
 
