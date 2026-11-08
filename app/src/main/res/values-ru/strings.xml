@@ -161,4 +161,6 @@
     <string name="delete_many_confirm">Удалить выбранные (%1$d)?</string>
     <string name="actions">Действия</string>
     <string name="exported_many">Экспортировано: %1$d</string>
+    <string name="set_wcorr_t">Поправка угла</string>
+    <string name="set_wcorr_d">Датчик поворота занижает поворот (на этом телефоне около 4,5 %). Увеличьте, если конец панорамы заходит на начало; уменьшите, если остаётся разрыв.</string>
 </resources>

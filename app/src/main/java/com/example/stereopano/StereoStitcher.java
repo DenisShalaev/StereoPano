@@ -41,6 +41,21 @@ final class StereoStitcher {
         }
     }
 
+    /**
+     * Dreht die Lage um die Hochachse (Welt) um delta Grad im Uhrzeigersinn (Kurs waechst). Damit wird ein bekannter
+     * Massstabsfehler des Drehsensors (Sensor zeigt z. B. 4,5 % zu wenig) vor der Verarbeitung herausgerechnet.
+     */
+    static float[] scaleYaw(float[] R, double deltaDeg) {
+        double r = Math.toRadians(deltaDeg);
+        float c = (float) Math.cos(r), s = (float) Math.sin(r);
+        float[] o = R.clone();
+        for (int k = 0; k < 3; k++) {
+            o[k] = c * R[k] + s * R[3 + k];
+            o[3 + k] = -s * R[k] + c * R[3 + k];
+        }
+        return o;
+    }
+
     static final class Result {
         int[] left, right;
         int panoW, panoH;      // Groesse des vollen 360-Grad-Arrays
@@ -248,7 +263,7 @@ final class StereoStitcher {
             if (!Double.isNaN(ed)) loopSamples.add(new double[]{psiRaw, ed});
         }
         // (alte, eng begrenzte Messung - nur noch Reserve, wenn die neue nichts findet)
-        if (closureEnabled && !loopEnabled && psi0 >= CLOSE_FROM_DEG && psi0 <= 372.0 && closureSamples.size() < 40) {
+        if (closureEnabled && psi0 >= CLOSE_FROM_DEG && psi0 <= 372.0 && closureSamples.size() < 40) {
             double m = measureClosure(f, rot);
             if (!Double.isNaN(m)) closureSamples.add(m);
         }

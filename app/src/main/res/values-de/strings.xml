@@ -161,4 +161,6 @@
     <string name="delete_many_confirm">%1$d Bilder löschen?</string>
     <string name="actions">Aktionen</string>
     <string name="exported_many">%1$d Bilder exportiert</string>
+    <string name="set_wcorr_t">Winkelkorrektur</string>
+    <string name="set_wcorr_d">Der Drehsensor zeigt zu wenig Drehung (bei diesem Telefon ca. 4,5 %). Erhöhen, wenn das Ende das Panorama-Anfang überlappt; senken, wenn eine Lücke bleibt.</string>
 </resources>

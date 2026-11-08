@@ -18,6 +18,7 @@ final class Settings {
     static final String K_BREITE = "max_breite";         // Pixel (lange Kameraseite)
     static final String K_LATENZ = "latenz_ms";          // Millisekunden
     static final String K_FPX = "fpx_prozent";           // Prozent
+    static final String K_WKORR = "winkel_korr";          // Zehntel Prozent (45 = 4,5 %)
     static final String K_STAB = "max_nickrate";         // Grad/s (20 = aus)
     static final String K_MOVE = "bewegung";             // 0..100: Empfindlichkeit der Erkennung bewegter Objekte (0 = aus)
     static final String K_AUTHOR = "autor";                // Autorenname (XMP dc:creator)
@@ -38,7 +39,7 @@ final class Settings {
     static final String K_K2 = "lens_k2";                // Hundertstel
     static final String K_SBSFOV = "sbs_fov";            // Grad (vertikal)
 
-    static final String[] ALLE = {K_WINKEL, K_DELTA, K_TEMPO, K_BREITE, K_LATENZ, K_FPX, K_STAB, K_MOVE, K_SHARP, K_AUTHOR, K_LOC, K_ALL, K_SORT, K_QUALI, K_AE, K_LEIT,
+    static final String[] ALLE = {K_WINKEL, K_DELTA, K_TEMPO, K_BREITE, K_LATENZ, K_FPX, K_WKORR, K_STAB, K_MOVE, K_SHARP, K_AUTHOR, K_LOC, K_ALL, K_SORT, K_QUALI, K_AE, K_LEIT,
             K_AUDIO, K_KOMPASS, K_GYRO, K_HALB, K_LINSEN, K_K1, K_K2, K_SBSFOV};
 
     private Settings() {}
@@ -53,6 +54,7 @@ final class Settings {
     static double zielTempo(Context c) { return p(c).getInt(K_TEMPO, 8); }
     static int maxBreite(Context c) { return p(c).getInt(K_BREITE, 1920); }
     static long latenzNs(Context c) { return p(c).getInt(K_LATENZ, 0) * 1_000_000L; }
+    static double winkelKorr(Context c) { return p(c).getInt(K_WKORR, 45) / 1000.0; }
     static double fpxFaktor(Context c) { return p(c).getInt(K_FPX, 100) / 100.0; }
     /** Maximale Nick-/Kippgeschwindigkeit in Grad/s, bei der ein Bild noch verwendet wird. */
     static double maxNickrate(Context c) {

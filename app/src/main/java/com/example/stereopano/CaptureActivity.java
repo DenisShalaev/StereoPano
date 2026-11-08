@@ -94,6 +94,7 @@ public class CaptureActivity extends Activity {
     private GestureDetector gesten;
     private boolean panelSichtbar = true;
     private boolean belichtungSperren = true;
+    private double winkelKorr = 0;             // Massstabskorrektur des Drehwinkels (0.045 = +4,5 %)
     private volatile double fPxGeraet = 0;     // Brennweite in Pixeln laut Kamera (nur zur Diagnose)
     private GuideView guide;
     private boolean leitpunkte = true;
@@ -276,6 +277,7 @@ public class CaptureActivity extends Activity {
         maxBreite = Settings.maxBreite(this);
         latenzNs = Settings.latenzNs(this);
         fpxFaktor = Settings.fpxFaktor(this);
+        winkelKorr = Settings.winkelKorr(this);
         jpegQualitaet = Settings.jpegQualitaet(this);
         audioAn = Settings.audio(this);
         maxNick = Settings.maxNickrate(this);
@@ -790,9 +792,16 @@ public class CaptureActivity extends Activity {
             } else {
                 v = (android.os.Vibrator) getSystemService(VIBRATOR_SERVICE);
             }
-            if (v == null || !v.hasVibrator()) return;
-            v.vibrate(android.os.VibrationEffect.createWaveform(muster, -1));
-        } catch (RuntimeException ignored) { }
+            if (v == null || !v.hasVibrator() || checkSelfPermission(Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED)
+                throw new SecurityException("no vibrator/permission");
+            android.os.VibrationEffect ef = android.os.VibrationEffect.createWaveform(muster, -1);
+            // als Alarm gekennzeichnet, damit die Systemeinstellung "Beruehrungsfeedback" es nicht unterdrueckt
+            v.vibrate(ef, new android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_ALARM).build());
+        } catch (RuntimeException e) {
+            // Ersatz ohne Berechtigung: Haptik des Fensters
+            getWindow().getDecorView().performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS,
+                    android.view.HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+        }
     }
 
     private void starteAufnahmeJetzt() {
@@ -858,6 +867,11 @@ public class CaptureActivity extends Activity {
             float[] rot = gameYaw.rotationAt(ts);
             double psi = yaw - startYaw;
             if (Double.isNaN(psi) || rot == null) return;
+            // bekannter Massstabsfehler des Drehsensors (zeigt zu wenig Drehung): vor allem anderen herausrechnen
+            if (winkelKorr != 0) {
+                rot = StereoStitcher.scaleYaw(rot, psi * winkelKorr);
+                psi = psi * (1.0 + winkelKorr);
+            }
 
             // Bewegungsfilter: Bei schnellem Nicken/Kippen ist die Lage zum Bildzeitpunkt zu ungenau
             // (Zeitfehler x Drehrate = vertikaler Versatz -> "Treppen" an waagerechten Kanten).

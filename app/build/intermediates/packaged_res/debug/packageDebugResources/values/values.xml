@@ -151,6 +151,8 @@
     <string name="set_stab_t">Motion filter</string>
     <string name="set_tempo_d">Speed of the red guide dot. 8°/s ≈ 45 s per revolution.</string>
     <string name="set_tempo_t">Target pace</string>
+    <string name="set_wcorr_d">The rotation sensor under-reports the turn (on this phone about 4.5 %). Raise it if the end of the panorama overlaps the start; lower it if a gap remains.</string>
+    <string name="set_wcorr_t">Angle correction</string>
     <string name="settings_title">Settings</string>
     <string name="share_title">Share panorama</string>
     <string name="sort_author">Author</string>
