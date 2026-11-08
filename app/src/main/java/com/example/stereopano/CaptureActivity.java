@@ -86,6 +86,7 @@ public class CaptureActivity extends Activity {
     private FrameLayout root;
     private SurfaceView surface;
     private TextView info;
+    private TextView diagView;               // Kurzprotokoll der letzten Aufnahme (bleibt stehen, fuer Screenshots)
     private ImageView griff;
     private ImageView knopf, sperreKnopf, leitKnopf;
     private ImageView galerie;
@@ -278,6 +279,7 @@ public class CaptureActivity extends Activity {
         latenzNs = Settings.latenzNs(this);
         fpxFaktor = Settings.fpxFaktor(this);
         winkelKorr = Settings.winkelKorr(this);
+        StereoStitcher.hintCap = winkelKorr > 0 ? 366.0 : 394.0;
         jpegQualitaet = Settings.jpegQualitaet(this);
         audioAn = Settings.audio(this);
         maxNick = Settings.maxNickrate(this);
@@ -368,6 +370,14 @@ public class CaptureActivity extends Activity {
         Ui.zustand(blitzKnopf, blitzAn ? Ui.AN : Ui.AUS);
         zeile.addView(zahnrad, zlp);
         oben.addView(zeile);
+        diagView = new TextView(this);
+        diagView.setTextColor(0xFFFFEB3B);
+        diagView.setTextSize(11);
+        diagView.setTypeface(android.graphics.Typeface.MONOSPACE);
+        diagView.setBackgroundColor(0x99000000);
+        diagView.setPadding(dp(10), dp(4), dp(10), dp(4));
+        diagView.setVisibility(View.GONE);
+        oben.addView(diagView);
         overlay.addView(oben, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP));
 
@@ -822,6 +832,7 @@ public class CaptureActivity extends Activity {
         nimmtAuf = true;
         setzeAusloeser(true);
         info.setText(R.string.recording_hint);
+        diagView.setVisibility(View.GONE);
     }
 
     private void setzeSperren(boolean an) {
@@ -942,6 +953,7 @@ public class CaptureActivity extends Activity {
     }
 
     private volatile String lastDiag = "";
+    private volatile String lastDiagFull;
 
     private void beendeAufnahme() {
         if (!nimmtAuf) return;
@@ -973,6 +985,7 @@ public class CaptureActivity extends Activity {
                 ladeMiniatur();
                 fortschritt.setProgress(0);
                 info.setText(R.string.done_again);
+                if (lastDiagFull != null) { diagView.setText("#" + BuildInfo.NUMBER + " " + lastDiagFull); diagView.setVisibility(View.VISIBLE); }
             });
         }).start();
     }
@@ -1001,6 +1014,7 @@ public class CaptureActivity extends Activity {
         tags.add(BuildInfo.TAG);                      // Programmversion, mit der die Datei erzeugt wurde
         tags.add("diag:" + e.diag);                   // Kurzprotokoll der Aufnahme (Winkelkorrektur, Kreisschluss, Naht)
         lastDiag = e.diag;
+        lastDiagFull = e.diag + String.format(java.util.Locale.US, " lens=%s f=%.0f/%.0f wk=%.1f%%", objektive.isEmpty() ? "?" : objektive.get(objIndex).name, fPx, fPxGeraet, winkelKorr * 100);
         tags.addAll(java.util.Arrays.asList(ortTags));
         m.tags = tags.toArray(new String[0]);
         m.lat = ortLat;

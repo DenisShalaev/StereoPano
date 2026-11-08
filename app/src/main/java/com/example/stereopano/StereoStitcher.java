@@ -122,7 +122,8 @@ final class StereoStitcher {
     private final java.util.ArrayList<Double> closureSamples = new java.util.ArrayList<>();
     /** Zum Testen abschaltbar. */
     static boolean closureEnabled = true;
-    static boolean loopEnabled = true;               // Kreisschluss-Erkennung durch Bildvergleich mit dem Anfang
+    static boolean loopEnabled = true;
+    static double hintCap = 394.0;      // bis zu diesem Rohwinkel darf die grobe Schaetzung das Ende hinauszoegern               // Kreisschluss-Erkennung durch Bildvergleich mit dem Anfang
     private static final double LOOP_FROM_DEG = 280.0;   // ab hier wird nach dem Anfang des Panoramas gesucht
     private static final double LOOP_MARGIN_DEG = 3.0;   // so weit hinter den Anfang weiterdrehen (Ueberlappung fuer die Naht)
     private static final double CLOSE_FROM_DEG = 357.0;   // ab hier werden die Bilder mit dem Anfang verglichen
@@ -707,6 +708,106 @@ final class StereoStitcher {
         return o < ppd ? 0 : (int) o;
     }
 
+    /**
+     * Nahtglaettung ohne Ueberlappungsdaten: Am Kreisende passen Anfang und Ende meist nicht ganz zusammen (Helligkeit,
+     * kleiner vertikaler Versatz). Die Abweichung an der Nahtstelle wird gemessen und ueber die letzten ~30 Grad des Kreises
+     * allmaehlich herausgerechnet (kaum sichtbar, statt einer harten senkrechten Linie). Vertikaler Versatz wird fuer beide Augen
+     * gemeinsam bestimmt (sonst gaebe es vertikale Disparitaet), die Helligkeit je Auge.
+     */
+    static void wrapFix(int[] pl, int[] pr, int startL, int startR, int w, int h) {
+        double dy = measureWrapDy(pl, startL, w, h);
+        int sh = (int) Math.round(dy);
+        double gl = measureWrapGain(pl, startL, w, h, sh), gr = measureWrapGain(pr, startR, w, h, sh);
+        applyWrap(pl, startL, w, h, dy, gl);
+        applyWrap(pr, startR, w, h, dy, gr);
+    }
+
+    private static final int WK = 10;     // Spalten beiderseits der Naht fuer die Messung
+
+    private static double[] wrapProfile(int[] px, int startCol, int w, int h, boolean ende) {
+        double[] p = new double[h];
+        int[] n = new int[h];
+        for (int v = 0; v < h; v++) {
+            double s = 0; int c = 0;
+            for (int k = 0; k < WK; k++) {
+                int t = ende ? w - 1 - k : k;
+                int px0 = px[v * w + Math.floorMod(startCol + t, w)];
+                if (px0 == 0) continue;
+                s += lum(px0); c++;
+            }
+            p[v] = c >= WK / 2 ? s / c : Double.NaN;
+        }
+        return p;
+    }
+
+    static double measureWrapGain(int[] px, int startCol, int w, int h, int sh) {
+        double[] e = wrapProfile(px, startCol, w, h, true), s = wrapProfile(px, startCol, w, h, false);
+        double se = 0, ss = 0; int n = 0;
+        for (int v = h / 8; v < h - h / 8; v++) {
+            int ve = v + sh;                                       // dieselbe Stelle der Szene im Ende
+            if (ve < 0 || ve >= h) continue;
+            if (!Double.isNaN(e[ve]) && !Double.isNaN(s[v])) { se += e[ve]; ss += s[v]; n++; }
+        }
+        if (n < h / 4 || se < 1) return 1;
+        double g = ss / se;
+        return g < 0.8 ? 0.8 : (g > 1.25 ? 1.25 : g);
+    }
+
+    static double measureWrapDy(int[] px, int startCol, int w, int h) {
+        double[] e = wrapProfile(px, startCol, w, h, true), s = wrapProfile(px, startCol, w, h, false);
+        final int R = Math.max(8, (int) (4.0 * w / 360.0));
+        double var = 0; int nv = 0;
+        for (int v = 1; v < h; v++) if (!Double.isNaN(s[v]) && !Double.isNaN(s[v - 1])) { double d = s[v] - s[v - 1]; var += d * d; nv++; }
+        if (nv < h / 3 || var / nv < 0.5) return 0;
+        double[] cost = new double[2 * R + 1];
+        double c0 = Double.NaN, best = 1e18; int bi = R;
+        for (int dy = -R; dy <= R; dy++) {
+            double sum = 0; int n = 0;
+            for (int v = R + 1; v < h - R - 1; v++) {
+                double a0 = s[v], a1 = s[v - 1], b0 = e[v + dy], b1 = e[v + dy - 1];
+                if (Double.isNaN(a0) || Double.isNaN(a1) || Double.isNaN(b0) || Double.isNaN(b1)) continue;
+                sum += Math.abs((a0 - a1) - (b0 - b1));
+                n++;
+            }
+            double c = n < h / 3 ? 1e18 : sum / n;
+            cost[dy + R] = c;
+            if (dy == 0) c0 = c;
+            if (c < best) { best = c; bi = dy + R; }
+        }
+        if (bi == 0 || bi == 2 * R || best > 0.8 * c0) return 0;           // Rand der Suche / keine klare Verbesserung
+        double a = cost[bi - 1], b = cost[bi], c = cost[bi + 1], den = a - 2 * b + c, sub = bi - R;
+        if (den > 1e-9) sub += Math.max(-0.5, Math.min(0.5, 0.5 * (a - c) / den));
+        return sub;
+    }
+
+    private static void applyWrap(int[] px, int startCol, int w, int h, double dy, double g) {
+        if (Math.abs(dy) < 0.3 && Math.abs(g - 1) < 0.01) return;
+        int len = Math.min(w / 4, (int) (30.0 * w / 360.0));
+        int[] col = new int[h];
+        for (int j = 0; j < len; j++) {
+            int t = w - len + j;
+            double f = smooth01((j + 1.0) / len);
+            int ci = Math.floorMod(startCol + t, w);
+            double gain = Math.pow(g, f), sh = dy * f;
+            for (int v = 0; v < h; v++) {
+                double y = v + sh;
+                int y0 = (int) Math.floor(y);
+                double fy = y - y0;
+                int p0 = y0 >= 0 && y0 < h ? px[y0 * w + ci] : 0, p1 = y0 + 1 >= 0 && y0 + 1 < h ? px[(y0 + 1) * w + ci] : 0;
+                int o;
+                if (p0 == 0 || p1 == 0) o = px[v * w + ci] == 0 ? 0 : px[v * w + ci];
+                else {
+                    int r = (int) (((p0 >> 16) & 255) * (1 - fy) + ((p1 >> 16) & 255) * fy);
+                    int gg = (int) (((p0 >> 8) & 255) * (1 - fy) + ((p1 >> 8) & 255) * fy);
+                    int b = (int) ((p0 & 255) * (1 - fy) + (p1 & 255) * fy);
+                    o = 0xFF000000 | (Math.min(255, (int) (r * gain)) << 16) | (Math.min(255, (int) (gg * gain)) << 8) | Math.min(255, (int) (b * gain));
+                }
+                col[v] = o;
+            }
+            for (int v = 0; v < h; v++) px[v * w + ci] = col[v];
+        }
+    }
+
     private static int lum(int c) { return (77 * ((c >> 16) & 255) + 150 * ((c >> 8) & 255) + 29 * (c & 255)) >> 8; }
 
     private static double smooth01(double x) { x = x < 0 ? 0 : (x > 1 ? 1 : x); return x * x * (3 - 2 * x); }
@@ -1210,7 +1311,7 @@ final class StereoStitcher {
         }
         if (loopEnabled) {                                   // noch nicht gesichert: deutet die grobe Schaetzung auf "Anfang noch nicht erreicht"?
             double hint = recentHint();
-            if (!Double.isNaN(hint) && maxRaw + hint < 360.0 + win + LOOP_MARGIN_DEG && maxRaw < 394.0) return false;
+            if (!Double.isNaN(hint) && maxRaw + hint < 360.0 + win + LOOP_MARGIN_DEG && maxRaw < hintCap) return false;
         }
         if (!(eyeL.covered >= panoW && eyeR.covered >= panoW)) return false;
         return maxPsi >= 360.0 + win + closureNeedDeg();
@@ -1353,6 +1454,7 @@ final class StereoStitcher {
             closeLoop(r.left, extL, extW, panoW, panoH, d, (int) eyeL.start, seam);
             closeLoop(r.right, extR, extW, panoW, panoH, d, (int) eyeR.start, seam);
             r.closureShiftPx = d;
+            if (seam[1] == 0) wrapFix(r.left, r.right, (int) eyeL.start, (int) eyeR.start, panoW, panoH);
             r.diag = String.format(java.util.Locale.US, "raw=%.1f err=%.1f loopN=%d d=%.1fpx seam=%d,%.0f,%.0f,%.2f reg=%d/%d ppd=%.1f ld=%s",
                     maxRaw, Double.isNaN(loopEd) ? 0.0 : loopEd, loopSamples.size(), d, (int) seam[1], seam[2], seam[3], seam[4], regOk, regCalls, panoW / 360.0, java.util.Arrays.toString(ldbg));
         }
