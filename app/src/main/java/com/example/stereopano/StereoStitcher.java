@@ -219,39 +219,53 @@ final class StereoStitcher {
      * @param weightScale 1 = voller Beitrag; kleiner = unruhiges Bild (schnelles Nicken/Kippen) zaehlt weniger,
      *                    wird aber NICHT verworfen, damit keine Luecken entstehen
      */
-    synchronized void addFrame(Frame f, double psi, float[] rot, double weightScale) {
+    synchronized void addFrame(Frame f, double psiRaw, float[] rot, double weightScale) {
         curWs = Math.max(0.05, Math.min(1.0, weightScale));
-        if (closed || cached != null || rot == null || Double.isNaN(psi)) return;
+        if (closed || cached != null || rot == null || Double.isNaN(psiRaw)) return;
         // Bei niedriger Bildrate (Dunkelheit, lange Belichtung) wuerden sich die schmalen Streifen nicht mehr
         // beruehren -> Luecken. Daher wird das Fenster so breit gewaehlt, dass aufeinanderfolgende Bilder ueberlappen.
         double step = 0;
         if (!Double.isNaN(lastPsiSeen)) {
-            step = Math.abs(psi - lastPsiSeen);
+            step = Math.abs(psiRaw - lastPsiSeen);
             if (step < 4.0) stepEma = firstStep ? 0.8 * stepEma + 0.2 * step : step;   // erster Messwert direkt uebernehmen
             if (step < 4.0) firstStep = true;
         }
-        lastPsiSeen = psi;
+        lastPsiSeen = psiRaw;
+        // Wirklicher Drehwinkel = Sensorwinkel + gelernte Korrektur eps (siehe unten). Ab hier rechnen alle Spalten damit.
+        curEps = eps;
+        double psi0 = psiRaw + eps;
         win = Math.max(deltaDeg, 0.8 * Math.max(stepEma, step < 4.0 ? step : 0));
         // Drift des Kreises messen: letzte Bilder gegen den Anfang des Panoramas (nur kurz vor/nach 360 Grad)
-        if (closureEnabled && psi >= CLOSE_FROM_DEG && psi <= 372.0 && closureSamples.size() < 40) {
+        if (closureEnabled && psi0 >= CLOSE_FROM_DEG && psi0 <= 372.0 && closureSamples.size() < 40) {
             double m = measureClosure(f, rot);
             if (!Double.isNaN(m)) closureSamples.add(m);
         }
         // Kreis geschlossen: weitere Bilder nicht mehr einmischen (sonst Doppelbilder durch Sensordrift)
-        if (psi > 360.0 + EXT_DEG + 0.5) return;
+        if (psi0 > 360.0 + EXT_DEG + 0.5) return;
         double dx = 0, dy = 0;
         if (register) {
-            double[] s = estimateShift(f, psi, rot);
-            if (s == null) {                      // unsicher: letzten Wert halten und langsam abklingen (kein Sprung auf 0 = keine Stufen)
-                smDx *= 0.92;
+            double[] s = estimateShift(f, psi0, rot);
+            if (s == null) {                      // keine Messung moeglich (kaum Struktur): Werte halten bzw. abklingen lassen
                 smDy *= 0.92;
-            } else {                              // sicher: weich nachfuehren, Sprung pro Bild begrenzt
-                smDx += clampD(0.5 * (s[0] - smDx), 1.5);
-                smDy += clampD(0.5 * (s[1] - smDy), 1.5);
+                smDx *= 0.92;
+            } else {
+                if (s[2] > 0.5) {                                           // sicher: weich nachfuehren, Sprung pro Bild begrenzt
+                    smDy += clampD(0.5 * (s[1] - smDy), 1.5);
+                } else {
+                    smDy *= 0.92;
+                    smDx *= 0.92;
+                }
+                // Horizontaler Rest = Fehler des Drehsensors (meist zu wenig Drehung gemeldet). Er wird NICHT als Bildverschiebung
+                // angewendet, sondern fortlaufend zum Drehwinkel addiert: Das Panorama bleibt lokal nahtlos und die
+                // Winkelskala stimmt, sodass sich der Kreis nach 360 Grad wirklich schliesst. Bild gegen Bild vor wenigen Grad
+                // misst nur den kleinen Zuwachs; ueber den Kreis summiert er sich (auch bei 15 Grad Gesamtfehler).
+                double dEps = -Math.toDegrees(Math.atan(s[0] / fPx));      // Inhalt weiter rechts als erwartet = Kamera weiter links
+                if (epsEnabled) eps += clampD(EPS_GAIN * dEps, EPS_MAX_STEP);
             }
-            dx = smDx;
             dy = smDy;
         }
+        curEps = eps;
+        final double psi = psiRaw + eps;
         lastDx = dx;
         lastDy = dy;
         mask = moveThresh > 0 ? motionMask(f, rot) : null;
@@ -291,7 +305,7 @@ final class StereoStitcher {
             if (inExt && x - e.end - 1 >= extW) continue;
             int col = (int) Math.floorMod(x, (long) panoW);
 
-            double A = Math.toRadians(az0Deg + phi);              // Welt-Azimut des Strahls
+            double A = Math.toRadians(az0Deg + phi - curEps);              // Welt-Azimut des Strahls
             double sA = Math.sin(A), cA = Math.cos(A);
             double px = sA * R[0] + cA * R[3];
             double py = sA * R[1] + cA * R[4];
@@ -347,7 +361,7 @@ final class StereoStitcher {
             if (tri <= 0) continue;
             int wt = Math.max(1, (int) Math.round(W_FULL * curWs * tri));
             int col = (int) Math.floorMod(x, (long) panoW);
-            double A = Math.toRadians(az0Deg + phi);
+            double A = Math.toRadians(az0Deg + phi - curEps);
             double sA = Math.sin(A), cA = Math.cos(A);
             double px = sA * R[0] + cA * R[3];
             double py = sA * R[1] + cA * R[4];
@@ -402,7 +416,7 @@ final class StereoStitcher {
         int n = 0;
         for (int k = 0; k < nc; k++) {
             double phi = (xs[k] + 0.5) / panoW * 360.0;
-            double A = Math.toRadians(az0Deg + phi);
+            double A = Math.toRadians(az0Deg + phi - curEps);
             double sA = Math.sin(A), cA = Math.cos(A);
             double px = sA * R[0] + cA * R[3];
             double py = sA * R[1] + cA * R[4];
@@ -859,6 +873,13 @@ final class StereoStitcher {
      * damit es zum bereits aufgebauten Panorama (linkes Auge) passt. Rueckgabe {0,0}, wenn nichts Sicheres gefunden wird.
      */
     private double smDx = 0, smDy = 0;
+    private double eps = 0, curEps = 0;                 // gelernte Korrektur des Sensorwinkels (Grad) bzw. der aktuell benutzte Wert
+    static boolean epsEnabled = true;                // Winkelkorrektur nach Bild (zum Testen abschaltbar)
+    static double EPS_GAIN = 1.0;          // gemessener Rest ist differenziell (gegen schon korrigierten Inhalt) -> Einheitsverstaerkung, sonst geht Drift verloren
+    private static final double EPS_MAX_STEP = 0.4;      // max. Korrektur pro Bild (Grad)
+
+    /** Korrigierter Drehwinkel zu einem Sensorwinkel (fuer Abbruchbedingungen des Aufrufers). */
+    synchronized double effPsi(double psiRaw) { return psiRaw + eps; }
 
     private static double clampD(double v, double m) { return v > m ? m : (v < -m ? -m : v); }
 
@@ -887,7 +908,7 @@ final class StereoStitcher {
         double margin = regRY + 3;
         for (int k = 0; k < nc; k++) {
             double phi = (xs[k] + 0.5) / panoW * 360.0;
-            double A = Math.toRadians(az0Deg + phi);
+            double A = Math.toRadians(az0Deg + phi - curEps);
             double sA = Math.sin(A), cA = Math.cos(A);
             double px = sA * R[0] + cA * R[3];
             double py = sA * R[1] + cA * R[4];
@@ -918,15 +939,15 @@ final class StereoStitcher {
         if (m2 / n - m * m < 36) return zero;
 
         double cost0 = cost(f, n, 0, 0);
-        if (cost0 < 4) return zero;                        // passt schon (Rauschniveau)
-
-        // 1) vertikal (Nicken), 2) horizontal (Gieren) - getrennt, grob (Schritt 2) dann fein (+-1): ca. 4x weniger Auswertungen
-        double dy = search1D(f, n, true, regRY, 0, cost0);
+        // Vertikale Feinausrichtung nur, wenn wirklich ein Unterschied besteht und die Suche klar besser wird.
+        // Der horizontale Rest (Winkelfehler des Sensors) wird dagegen IMMER gemessen: er ist pro Bild winzig
+        // (Bruchteil eines Pixels), summiert sich aber ueber den Kreis auf viele Grad.
+        boolean unterschied = cost0 >= 4;
+        double dy = unterschied ? search1D(f, n, true, regRY, 0, cost0) : 0;
         double dx = search1D(f, n, false, regRX, dy, cost0);
-
         double costBest = cost(f, n, dx, dy);
-        if (costBest > 0.75 * cost0) return zero;          // keine klare Verbesserung -> Sensorwert behalten
-        return new double[]{dx, dy};
+        boolean klar = unterschied && costBest <= 0.75 * cost0;
+        return new double[]{dx, dy, klar ? 1 : 0};
     }
 
     /** Sucht das Kostenminimum entlang einer Achse; 0 bei Randtreffer. */

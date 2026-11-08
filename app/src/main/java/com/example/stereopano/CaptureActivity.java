@@ -860,7 +860,7 @@ public class CaptureActivity extends Activity {
             final double stp = j.s.stepDeg();
             runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp));
         }
-        if (j.s.isComplete() || j.psi >= 370.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad
+        if (j.s.isComplete() || j.s.effPsi(j.psi) >= 370.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad
     }
 
     private void aktualisiereAnzeige(double fort, double pitch, double psi, double stepDeg) {
