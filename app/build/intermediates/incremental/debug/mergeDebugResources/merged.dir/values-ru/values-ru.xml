@@ -26,6 +26,7 @@
     <string name="compass_off">Компас выключен</string>
     <string name="compass_on">Компас включён</string>
     <string name="delete_confirm">Удалить %1$s?</string>
+    <string name="delete_many_confirm">Удалить выбранные (%1$d)?</string>
     <string name="delete_not_allowed">Удаление не разрешено.</string>
     <string name="done_again">Готово. Снять ещё?</string>
     <string name="export_failed">Не удалось экспортировать: %1$s</string>
@@ -66,6 +67,7 @@
     <string name="menu_delete">Удалить</string>
     <string name="menu_flat">Сохранить как плоскую 2D-панораму</string>
     <string name="menu_sbs">Сохранить как SBS-кадр (очки)</string>
+    <string name="menu_select">Выбрать несколько</string>
     <string name="menu_share">Поделиться (.vr.jpg)</string>
     <string name="mode_fmt">Режим: %1$s</string>
     <string name="mode_sbs">SBS-очки</string>
@@ -93,6 +95,8 @@
     <string name="sec_capture">Съёмка</string>
     <string name="sec_files">Файлы и метаданные</string>
     <string name="sec_viewer">Просмотр</string>
+    <string name="select_all">Все</string>
+    <string name="selected_count">Выбрано: %1$d</string>
     <string name="set_ae_d">Блокировать экспозицию и баланс белого во время съёмки (меньше скачков яркости).</string>
     <string name="set_ae_t">Фиксировать экспозицию</string>
     <string name="set_all_d">Дополнительно показывает все файлы .vr.jpg на устройстве (например, от Cardboard Camera или старых Pixel). Нужно разрешение на чтение фото.</string>

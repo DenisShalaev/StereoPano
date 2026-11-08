@@ -155,4 +155,8 @@
     <string name="from_google">Google-Konto</string>
     <string name="account_failed">Kontoauswahl konnte nicht geöffnet werden.</string>
     <string name="hint_finish">Fast fertig – noch etwa %1$d° weiter drehen.</string>
+    <string name="menu_select">Auswählen</string>
+    <string name="select_all">Alle</string>
+    <string name="selected_count">%1$d ausgewählt</string>
+    <string name="delete_many_confirm">%1$d Bilder löschen?</string>
 </resources>

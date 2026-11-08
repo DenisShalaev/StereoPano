@@ -29,6 +29,7 @@
     <string name="compass_off">Compass off</string>
     <string name="compass_on">Compass on</string>
     <string name="delete_confirm">Delete %1$s?</string>
+    <string name="delete_many_confirm">Delete %1$d images?</string>
     <string name="delete_not_allowed">Deleting is not allowed.</string>
     <string name="done_again">Done. Another shot?</string>
     <string name="export_failed">Export failed: %1$s</string>
@@ -69,6 +70,7 @@
     <string name="menu_delete">Delete</string>
     <string name="menu_flat">Save as flat 2D panorama</string>
     <string name="menu_sbs">Save as SBS image (glasses)</string>
+    <string name="menu_select">Select</string>
     <string name="menu_share">Share (.vr.jpg)</string>
     <string name="mode_cardboard" translatable="false">Cardboard</string>
     <string name="mode_flat" translatable="false">2D</string>
@@ -99,6 +101,8 @@
     <string name="sec_capture">Capture</string>
     <string name="sec_files">Files &amp; metadata</string>
     <string name="sec_viewer">Viewer</string>
+    <string name="select_all">Select all</string>
+    <string name="selected_count">%1$d selected</string>
     <string name="set_ae_d">Lock exposure and white balance while recording (fewer brightness jumps).</string>
     <string name="set_ae_t">Lock exposure</string>
     <string name="set_all_d">Also lists every .vr.jpg on the device (e.g. from Cardboard Camera or older Pixel phones). Needs permission to read photos.</string>

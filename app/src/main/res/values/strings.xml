@@ -165,4 +165,8 @@
     <string name="from_google">Google account</string>
     <string name="account_failed">Could not open the account chooser.</string>
     <string name="hint_finish">Almost done – turn about %1$d° more.</string>
+    <string name="menu_select">Select</string>
+    <string name="select_all">Select all</string>
+    <string name="selected_count">%1$d selected</string>
+    <string name="delete_many_confirm">Delete %1$d images?</string>
 </resources>

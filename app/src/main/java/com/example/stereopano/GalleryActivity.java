@@ -67,6 +67,10 @@ public class GalleryActivity extends Activity {
     private TextView leer;
     private int sortModus;
     private boolean berechtigungAngefragt;
+    private final java.util.Set<Long> gewaehlt = new java.util.HashSet<>();
+    private boolean auswahl;
+    private LinearLayout auswahlLeiste;
+    private TextView auswahlZahl;
 
     private static String leseRecht() {
         return Build.VERSION.SDK_INT >= 33 ? Manifest.permission.READ_MEDIA_IMAGES : Manifest.permission.READ_EXTERNAL_STORAGE;
@@ -129,6 +133,33 @@ public class GalleryActivity extends Activity {
         kopf.addView(sortKnopf, slp);
         kopf.addView(Ui.zahnrad(this), new LinearLayout.LayoutParams(sz, sz));
         root.addView(kopf);
+
+        auswahlLeiste = new LinearLayout(this);
+        auswahlLeiste.setOrientation(LinearLayout.HORIZONTAL);
+        auswahlLeiste.setGravity(Gravity.CENTER_VERTICAL);
+        auswahlLeiste.setBackgroundColor(0xFF1E2A33);
+        auswahlLeiste.setPadding(24, 8, 16, 8);
+        auswahlZahl = new TextView(this);
+        auswahlZahl.setTextColor(Color.WHITE);
+        auswahlZahl.setTextSize(16);
+        auswahlLeiste.addView(auswahlZahl, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        android.widget.Button alle = new android.widget.Button(this);
+        alle.setText(R.string.select_all);
+        alle.setOnClickListener(v -> {
+            for (Object z : zeilen) if (z instanceof Item[]) for (Item it : (Item[]) z) if (it != null) gewaehlt.add(it.id);
+            aktualisiereAuswahl();
+        });
+        auswahlLeiste.addView(alle);
+        android.widget.Button del = new android.widget.Button(this);
+        del.setText(R.string.menu_delete);
+        del.setOnClickListener(v -> frageLoeschenAuswahl());
+        auswahlLeiste.addView(del);
+        android.widget.Button abbr = new android.widget.Button(this);
+        abbr.setText(R.string.cancel);
+        abbr.setOnClickListener(v -> beendeAuswahl());
+        auswahlLeiste.addView(abbr);
+        auswahlLeiste.setVisibility(View.GONE);
+        root.addView(auswahlLeiste);
 
         leer = new TextView(this);
         leer.setText(R.string.gallery_empty);
@@ -210,7 +241,7 @@ public class GalleryActivity extends Activity {
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
-        if (req == REQ_LOESCHEN) laden();
+        if (req == REQ_LOESCHEN) { if (auswahl) beendeAuswahl(); laden(); }
     }
 
     @Override
@@ -229,9 +260,17 @@ public class GalleryActivity extends Activity {
         }
         iv.setVisibility(View.VISIBLE);
         iv.setTag(it.id);
-        iv.setOnClickListener(v -> startActivity(new Intent(this, ViewerActivity.class)
-                .setAction(Intent.ACTION_VIEW).setData(it.uri).putExtra("von_galerie", true)));
-        iv.setOnLongClickListener(v -> { zeigeMenue(it); return true; });
+        if (gewaehlt.contains(it.id)) iv.setColorFilter(0xAA4FC3F7, android.graphics.PorterDuff.Mode.SRC_ATOP);
+        else iv.clearColorFilter();
+        iv.setOnClickListener(v -> {
+            if (auswahl) { schalteAuswahl(it); return; }
+            startActivity(new Intent(this, ViewerActivity.class)
+                    .setAction(Intent.ACTION_VIEW).setData(it.uri).putExtra("von_galerie", true));
+        });
+        iv.setOnLongClickListener(v -> {
+            if (auswahl) schalteAuswahl(it); else zeigeMenue(it);
+            return true;
+        });
         Bitmap bm = cache.get(it.id);
         if (bm != null) { iv.setImageBitmap(bm); return; }
         iv.setImageDrawable(null);
@@ -354,10 +393,11 @@ public class GalleryActivity extends Activity {
 
     private void zeigeMenue(Item it) {
         String[] eintraege = {getString(R.string.menu_share), getString(R.string.menu_flat), getString(R.string.menu_sbs),
-                getString(R.string.menu_anaglyph), getString(R.string.menu_delete)};
+                getString(R.string.menu_anaglyph), getString(R.string.menu_delete), getString(R.string.menu_select)};
         new AlertDialog.Builder(this).setTitle(it.name).setItems(eintraege, (d, w) -> {
             if (w == 0) teilen(it);
             else if (w == 4) frageLoeschen(it);
+            else if (w == 5) { auswahl = true; gewaehlt.clear(); gewaehlt.add(it.id); aktualisiereAuswahl(); }
             else exportiere(it, w - 1);
         }).show();
     }
@@ -384,6 +424,55 @@ public class GalleryActivity extends Activity {
             final String msg = m;
             runOnUiThread(() -> Toast.makeText(this, msg, Toast.LENGTH_LONG).show());
         }).start();
+    }
+
+    private void schalteAuswahl(Item it) {
+        if (!gewaehlt.remove(it.id)) gewaehlt.add(it.id);
+        aktualisiereAuswahl();
+    }
+
+    private void aktualisiereAuswahl() {
+        auswahlLeiste.setVisibility(auswahl ? View.VISIBLE : View.GONE);
+        auswahlZahl.setText(getString(R.string.selected_count, gewaehlt.size()));
+        adapter.notifyDataSetChanged();
+    }
+
+    private void beendeAuswahl() {
+        auswahl = false;
+        gewaehlt.clear();
+        aktualisiereAuswahl();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (auswahl) beendeAuswahl(); else super.onBackPressed();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void frageLoeschenAuswahl() {
+        if (gewaehlt.isEmpty()) return;
+        final List<Uri> uris = new ArrayList<>();
+        final List<Long> ids = new ArrayList<>(gewaehlt);
+        for (Long id : ids) uris.add(ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id));
+        new AlertDialog.Builder(this)
+                .setMessage(getString(R.string.delete_many_confirm, uris.size()))
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.menu_delete, (d, w) -> {
+                    try {
+                        for (Uri u : uris) getContentResolver().delete(u, null, null);
+                        for (Long id : ids) cache.remove(id);
+                        beendeAuswahl();
+                        laden();
+                    } catch (SecurityException e) {
+                        // Fremde Dateien: ein einziger Systemdialog fuer alle
+                        try {
+                            IntentSender is = MediaStore.createDeleteRequest(getContentResolver(), uris).getIntentSender();
+                            startIntentSenderForResult(is, REQ_LOESCHEN, null, 0, 0, 0);
+                        } catch (Exception ex) {
+                            Toast.makeText(this, R.string.delete_not_allowed, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }).show();
     }
 
     @SuppressWarnings("deprecation")

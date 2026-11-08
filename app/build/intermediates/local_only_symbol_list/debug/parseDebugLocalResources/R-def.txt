@@ -62,6 +62,7 @@ string cd_sort
 string compass_off
 string compass_on
 string delete_confirm
+string delete_many_confirm
 string delete_not_allowed
 string done_again
 string export_failed
@@ -102,6 +103,7 @@ string menu_anaglyph
 string menu_delete
 string menu_flat
 string menu_sbs
+string menu_select
 string menu_share
 string mode_cardboard
 string mode_flat
@@ -132,6 +134,8 @@ string sec_calibration
 string sec_capture
 string sec_files
 string sec_viewer
+string select_all
+string selected_count
 string set_ae_d
 string set_ae_t
 string set_all_d

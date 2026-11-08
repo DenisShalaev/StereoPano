@@ -94,6 +94,7 @@ public class CaptureActivity extends Activity {
     private GestureDetector gesten;
     private boolean panelSichtbar = true;
     private boolean belichtungSperren = true;
+    private volatile double fPxGeraet = 0;     // Brennweite in Pixeln laut Kamera (nur zur Diagnose)
     private GuideView guide;
     private boolean leitpunkte = true;
     private long startZeit, letzteT;
@@ -712,6 +713,10 @@ public class CaptureActivity extends Activity {
                 }
             }
 
+            // Weitwinkel: Verzeichnung in hoechster Qualitaet entzerren lassen (sonst biegen sich Kanten, Registrierung/Naht leiden)
+            int[] dm = cc.get(CameraCharacteristics.DISTORTION_CORRECTION_AVAILABLE_MODES);
+            if (hat(dm, CaptureRequest.DISTORTION_CORRECTION_MODE_HIGH_QUALITY))
+                anfrage.set(CaptureRequest.DISTORTION_CORRECTION_MODE, CaptureRequest.DISTORTION_CORRECTION_MODE_HIGH_QUALITY);
             // Stabilisierung aus: sie wuerde das Sichtfeld unvorhersehbar verschieben
             if (hat(cc.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION),
                     CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF))
@@ -760,6 +765,39 @@ public class CaptureActivity extends Activity {
             Toast.makeText(this, R.string.not_ready, Toast.LENGTH_SHORT).show();
             return;
         }
+        if (startVerzoegert) return;
+        startVerzoegert = true;
+        vibriere(new long[]{0, 70});
+        // Kurze Pause: Tippen und Vibration sollen das Geraet nicht mehr bewegen, wenn das erste Bild entsteht
+        handler().postDelayed(this::starteAufnahmeJetzt, 350);
+    }
+
+    private boolean startVerzoegert;
+
+    private android.os.Handler uiHandler;
+    private android.os.Handler handler() {
+        if (uiHandler == null) uiHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        return uiHandler;
+    }
+
+    @SuppressWarnings("deprecation")
+    private void vibriere(long[] muster) {
+        try {
+            android.os.Vibrator v;
+            if (android.os.Build.VERSION.SDK_INT >= 31) {
+                android.os.VibratorManager vm = (android.os.VibratorManager) getSystemService(VIBRATOR_MANAGER_SERVICE);
+                v = vm == null ? null : vm.getDefaultVibrator();
+            } else {
+                v = (android.os.Vibrator) getSystemService(VIBRATOR_SERVICE);
+            }
+            if (v == null || !v.hasVibrator()) return;
+            v.vibrate(android.os.VibrationEffect.createWaveform(muster, -1));
+        } catch (RuntimeException ignored) { }
+    }
+
+    private void starteAufnahmeJetzt() {
+        startVerzoegert = false;
+        if (!gameYaw.hasData() || sitzung == null) return;
         startYaw = gameYaw.latest();
         startKurs = hatKompass ? kompass.azimuth() : Double.NaN;
         // Sollneigung festhalten (z. B. 30 Grad nach oben fuer hohe Gebaeude): das Panorama-Fenster wird um diese Elevation
@@ -798,6 +836,10 @@ public class CaptureActivity extends Activity {
         public void onCaptureCompleted(CameraCaptureSession s, CaptureRequest rq, android.hardware.camera2.TotalCaptureResult res) {
             Long e = res.get(android.hardware.camera2.CaptureResult.SENSOR_EXPOSURE_TIME);
             Long k = res.get(android.hardware.camera2.CaptureResult.SENSOR_ROLLING_SHUTTER_SKEW);
+            float[] ic = res.get(android.hardware.camera2.CaptureResult.LENS_INTRINSIC_CALIBRATION);
+            android.graphics.Rect aa = cc == null ? null : cc.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            if (ic != null && ic.length >= 1 && aa != null && groesse != null && aa.width() > 0)
+                fPxGeraet = ic[0] * groesse.getWidth() / (double) aa.width();
             if (e != null) expNs = e;
             if (k != null) skewNs = k;
         }
@@ -890,6 +932,7 @@ public class CaptureActivity extends Activity {
     private void beendeAufnahme() {
         if (!nimmtAuf) return;
         nimmtAuf = false;
+        vibriere(new long[]{0, 80, 90, 80});
         final StereoStitcher s = stitcher;
         stitcher = null;
         s.close();
@@ -903,7 +946,8 @@ public class CaptureActivity extends Activity {
             String meldung;
             try {
                 Uri uri = speichere(s, ton, kurs);
-                meldung = getString(R.string.saved_toast) + "\n#" + BuildInfo.NUMBER + " " + lastDiag;
+                meldung = getString(R.string.saved_toast) + "\n#" + BuildInfo.NUMBER + " " + lastDiag
+                        + String.format(java.util.Locale.US, " lens=%s f=%.0f/%.0f", objektive.isEmpty() ? "?" : objektive.get(objIndex).name, fPx, fPxGeraet);
             } catch (Exception | OutOfMemoryError e) {
                 meldung = getString(R.string.save_error, String.valueOf(e.getMessage()));
             }
