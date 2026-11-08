@@ -131,7 +131,9 @@ public class CaptureActivity extends Activity {
     private CameraCaptureSession sitzung;
     private CaptureRequest.Builder anfrage;
     private ImageReader leser;
-    private HandlerThread kameraThread, sensorThread;
+    private HandlerThread kameraThread, sensorThread, rechenThread;
+    private Handler rechenHandler;
+    private final java.util.concurrent.atomic.AtomicReference<Job> offen = new java.util.concurrent.atomic.AtomicReference<>();
     private Handler kameraHandler, sensorHandler;
     private boolean surfaceBereit, oeffnet;
 
@@ -654,6 +656,9 @@ public class CaptureActivity extends Activity {
         kameraThread = new HandlerThread("kamera");
         kameraThread.start();
         kameraHandler = new Handler(kameraThread.getLooper());
+        rechenThread = new HandlerThread("rechnen");   // schwere Arbeit getrennt vom Kamera-Thread (sonst staut sich die Kamera)
+        rechenThread.start();
+        rechenHandler = new Handler(rechenThread.getLooper());
         try {
             cm.openCamera(kameraId, new CameraDevice.StateCallback() {
                 @Override public void onOpened(CameraDevice c) {
@@ -743,6 +748,8 @@ public class CaptureActivity extends Activity {
         if (kamera != null) { kamera.close(); kamera = null; }
         if (leser != null) { leser.close(); leser = null; }
         if (kameraThread != null) { kameraThread.quitSafely(); kameraThread = null; }
+        if (rechenThread != null) { rechenThread.quitSafely(); rechenThread = null; }
+        offen.set(null);
         oeffnet = false;
     }
 
@@ -822,22 +829,38 @@ public class CaptureActivity extends Activity {
                 ruhig = Math.abs(nick - vorherNick) / dt <= maxNick && Math.abs(kipp - vorherKipp) / dt <= maxNick;
             }
             vorherNick = nick; vorherKipp = kipp; vorherTs = zeit;
-            // unruhige Bilder werden nicht verworfen (das riss Luecken, der Kreis wurde nie fertig), sondern zaehlen weniger
-            s.addFrame(new YuvFrame(img, sensorOrientierung), psi, rot, ruhig ? 1.0 : 0.25);
-
-            long jetzt = System.currentTimeMillis();
-            if (jetzt - letzteAnzeige > 100) {
-                letzteAnzeige = jetzt;
-                final double fort = s.progress();
-                final double pitch = gameYaw.pitch() - startEl;
-                final double p = psi;
-                final double stp = s.stepDeg();
-                runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp));
-            }
-            if (s.isComplete() || psi >= 370.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad (Erweiterung fuer den Kreisschluss reicht bis ca. 369)
+            // unruhige Bilder werden nicht verworfen (das riss Luecken, der Kreis wurde nie fertig), sondern zaehlen weniger.
+            // Das Bild wird nur kopiert und sofort freigegeben; gerechnet wird im eigenen Thread. Ist er noch beschaeftigt,
+            // ersetzt das neueste Bild das wartende (die Fensterbreite des Stitchers passt sich dem Abstand an).
+            Handler h = rechenHandler;
+            if (h == null) return;
+            Job neu = new Job(s, new YuvFrame(img, sensorOrientierung), psi, rot, ruhig ? 1.0 : 0.25);
+            if (offen.getAndSet(neu) == null) h.post(this::arbeite);
         } finally {
             img.close();
         }
+    }
+
+    private static final class Job {
+        final StereoStitcher s; final YuvFrame f; final double psi; final float[] rot; final double ws;
+        Job(StereoStitcher s, YuvFrame f, double psi, float[] rot, double ws) { this.s = s; this.f = f; this.psi = psi; this.rot = rot; this.ws = ws; }
+    }
+
+    /** Laeuft im Rechen-Thread: Bild einsortieren, Anzeige aktualisieren, Ende erkennen. */
+    private void arbeite() {
+        Job j = offen.getAndSet(null);
+        if (j == null || !nimmtAuf || j.s != stitcher) return;
+        j.s.addFrame(j.f, j.psi, j.rot, j.ws);
+        long jetzt = System.currentTimeMillis();
+        if (jetzt - letzteAnzeige > 100) {
+            letzteAnzeige = jetzt;
+            final double fort = j.s.progress();
+            final double pitch = gameYaw.pitch() - startEl;
+            final double p = j.psi;
+            final double stp = j.s.stepDeg();
+            runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp));
+        }
+        if (j.s.isComplete() || j.psi >= 370.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad
     }
 
     private void aktualisiereAnzeige(double fort, double pitch, double psi, double stepDeg) {
@@ -992,15 +1015,24 @@ public class CaptureActivity extends Activity {
      * Sensororientierung 270: aufrecht(ux, uy) = roh(x = W-1-uy, y = ux)
      */
     private static final class YuvFrame implements StereoStitcher.Frame {
-        private final ByteBuffer yb, ub, vb;
+        private final byte[] yb, ub, vb;
         private final int yRow, uRow, vRow, uPix, vPix, rawW, rawH;
         private final boolean rot90;
 
+        private static byte[] kopie(ByteBuffer b) {
+            ByteBuffer d = b.duplicate();
+            d.rewind();
+            byte[] a = new byte[d.remaining()];
+            d.get(a);
+            return a;
+        }
+
+        /** Kopiert die Ebenen (schnelles Blockkopieren), damit das Kamerabild sofort zurueckgegeben werden kann. */
         YuvFrame(Image img, int sensorOrientation) {
             Image.Plane[] p = img.getPlanes();
-            yb = p[0].getBuffer();
-            ub = p[1].getBuffer();
-            vb = p[2].getBuffer();
+            yb = kopie(p[0].getBuffer());
+            ub = kopie(p[1].getBuffer());
+            vb = kopie(p[2].getBuffer());
             yRow = p[0].getRowStride();
             uRow = p[1].getRowStride();
             vRow = p[2].getRowStride();
@@ -1016,7 +1048,7 @@ public class CaptureActivity extends Activity {
             int x, y;
             if (rot90) { x = uy; y = rawH - 1 - ux; }
             else       { x = rawW - 1 - uy; y = ux; }
-            return yb.get(y * yRow + x) & 0xFF;
+            return yb[y * yRow + x] & 0xFF;
         }
 
         @Override
@@ -1024,9 +1056,9 @@ public class CaptureActivity extends Activity {
             int x, y;
             if (rot90) { x = uy; y = rawH - 1 - ux; }
             else       { x = rawW - 1 - uy; y = ux; }
-            int yy = yb.get(y * yRow + x) & 0xFF;
-            int cu = (ub.get((y >> 1) * uRow + (x >> 1) * uPix) & 0xFF) - 128;
-            int cv = (vb.get((y >> 1) * vRow + (x >> 1) * vPix) & 0xFF) - 128;
+            int yy = yb[y * yRow + x] & 0xFF;
+            int cu = (ub[(y >> 1) * uRow + (x >> 1) * uPix] & 0xFF) - 128;
+            int cv = (vb[(y >> 1) * vRow + (x >> 1) * vPix] & 0xFF) - 128;
             int r = clamp(yy + (int) (1.402f * cv));
             int g = clamp(yy - (int) (0.344f * cu + 0.714f * cv));
             int b = clamp(yy + (int) (1.772f * cu));

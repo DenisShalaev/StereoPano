@@ -113,6 +113,7 @@ final class StereoStitcher {
 
     // Arbeitsfelder der Feinausrichtung
     private final int regMax;
+    private final int regVStep;
     private final double[] sUx, sUy, sRef;
     private final int regRY, regRX;
     // Bewegungserkennung
@@ -192,7 +193,8 @@ final class StereoStitcher {
         this.gh = frameH / MV_STRIDE;
         this.regRY = Math.max(6, frameH / 160);
         this.regRX = Math.max(3, regRY / 2);
-        this.regMax = REG_COLS * (panoH / 3 + 2);
+        this.regVStep = Math.max(3, (REG_COLS * panoH) / 1500);   // hoechstens ca. 1500 Vergleichspunkte (Rechenzeit)
+        this.regMax = REG_COLS * (panoH / regVStep + 2);
         this.sUx = new double[regMax];
         this.sUy = new double[regMax];
         this.sRef = new double[regMax];
@@ -240,24 +242,38 @@ final class StereoStitcher {
         double dx = 0, dy = 0;
         if (register) {
             double[] s = estimateShift(f, psi, rot);
-            dx = s[0];
-            dy = s[1];
+            if (s == null) {                      // unsicher: letzten Wert halten und langsam abklingen (kein Sprung auf 0 = keine Stufen)
+                smDx *= 0.92;
+                smDy *= 0.92;
+            } else {                              // sicher: weich nachfuehren, Sprung pro Bild begrenzt
+                smDx += clampD(0.5 * (s[0] - smDx), 1.5);
+                smDy += clampD(0.5 * (s[1] - smDy), 1.5);
+            }
+            dx = smDx;
+            dy = smDy;
         }
         lastDx = dx;
         lastDy = dy;
         mask = moveThresh > 0 ? motionMask(f, rot) : null;
-        accumulate(eyeL, f, psi, rot, dx, dy);
-        accumulate(eyeR, f, psi, rot, dx, dy);
-        if (mask != null) {
-            accumulateFallback(eyeL, f, psi, rot, dx, dy, +FB_DEG);
-            accumulateFallback(eyeL, f, psi, rot, dx, dy, -FB_DEG);
-            accumulateFallback(eyeR, f, psi, rot, dx, dy, +FB_DEG);
-            accumulateFallback(eyeR, f, psi, rot, dx, dy, -FB_DEG);
-        }
+        // Beide Augen schreiben in getrennte Puffer -> parallel (halbiert die Rechenzeit pro Bild auf Mehrkernprozessoren)
+        final double fdx = dx, fdy = dy;
+        final boolean fb = mask != null;
+        java.util.concurrent.CompletableFuture<Void> r = java.util.concurrent.CompletableFuture.runAsync(
+                () -> accumulateEye(eyeR, f, psi, rot, fdx, fdy, fb));
+        accumulateEye(eyeL, f, psi, rot, fdx, fdy, fb);
+        r.join();
         if (psi > maxPsi) maxPsi = psi;
     }
 
     // ------------------------------------------------------------------ Einsortieren
+
+    private void accumulateEye(Eye e, Frame f, double psi, float[] rot, double dx, double dy, boolean fb) {
+        accumulate(e, f, psi, rot, dx, dy);
+        if (fb) {
+            accumulateFallback(e, f, psi, rot, dx, dy, +FB_DEG);
+            accumulateFallback(e, f, psi, rot, dx, dy, -FB_DEG);
+        }
+    }
 
     private void accumulate(Eye e, Frame f, double psi, float[] R, double sx, double sy) {
         double centre = psi + e.offsetDeg;
@@ -664,8 +680,12 @@ final class StereoStitcher {
      * Schaetzt, um wie viele Bildpixel (dx, dy) das neue Bild gegenueber dem Sensorwert verschoben werden muss,
      * damit es zum bereits aufgebauten Panorama (linkes Auge) passt. Rueckgabe {0,0}, wenn nichts Sicheres gefunden wird.
      */
+    private double smDx = 0, smDy = 0;
+
+    private static double clampD(double v, double m) { return v > m ? m : (v < -m ? -m : v); }
+
     private double[] estimateShift(Frame f, double psi, float[] R) {
-        final double[] zero = {0, 0};
+        final double[] zero = null;                         // null = keine sichere Messung
         Eye e = eyeL;
         double centre = psi + e.offsetDeg;
         long xa = (long) Math.floor((centre - REG_BACK_DEG) / 360.0 * panoW - 0.5);
@@ -694,7 +714,7 @@ final class StereoStitcher {
             double px = sA * R[0] + cA * R[3];
             double py = sA * R[1] + cA * R[4];
             double pz = sA * R[2] + cA * R[5];
-            for (int v = 3; v < panoH - 3 && n < regMax; v += 3) {
+            for (int v = 3; v < panoH - 3 && n < regMax; v += regVStep) {
                 int idx = v * panoW + cols[k];
                 int wp = e.w[idx] & 0xFF;
                 if (wp < 3) continue;
@@ -722,28 +742,35 @@ final class StereoStitcher {
         double cost0 = cost(f, n, 0, 0);
         if (cost0 < 4) return zero;                        // passt schon (Rauschniveau)
 
-        // 1) vertikal (Nicken), 2) horizontal (Gieren) - getrennt gesucht
-        double bestY = 0, bestCy = cost0;
-        double[] cy = new double[2 * regRY + 1];
-        for (int s = -regRY; s <= regRY; s++) {
-            cy[s + regRY] = cost(f, n, 0, s);
-            if (cy[s + regRY] < bestCy) { bestCy = cy[s + regRY]; bestY = s; }
-        }
-        double dy = subpixel(cy, (int) bestY + regRY, bestY);
-        if (Math.abs(bestY) >= regRY) dy = 0;
-
-        double bestX = 0, bestCx = cost(f, n, 0, dy);
-        double[] cxs = new double[2 * regRX + 1];
-        for (int s = -regRX; s <= regRX; s++) {
-            cxs[s + regRX] = cost(f, n, s, dy);
-            if (cxs[s + regRX] < bestCx) { bestCx = cxs[s + regRX]; bestX = s; }
-        }
-        double dx = subpixel(cxs, (int) bestX + regRX, bestX);
-        if (Math.abs(bestX) >= regRX) dx = 0;
+        // 1) vertikal (Nicken), 2) horizontal (Gieren) - getrennt, grob (Schritt 2) dann fein (+-1): ca. 4x weniger Auswertungen
+        double dy = search1D(f, n, true, regRY, 0, cost0);
+        double dx = search1D(f, n, false, regRX, dy, cost0);
 
         double costBest = cost(f, n, dx, dy);
-        if (costBest > 0.85 * cost0) return zero;          // keine klare Verbesserung -> Sensorwert behalten
+        if (costBest > 0.75 * cost0) return zero;          // keine klare Verbesserung -> Sensorwert behalten
         return new double[]{dx, dy};
+    }
+
+    /** Sucht das Kostenminimum entlang einer Achse; 0 bei Randtreffer. */
+    private double search1D(Frame f, int n, boolean vertical, int r, double other, double c0) {
+        int best = 0;
+        double bc = vertical ? c0 : cost(f, n, 0, other);
+        for (int s = -r; s <= r; s += 2) {
+            double c = vertical ? cost(f, n, 0, s) : cost(f, n, s, other);
+            if (c < bc) { bc = c; best = s; }
+        }
+        for (int s = best - 1; s <= best + 1; s += 2) {
+            if (s < -r || s > r) continue;
+            double c = vertical ? cost(f, n, 0, s) : cost(f, n, s, other);
+            if (c < bc) { bc = c; best = s; }
+        }
+        if (Math.abs(best) >= r) return 0;
+        double[] c3 = new double[3];
+        for (int i = -1; i <= 1; i++) {
+            int s = best + i;
+            c3[i + 1] = vertical ? cost(f, n, 0, s) : cost(f, n, s, other);
+        }
+        return subpixel(c3, 1, best);
     }
 
     /** Parabel durch drei Kostenwerte -> Minimum mit Teilpixelgenauigkeit. */
