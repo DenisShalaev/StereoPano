@@ -111,7 +111,10 @@ string lenti_marks
 string lenti_marks_all
 string lenti_marks_none
 string lenti_marks_sides
-string lenti_portrait
+string lenti_orient
+string lenti_orient_hint
+string lenti_orient_land
+string lenti_orient_port
 string lenti_prepare
 string lenti_px_per_lens
 string lenti_saved

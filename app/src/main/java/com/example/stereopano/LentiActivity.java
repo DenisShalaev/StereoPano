@@ -92,7 +92,7 @@ public class LentiActivity extends Activity {
         dpiIdx = sp.getInt("dpi", 0);
         views = sp.getInt("views", 8);
         depthPct = sp.getInt("depth", 100);
-        portrait = sp.getBoolean("portrait", false);
+        portrait = sp.contains("portrait") ? sp.getBoolean("portrait", false) : !ring;   // Teilpanorama: erst Hochformat vorschlagen
         reverse = sp.getBoolean("reverse", true);
         marksMode = sp.getInt("marksMode", 2);
         pos = sp.getInt("pos", 500);
@@ -212,7 +212,10 @@ public class LentiActivity extends Activity {
 
         formular.addView(ueberschrift(getString(R.string.lenti_format)));
         formular.addView(segment(FORMAT_NAME, fmt, i -> { fmt = i; sp.edit().putInt("fmt", i).apply(); aktualisiere(); }));
-        formular.addView(check(getString(R.string.lenti_portrait), portrait, c -> { portrait = c; sp.edit().putBoolean("portrait", c).apply(); aktualisiere(); }));
+        formular.addView(ueberschrift(getString(R.string.lenti_orient)));
+        formular.addView(segment(new String[]{getString(R.string.lenti_orient_land), getString(R.string.lenti_orient_port)}, portrait ? 1 : 0,
+                i -> { portrait = i == 1; sp.edit().putBoolean("portrait", portrait).apply(); aktualisiere(); }));
+        formular.addView(text(getString(R.string.lenti_orient_hint), 12, GRAU));
 
         formular.addView(ueberschrift(getString(R.string.lenti_dpi)));
         String[] dn = new String[DPI.length];

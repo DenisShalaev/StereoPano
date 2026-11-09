@@ -75,7 +75,10 @@
     <string name="lenti_marks_all">По всем краям</string>
     <string name="lenti_marks_none">Нет</string>
     <string name="lenti_marks_sides">Слева и справа</string>
-    <string name="lenti_portrait">Книжная ориентация</string>
+    <string name="lenti_orient">Ориентация листа</string>
+    <string name="lenti_orient_hint">Линзы растра должны идти вдоль вертикального края картинки: при горизонтальном листе параллельно короткой стороне, при вертикальном параллельно длинной.</string>
+    <string name="lenti_orient_land">Горизонтально (виды, групповые фото)</string>
+    <string name="lenti_orient_port">Вертикально (портрет из части панорамы)</string>
     <string name="lenti_prepare">Подготовка ракурсов…</string>
     <string name="lenti_px_per_lens">Пикселей на линзу: %1$.1f</string>
     <string name="lenti_saved">Сохранено: %1$s</string>

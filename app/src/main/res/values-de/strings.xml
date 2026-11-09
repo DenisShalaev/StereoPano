@@ -167,7 +167,6 @@
     <string name="lenti_lpi">Linsenraster, LPI</string>
     <string name="lenti_lpi_real">Tatsächliche LPI (aus dem Testblatt)</string>
     <string name="lenti_format">Papierformat</string>
-    <string name="lenti_portrait">Hochformat</string>
     <string name="lenti_dpi">Druckerauflösung, DPI</string>
     <string name="lenti_views">Anzahl Ansichten</string>
     <string name="lenti_flip">Ansichten umkehren (wenn die Tiefe verkehrt wirkt)</string>
@@ -190,4 +189,8 @@
     <string name="lenti_marks_none">Keine</string>
     <string name="lenti_marks_sides">Links/rechts</string>
     <string name="lenti_marks_all">Rundum</string>
+    <string name="lenti_orient">Blattausrichtung</string>
+    <string name="lenti_orient_land">Querformat (Ansichten, Gruppenfotos)</string>
+    <string name="lenti_orient_port">Hochformat (Teilpanorama, Porträts)</string>
+    <string name="lenti_orient_hint">Die Linsenstreifen müssen entlang der senkrechten Bildkante verlaufen (bei Querformat parallel zur kurzen, bei Hochformat zur langen Seite).</string>
 </resources>

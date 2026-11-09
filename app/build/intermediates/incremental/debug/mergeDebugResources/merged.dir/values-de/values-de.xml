@@ -75,7 +75,10 @@
     <string name="lenti_marks_all">Rundum</string>
     <string name="lenti_marks_none">Keine</string>
     <string name="lenti_marks_sides">Links/rechts</string>
-    <string name="lenti_portrait">Hochformat</string>
+    <string name="lenti_orient">Blattausrichtung</string>
+    <string name="lenti_orient_hint">Die Linsenstreifen müssen entlang der senkrechten Bildkante verlaufen (bei Querformat parallel zur kurzen, bei Hochformat zur langen Seite).</string>
+    <string name="lenti_orient_land">Querformat (Ansichten, Gruppenfotos)</string>
+    <string name="lenti_orient_port">Hochformat (Teilpanorama, Porträts)</string>
     <string name="lenti_prepare">Ansichten werden vorbereitet…</string>
     <string name="lenti_px_per_lens">Pixel pro Linse: %1$.1f</string>
     <string name="lenti_saved">Gespeichert: %1$s</string>

@@ -177,7 +177,6 @@
     <string name="lenti_lpi">Lens sheet, LPI</string>
     <string name="lenti_lpi_real">Actual LPI (from the test sheet)</string>
     <string name="lenti_format">Paper size</string>
-    <string name="lenti_portrait">Portrait orientation</string>
     <string name="lenti_dpi">Printer resolution, DPI</string>
     <string name="lenti_views">Number of views</string>
     <string name="lenti_flip">Reverse view order (if depth looks inverted)</string>
@@ -200,4 +199,8 @@
     <string name="lenti_marks_none">None</string>
     <string name="lenti_marks_sides">Left/right</string>
     <string name="lenti_marks_all">All sides</string>
+    <string name="lenti_orient">Sheet orientation</string>
+    <string name="lenti_orient_land">Landscape (views, group photos)</string>
+    <string name="lenti_orient_port">Portrait (partial panorama, portraits)</string>
+    <string name="lenti_orient_hint">The lens ridges must run along the vertical edge of the picture (parallel to the short side for landscape, to the long side for portrait).</string>
 </resources>
