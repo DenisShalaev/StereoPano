@@ -1469,6 +1469,11 @@ final class StereoStitcher {
             closeLoop(r.right, extR, extW, panoW, panoH, d, (int) eyeR.start, seam);
             r.closureShiftPx = d;
             if (seam[1] == 0) wrapFix(r.left, r.right, (int) eyeL.start, (int) eyeR.start, panoW, panoH);
+            else if (Math.abs(seam[4] - 1) <= 0.02) {          // Naht ausgerichtet, aber kein Helligkeitsabgleich gefunden: Stufe zwischen Ende und Anfang sanft ausgleichen
+                double gl = measureWrapGain(r.left, (int) eyeL.start, panoW, panoH, 0), gr = measureWrapGain(r.right, (int) eyeR.start, panoW, panoH, 0);
+                if (Math.abs(gl - 1) > 0.02) applyWrap(r.left, (int) eyeL.start, panoW, panoH, 0, gl);
+                if (Math.abs(gr - 1) > 0.02) applyWrap(r.right, (int) eyeR.start, panoW, panoH, 0, gr);
+            }
             r.diag = String.format(java.util.Locale.US, "raw=%.1f err=%.1f loopN=%d d=%.1fpx seam=%d,%.0f,%.0f,%.2f reg=%d/%d ppd=%.1f ld=%s",
                     maxRaw, Double.isNaN(loopEd) ? 0.0 : loopEd, loopSamples.size(), d, (int) seam[1], seam[2], seam[3], seam[4], regOk, regCalls, panoW / 360.0, java.util.Arrays.toString(ldbg));
         }

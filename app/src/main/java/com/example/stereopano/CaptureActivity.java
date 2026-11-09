@@ -973,15 +973,17 @@ public class CaptureActivity extends Activity {
         final double kurs = startKurs;
         new Thread(() -> {
             String meldung;
+            String gp = "";
             try {
                 Uri uri = speichere(s, ton, kurs);
-                String gp = ladeZuGoogle(uri);
+                gp = ladeZuGoogle(uri);
                 meldung = getString(R.string.saved_toast) + (gp.isEmpty() ? "" : "\n" + gp) + "\n#" + BuildInfo.NUMBER + " " + lastDiag
                         + String.format(java.util.Locale.US, " lens=%s f=%.0f/%.0f", objektive.isEmpty() ? "?" : objektive.get(objIndex).name, fPx, fPxGeraet);
             } catch (Exception | OutOfMemoryError e) {
                 meldung = getString(R.string.save_error, String.valueOf(e.getMessage()));
             }
             final String m = meldung;
+            final String gpMsg = gp;
             runOnUiThread(() -> {
                 Toast.makeText(this, m, Toast.LENGTH_LONG).show();
                 knopf.setEnabled(true);
@@ -989,7 +991,7 @@ public class CaptureActivity extends Activity {
                 ladeMiniatur();
                 fortschritt.setProgress(0);
                 info.setText(R.string.done_again);
-                if (lastDiagFull != null) { diagView.setText("#" + BuildInfo.NUMBER + " " + lastDiagFull); diagView.setVisibility(View.VISIBLE); }
+                if (lastDiagFull != null) { diagView.setText("#" + BuildInfo.NUMBER + " " + lastDiagFull + (gpMsg.isEmpty() ? "" : "\n" + gpMsg)); diagView.setVisibility(View.VISIBLE); }
             });
         }).start();
     }
