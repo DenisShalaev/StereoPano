@@ -228,4 +228,7 @@
     <string name="loop_auto">Auto (Bild + Gyro)</string>
     <string name="loop_gyro">Nur Gyro</string>
     <string name="gp_unreg">Google hat die Anfrage abgelehnt: Die App ist in der Google-Cloud-Konsole noch nicht registriert. OAuth-Client vom Typ Android (Paketname und SHA-1) anlegen und die Photos Library API aktivieren.</string>
+    <string name="gp_zip">Aus ZIP-Archiv importieren (heruntergeladenes Album)</string>
+    <string name="gp_import_done">Importiert: %1$d, davon stereo: %2$d</string>
+    <string name="gp_zip_done">ZIP fertig. Neu: %1$d (stereo: %2$d, nur flach/360: %3$d), schon vorhanden: %4$d</string>
 </resources>

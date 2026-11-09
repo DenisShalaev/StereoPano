@@ -83,6 +83,7 @@ string gp_count
 string gp_downloading
 string gp_failed
 string gp_hint
+string gp_import_done
 string gp_loading
 string gp_m_check
 string gp_m_link
@@ -98,6 +99,8 @@ string gp_title
 string gp_unreg
 string gp_upload_failed
 string gp_uploaded
+string gp_zip
+string gp_zip_done
 string group_no_author
 string group_no_place
 string guides_off

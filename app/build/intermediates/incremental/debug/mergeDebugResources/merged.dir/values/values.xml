@@ -49,6 +49,7 @@
     <string name="gp_downloading">Downloading…</string>
     <string name="gp_failed">Failed: %s</string>
     <string name="gp_hint">Tap an entry to copy it to the phone and open it. After that it is in the gallery: view, 3D export and lenticular print work as usual. Google Photos only lists files uploaded by this app; other photos (e.g. old PANORAMA files) can be picked with the button above.</string>
+    <string name="gp_import_done">Imported: %1$d, of them stereo: %2$d</string>
     <string name="gp_loading">Loading…</string>
     <string name="gp_m_check">Check stereo &amp; sound</string>
     <string name="gp_m_link">Create share link</string>
@@ -64,6 +65,8 @@
     <string name="gp_unreg">Google refused the request: this app is not registered in the Google Cloud console yet. Create an OAuth client of type Android (package name and SHA-1) and enable the Photos Library API.</string>
     <string name="gp_upload_failed">Google Photos upload failed: %s</string>
     <string name="gp_uploaded">Uploaded to Google Photos.</string>
+    <string name="gp_zip">Import from a ZIP archive (downloaded album)</string>
+    <string name="gp_zip_done">ZIP finished. New: %1$d (stereo: %2$d, flat/360 only: %3$d), already present: %4$d</string>
     <string name="group_no_author">No author</string>
     <string name="group_no_place">No place</string>
     <string name="guides_off">Guides off</string>

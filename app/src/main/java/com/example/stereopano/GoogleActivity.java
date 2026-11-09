@@ -29,7 +29,7 @@ import java.util.List;
  * .vr.jpg-Dateien auf dem Telefon in der Galerie einblenden.
  */
 public class GoogleActivity extends Activity {
-    private static final int REQ_WAHL = 31;
+    private static final int REQ_WAHL = 31, REQ_ZIP = 32;
     private final List<GooglePhotos.Item> items = new ArrayList<>();
     private TextView status;
 
@@ -86,8 +86,13 @@ public class GoogleActivity extends Activity {
 
         zeile(getString(R.string.gp_refresh), null, v -> aktualisiere());
         zeile(getString(R.string.gp_pick), null, v -> {
-            Intent i = new Intent(Intent.ACTION_GET_CONTENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE);
+            Intent i = new Intent(Intent.ACTION_GET_CONTENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             startActivityForResult(Intent.createChooser(i, getString(R.string.gp_pick)), REQ_WAHL);
+        });
+        zeile(getString(R.string.gp_zip), null, v -> {
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE)
+                    .putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/zip", "application/x-zip-compressed", "application/octet-stream"});
+            startActivityForResult(i, REQ_ZIP);
         });
         zeile(getString(R.string.gp_old), null, v -> {
             Settings.p(this).edit().putBoolean(Settings.K_ALL, true).apply();
@@ -247,29 +252,95 @@ public class GoogleActivity extends Activity {
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
-        if (req != REQ_WAHL || res != RESULT_OK || data == null || data.getData() == null) return;
-        final Uri src = data.getData();
+        if (res != RESULT_OK || data == null) return;
+        if (req == REQ_ZIP && data.getData() != null) { importZip(data.getData()); return; }
+        if (req != REQ_WAHL) return;
+        final List<Uri> uris = new ArrayList<>();
+        if (data.getClipData() != null) for (int i = 0; i < data.getClipData().getItemCount(); i++) uris.add(data.getClipData().getItemAt(i).getUri());
+        else if (data.getData() != null) uris.add(data.getData());
+        if (uris.isEmpty()) return;
+        status.setText(R.string.gp_loading);
         new Thread(() -> {
-            try {
-                String name = "IMPORT.vr.jpg";
-                try (Cursor c = getContentResolver().query(src, null, null, null, null)) {
-                    if (c != null && c.moveToFirst()) {
-                        int i = c.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                        if (i >= 0 && c.getString(i) != null) name = c.getString(i);
+            int ok = 0, stereo = 0;
+            Uri last = null;
+            String fehler = null;
+            for (Uri src : uris) {
+                try {
+                    String name = "IMPORT_" + System.currentTimeMillis() + ".vr.jpg";
+                    try (Cursor c = getContentResolver().query(src, null, null, null, null)) {
+                        if (c != null && c.moveToFirst()) {
+                            int i = c.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                            if (i >= 0 && c.getString(i) != null) name = c.getString(i);
+                        }
                     }
+                    byte[] daten = lies(getContentResolver().openInputStream(src));
+                    Uri u = vorhanden(name);
+                    if (u == null) u = importiere(daten, name);
+                    last = u;
+                    ok++;
+                    if (VrJpgReader.parse(daten).rightJpeg != null) stereo++;
+                } catch (Exception | OutOfMemoryError e) {
+                    fehler = String.valueOf(e.getMessage());
                 }
-                ByteArrayOutputStream bo = new ByteArrayOutputStream(8_000_000);
-                try (InputStream in = getContentResolver().openInputStream(src)) {
-                    byte[] buf = new byte[65536];
-                    int n;
-                    while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
-                }
-                Uri u = vorhanden(name);
-                if (u == null) u = importiere(bo.toByteArray(), name);
-                oeffne(u);
-            } catch (Exception | OutOfMemoryError e) {
-                runOnUiThread(() -> Toast.makeText(this, getString(R.string.gp_failed, String.valueOf(e.getMessage())), Toast.LENGTH_LONG).show());
             }
+            final int fok = ok, fst = stereo;
+            final Uri fl = last;
+            final String ff = fehler;
+            runOnUiThread(() -> {
+                status.setText(getString(R.string.gp_import_done, fok, fst) + (ff != null ? "\n" + getString(R.string.gp_failed, ff) : ""));
+                if (fok == 1 && fl != null) oeffne(fl);
+            });
+        }).start();
+    }
+
+    private static byte[] lies(InputStream in) throws Exception {
+        ByteArrayOutputStream bo = new ByteArrayOutputStream(8_000_000);
+        try (InputStream i = in) {
+            byte[] buf = new byte[65536];
+            int n;
+            while ((n = i.read(buf)) > 0) bo.write(buf, 0, n);
+        }
+        return bo.toByteArray();
+    }
+
+    /** Alle JPEG-Dateien eines ZIP-Archivs (z. B. heruntergeladenes Google-Fotos-Album oder Takeout) in den eigenen Ordner uebernehmen. */
+    private void importZip(Uri zip) {
+        status.setText(R.string.gp_loading);
+        new Thread(() -> {
+            int ok = 0, stereo = 0, flach = 0, schon = 0;
+            String fehler = null;
+            try (java.util.zip.ZipInputStream zin = new java.util.zip.ZipInputStream(getContentResolver().openInputStream(zip))) {
+                java.util.zip.ZipEntry e;
+                while ((e = zin.getNextEntry()) != null) {
+                    String n = e.getName();
+                    String low = n.toLowerCase(java.util.Locale.ROOT);
+                    if (e.isDirectory() || !(low.endsWith(".jpg") || low.endsWith(".jpeg"))) continue;
+                    String name = n.substring(n.lastIndexOf('/') + 1);
+                    try {
+                        ByteArrayOutputStream bo = new ByteArrayOutputStream(8_000_000);
+                        byte[] buf = new byte[65536];
+                        int k;
+                        while ((k = zin.read(buf)) > 0) {
+                            bo.write(buf, 0, k);
+                            if (bo.size() > 120_000_000) throw new Exception("too large: " + name);
+                        }
+                        byte[] daten = bo.toByteArray();
+                        if (vorhanden(name) != null) { schon++; continue; }
+                        importiere(daten, name);
+                        ok++;
+                        if (VrJpgReader.parse(daten).rightJpeg != null) stereo++; else flach++;
+                    } catch (Exception | OutOfMemoryError x) {
+                        fehler = String.valueOf(x.getMessage());
+                    }
+                    final int cnt = ok;
+                    runOnUiThread(() -> status.setText(getString(R.string.gp_loading) + " " + cnt));
+                }
+            } catch (Exception x) {
+                fehler = String.valueOf(x.getMessage());
+            }
+            final int fok = ok, fst = stereo, ffl = flach, fsc = schon;
+            final String ff = fehler;
+            runOnUiThread(() -> status.setText(getString(R.string.gp_zip_done, fok, fst, ffl, fsc) + (ff != null ? "\n" + getString(R.string.gp_failed, ff) : "")));
         }).start();
     }
 

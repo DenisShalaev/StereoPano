@@ -46,6 +46,7 @@
     <string name="gp_downloading">Скачивание…</string>
     <string name="gp_failed">Ошибка: %s</string>
     <string name="gp_hint">Нажмите запись: файл копируется на телефон и открывается. Дальше он в галерее: просмотр, 3D-экспорт и печать на линзовый растр как обычно. Google Фото показывает только файлы, загруженные этим приложением; прочие фото (например, старые PANORAMA) выбираются кнопкой выше.</string>
+    <string name="gp_import_done">Импортировано: %1$d, из них стерео: %2$d</string>
     <string name="gp_loading">Загрузка…</string>
     <string name="gp_m_check">Проверить стерео и звук</string>
     <string name="gp_m_link">Создать ссылку</string>
@@ -61,6 +62,8 @@
     <string name="gp_unreg">Google отклонил запрос: приложение ещё не зарегистрировано в консоли Google Cloud. Создайте OAuth-клиент типа Android (имя пакета и SHA-1) и включите Photos Library API.</string>
     <string name="gp_upload_failed">Не удалось загрузить в Google Фото: %s</string>
     <string name="gp_uploaded">Загружено в Google Фото.</string>
+    <string name="gp_zip">Импорт из ZIP-архива (скачанный альбом)</string>
+    <string name="gp_zip_done">ZIP готов. Новых: %1$d (стерео: %2$d, только плоские/360: %3$d), уже было: %4$d</string>
     <string name="group_no_author">Без автора</string>
     <string name="group_no_place">Без места</string>
     <string name="guides_off">Ориентиры выключены</string>
