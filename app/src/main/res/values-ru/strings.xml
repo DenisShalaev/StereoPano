@@ -186,5 +186,8 @@
     <string name="lenti_window">Центр окна: %1$d°</string>
     <string name="lenti_prepare">Подготовка ракурсов…</string>
     <string name="menu_lenti">Печать под линзовый растр…</string>
-    <string name="lenti_marks">Разноцветные полосы по краям (для совмещения линзового листа)</string>
+    <string name="lenti_marks">Разноцветные полосы для совмещения линзового листа</string>
+    <string name="lenti_marks_none">Нет</string>
+    <string name="lenti_marks_sides">Слева и справа</string>
+    <string name="lenti_marks_all">По всем краям</string>
 </resources>

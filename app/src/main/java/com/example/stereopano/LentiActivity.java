@@ -60,7 +60,8 @@ public class LentiActivity extends Activity {
 
     private int lpiIdx, fmt, dpiIdx, views, depthPct, pos;
     private double lpiReal;
-    private boolean portrait, reverse, marks;
+    private boolean portrait, reverse;
+    private int marksMode;                    // 0 keine, 1 links/rechts, 2 rundum
 
     private ImageView vorschau;
     private TextView posText, info, status;
@@ -93,7 +94,7 @@ public class LentiActivity extends Activity {
         depthPct = sp.getInt("depth", 100);
         portrait = sp.getBoolean("portrait", false);
         reverse = sp.getBoolean("reverse", true);
-        marks = sp.getBoolean("marks", true);
+        marksMode = sp.getInt("marksMode", 2);
         pos = sp.getInt("pos", 500);
         bauen();
         aktualisiere();
@@ -248,7 +249,9 @@ public class LentiActivity extends Activity {
             @Override public void onStopTrackingTouch(SeekBar s) { sp.edit().putInt("depth", depthPct).apply(); aktualisiere(); }
         });
         formular.addView(ds);
-        formular.addView(check(getString(R.string.lenti_marks), marks, c -> { marks = c; sp.edit().putBoolean("marks", c).apply(); aktualisiere(); }));
+        formular.addView(ueberschrift(getString(R.string.lenti_marks)));
+        formular.addView(segment(new String[]{getString(R.string.lenti_marks_none), getString(R.string.lenti_marks_sides), getString(R.string.lenti_marks_all)},
+                marksMode, i -> { marksMode = i; sp.edit().putInt("marksMode", i).apply(); aktualisiere(); }));
         formular.addView(check(getString(R.string.lenti_flip), reverse, c -> { reverse = c; sp.edit().putBoolean("reverse", c).apply(); }));
 
         int[] px = druckPixel();
@@ -268,9 +271,9 @@ public class LentiActivity extends Activity {
 
     /** Randbreiten fuer die Ausrichtungsstreifen: {seitlich, oben/unten, Luecke} in Pixeln (alles 0 ohne Streifen). */
     private int[] rand() {
-        if (!marks) return new int[]{0, 0, 0};
+        if (marksMode == 0) return new int[]{0, 0, 0};
         int dpi = DPI[dpiIdx];
-        return new int[]{(int) Math.round(7 / 25.4 * dpi), (int) Math.round(5 / 25.4 * dpi), (int) Math.round(1.2 / 25.4 * dpi)};
+        return new int[]{(int) Math.round(7 / 25.4 * dpi), marksMode == 2 ? (int) Math.round(5 / 25.4 * dpi) : 0, (int) Math.round(1.2 / 25.4 * dpi)};
     }
 
     private int[] druckPixel() {

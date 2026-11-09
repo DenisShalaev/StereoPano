@@ -74,7 +74,10 @@
     <string name="lenti_lpi">Lens sheet, LPI</string>
     <string name="lenti_lpi_real">Actual LPI (from the test sheet)</string>
     <string name="lenti_make">Create print file</string>
-    <string name="lenti_marks">Colour alignment strips at the edges (to position the lens sheet)</string>
+    <string name="lenti_marks">Colour alignment strips (to position the lens sheet)</string>
+    <string name="lenti_marks_all">All sides</string>
+    <string name="lenti_marks_none">None</string>
+    <string name="lenti_marks_sides">Left/right</string>
     <string name="lenti_portrait">Portrait orientation</string>
     <string name="lenti_prepare">Preparing views…</string>
     <string name="lenti_px_per_lens">Pixels per lens: %1$.1f</string>

@@ -108,6 +108,9 @@ string lenti_lpi
 string lenti_lpi_real
 string lenti_make
 string lenti_marks
+string lenti_marks_all
+string lenti_marks_none
+string lenti_marks_sides
 string lenti_portrait
 string lenti_prepare
 string lenti_px_per_lens
