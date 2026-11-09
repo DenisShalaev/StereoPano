@@ -393,10 +393,11 @@ public class GalleryActivity extends Activity {
 
     private void zeigeMenue(Item it) {
         String[] eintraege = {getString(R.string.menu_share), getString(R.string.menu_flat), getString(R.string.menu_sbs),
-                getString(R.string.menu_anaglyph), getString(R.string.menu_delete), getString(R.string.menu_select)};
+                getString(R.string.menu_anaglyph), getString(R.string.menu_delete), getString(R.string.menu_select), getString(R.string.menu_lenti)};
         new AlertDialog.Builder(this).setTitle(it.name).setItems(eintraege, (d, w) -> {
             if (w == 0) teilen(it);
             else if (w == 4) frageLoeschen(it);
+            else if (w == 6) startActivity(new Intent(this, LentiActivity.class).setData(it.uri).putExtra("name", it.name));
             else if (w == 5) { auswahl = true; gewaehlt.clear(); gewaehlt.add(it.id); aktualisiereAuswahl(); }
             else exportiere(it, w - 1);
         }).show();

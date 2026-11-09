@@ -163,4 +163,27 @@
     <string name="exported_many">%1$d Bilder exportiert</string>
     <string name="set_wcorr_t">Winkelkorrektur</string>
     <string name="set_wcorr_d">Der Drehsensor zeigt zu wenig Drehung (bei diesem Telefon ca. 3,5 %). Erhöhen, wenn das Ende das Panorama-Anfang überlappt; senken, wenn eine Lücke bleibt.</string>
+    <string name="lenti_title">Linsenraster-Druck</string>
+    <string name="lenti_lpi">Linsenraster, LPI</string>
+    <string name="lenti_lpi_real">Tatsächliche LPI (aus dem Testblatt)</string>
+    <string name="lenti_format">Papierformat</string>
+    <string name="lenti_portrait">Hochformat</string>
+    <string name="lenti_dpi">Druckerauflösung, DPI</string>
+    <string name="lenti_views">Anzahl Ansichten</string>
+    <string name="lenti_flip">Ansichten umkehren (wenn die Tiefe verkehrt wirkt)</string>
+    <string name="lenti_depth">Tiefenstärke</string>
+    <string name="lenti_make">Druckdatei erzeugen</string>
+    <string name="lenti_test">Testblatt</string>
+    <string name="lenti_test_best">Bestes Testband (1-9)</string>
+    <string name="lenti_cancel">Abbrechen</string>
+    <string name="lenti_px_per_lens">Pixel pro Linse: %1$.1f</string>
+    <string name="lenti_warn_views">Bei %1$d DPI und %2$.1f LPI entfallen nur %3$.1f Pixel auf eine Linse, 8 Ansichten sind nicht möglich. Höhere DPI wählen.</string>
+    <string name="lenti_saving">Berechnung… %1$d%%</string>
+    <string name="lenti_saved">Gespeichert: %1$s</string>
+    <string name="lenti_failed">Fehler: %1$s</string>
+    <string name="lenti_test_done">Testblatt gespeichert. Bänder von oben nach unten: Abstand -1 % … +1 %. Durch das Raster betrachten, das Band ohne Moiré wählen und seine Nummer antippen.</string>
+    <string name="lenti_hint">In 100 %% drucken, ohne Skalierung/„an Seite anpassen“, Farbverwaltung des Druckers aus. Dateigröße: %1$d x %2$d px</string>
+    <string name="lenti_window">Fenstermitte: %1$d°</string>
+    <string name="lenti_prepare">Ansichten werden vorbereitet…</string>
+    <string name="menu_lenti">Linsenraster-Druck…</string>
 </resources>

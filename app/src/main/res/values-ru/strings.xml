@@ -163,4 +163,27 @@
     <string name="exported_many">Экспортировано: %1$d</string>
     <string name="set_wcorr_t">Поправка угла</string>
     <string name="set_wcorr_d">Датчик поворота занижает поворот (на этом телефоне около 3,5 %). Увеличьте, если конец панорамы заходит на начало; уменьшите, если остаётся разрыв.</string>
+    <string name="lenti_title">Печать под линзовый растр</string>
+    <string name="lenti_lpi">Растр, LPI</string>
+    <string name="lenti_lpi_real">Фактический LPI (по тестовому листу)</string>
+    <string name="lenti_format">Формат бумаги</string>
+    <string name="lenti_portrait">Книжная ориентация</string>
+    <string name="lenti_dpi">Разрешение принтера, DPI</string>
+    <string name="lenti_views">Количество ракурсов</string>
+    <string name="lenti_flip">Обратный порядок ракурсов (если объём вывернут)</string>
+    <string name="lenti_depth">Сила объёма</string>
+    <string name="lenti_make">Создать файл для печати</string>
+    <string name="lenti_test">Тестовый лист</string>
+    <string name="lenti_test_best">Лучший ряд теста (1-9)</string>
+    <string name="lenti_cancel">Отмена</string>
+    <string name="lenti_px_per_lens">Пикселей на линзу: %1$.1f</string>
+    <string name="lenti_warn_views">При %1$d DPI и %2$.1f LPI на линзу приходится только %3$.1f пикселя: 8 ракурсов не получить. Выберите больше DPI.</string>
+    <string name="lenti_saving">Расчёт… %1$d%%</string>
+    <string name="lenti_saved">Сохранено: %1$s</string>
+    <string name="lenti_failed">Ошибка: %1$s</string>
+    <string name="lenti_test_done">Тестовый лист сохранён. Ряды сверху вниз: шаг -1 % … +1 %. Посмотрите через растр, выберите ряд без муара и нажмите его номер.</string>
+    <string name="lenti_hint">Печатайте в 100 %%, без масштабирования и «по размеру страницы», без цветокоррекции принтера. Размер файла: %1$d x %2$d px</string>
+    <string name="lenti_window">Центр окна: %1$d°</string>
+    <string name="lenti_prepare">Подготовка ракурсов…</string>
+    <string name="menu_lenti">Печать под линзовый растр…</string>
 </resources>
