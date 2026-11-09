@@ -123,6 +123,9 @@ final class StereoStitcher {
     /** Zum Testen abschaltbar. */
     static boolean closureEnabled = true;
     static boolean loopEnabled = true;
+    /** Suchbereich (Grad) fuer den Restfehler der Drehung. Ist der Massstab des Sensors schon korrigiert, bleibt der Fehler klein;
+     *  grosse Treffer waeren dann Fehlzuordnungen (aehnliche Tuerkanten) und wuerden die Aufnahme zu frueh beenden. */
+    static double loopRange = 45.0;
     static double hintCap = 394.0;      // bis zu diesem Rohwinkel darf die grobe Schaetzung das Ende hinauszoegern               // Kreisschluss-Erkennung durch Bildvergleich mit dem Anfang
     private static final double LOOP_FROM_DEG = 280.0;   // ab hier wird nach dem Anfang des Panoramas gesucht
     private static final double LOOP_MARGIN_DEG = 3.0;   // so weit hinter den Anfang weiterdrehen (Ueberlappung fuer die Naht)
@@ -531,7 +534,7 @@ final class StereoStitcher {
         double qx = R[6], qy = R[7], qz = R[8];
         int n = 0;
         double ppd = panoW / 360.0;
-        int rng = (int) Math.round(45.0 * ppd);
+        int rng = (int) Math.round(loopRange * ppd);
         for (int k = 0; k < nc; k++) {
             double phi = (xs[k] + 0.5) / panoW * 360.0;
             double A = Math.toRadians(az0Deg + phi - curEps);
@@ -580,7 +583,7 @@ final class StereoStitcher {
             if (Math.abs((-rng + 4 * i) - bestS) < 24) continue;
             if (ncc[i] >= ncc[i - 1] && ncc[i] >= ncc[i + 1] && ncc[i] > second) second = ncc[i];
         }
-        if (bv - second < 0.05) { ldbg[4]++; return Double.NaN; }     // nicht eindeutig (sich wiederholende Struktur)
+        if (bv - second < 0.08) { ldbg[4]++; return Double.NaN; }     // nicht eindeutig (sich wiederholende Struktur)
         double cm = nccAt(f, lx, ly, lr, n, bestS - 1), cp = nccAt(f, lx, ly, lr, n, bestS + 1);
         double den = cm - 2 * bv + cp, sub = bestS;
         if (den < -1e-9) sub += Math.max(-0.5, Math.min(0.5, 0.5 * (cm - cp) / den));
@@ -590,7 +593,7 @@ final class StereoStitcher {
         ux0 /= Math.max(1, cnt);
         double a0 = Math.atan((ux0 - frameW / 2.0) / fPx), a1 = Math.atan((ux0 + sub - frameW / 2.0) / fPx);
         double err = -Math.toDegrees(a1 - a0);
-        if (Math.abs(err) > 46) { ldbg[5]++; return Double.NaN; }
+        if (Math.abs(err) > loopRange + 1) { ldbg[5]++; return Double.NaN; }
         return err;
     }
 

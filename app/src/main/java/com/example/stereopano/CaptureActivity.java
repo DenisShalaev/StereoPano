@@ -280,6 +280,7 @@ public class CaptureActivity extends Activity {
         fpxFaktor = Settings.fpxFaktor(this);
         winkelKorr = Settings.winkelKorr(this);
         StereoStitcher.hintCap = winkelKorr > 0 ? 366.0 : 394.0;
+        StereoStitcher.loopRange = winkelKorr > 0 ? 14.0 : 45.0;
         jpegQualitaet = Settings.jpegQualitaet(this);
         audioAn = Settings.audio(this);
         maxNick = Settings.maxNickrate(this);
