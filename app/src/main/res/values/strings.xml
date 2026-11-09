@@ -237,4 +237,5 @@
     <string name="set_loop_d">Auto compares the image with the start but only trusts it if it agrees with the gyro (within about 4.5°). Gyro only is for plain scenes such as sky and water.</string>
     <string name="loop_auto">Auto (image + gyro)</string>
     <string name="loop_gyro">Gyro only</string>
+    <string name="gp_unreg">Google refused the request: this app is not registered in the Google Cloud console yet. Create an OAuth client of type Android (package name and SHA-1) and enable the Photos Library API.</string>
 </resources>

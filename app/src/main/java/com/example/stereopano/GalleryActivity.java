@@ -130,11 +130,9 @@ public class GalleryActivity extends Activity {
         sortKnopf.setOnClickListener(v -> zeigeSortierMenue());
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(sz, sz);
         slp.rightMargin = (int) (8 * dd);
-        android.widget.Button gKnopf = new android.widget.Button(this);
-        gKnopf.setText(R.string.gp_button);
-        gKnopf.setAllCaps(false);
+        ImageView gKnopf = Ui.runderKnopf(this, R.drawable.ic_cloud, R.string.gp_button);
         gKnopf.setOnClickListener(v -> startActivity(new Intent(this, GoogleActivity.class)));
-        LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, sz);
+        LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(sz, sz);
         glp.rightMargin = (int) (8 * dd);
         kopf.addView(gKnopf, glp);
         kopf.addView(sortKnopf, slp);

@@ -9,6 +9,7 @@ drawable ic_arrow_up
 drawable ic_capture
 drawable ic_center
 drawable ic_chevron_up
+drawable ic_cloud
 drawable ic_compass
 drawable ic_flash
 drawable ic_gallery
@@ -94,6 +95,7 @@ string gp_old_on
 string gp_pick
 string gp_refresh
 string gp_title
+string gp_unreg
 string gp_upload_failed
 string gp_uploaded
 string group_no_author

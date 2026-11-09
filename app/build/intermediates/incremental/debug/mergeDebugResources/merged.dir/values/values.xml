@@ -61,6 +61,7 @@
     <string name="gp_pick">Pick a photo from Google Photos / other app</string>
     <string name="gp_refresh">Refresh list of my uploaded panoramas</string>
     <string name="gp_title">Google Photos</string>
+    <string name="gp_unreg">Google refused the request: this app is not registered in the Google Cloud console yet. Create an OAuth client of type Android (package name and SHA-1) and enable the Photos Library API.</string>
     <string name="gp_upload_failed">Google Photos upload failed: %s</string>
     <string name="gp_uploaded">Uploaded to Google Photos.</string>
     <string name="group_no_author">No author</string>

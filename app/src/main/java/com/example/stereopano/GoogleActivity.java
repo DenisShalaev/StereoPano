@@ -13,10 +13,7 @@ import android.provider.OpenableColumns;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,80 +31,157 @@ import java.util.List;
 public class GoogleActivity extends Activity {
     private static final int REQ_WAHL = 31;
     private final List<GooglePhotos.Item> items = new ArrayList<>();
-    private ArrayAdapter<String> adapter;
     private TextView status;
+
+    private static final int BG = 0xFF0F172A, KARTE = 0xFF1E293B, RAND = 0xFF334155, TEXT = Color.WHITE, GRAU = 0xFF94A3B8, AKZENT = 0xFF4FC3F7;
+    private float d;
+    private LinearLayout liste;
+
+    private int dp(int v) { return (int) (v * d + 0.5f); }
 
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        d = getResources().getDisplayMetrics().density;
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.BLACK);
-        root.setPadding(24, 24, 24, 24);
+        root.setBackgroundColor(BG);
 
+        LinearLayout kopf = new LinearLayout(this);
+        kopf.setOrientation(LinearLayout.HORIZONTAL);
+        kopf.setGravity(Gravity.CENTER_VERTICAL);
+        kopf.setPadding(dp(8), dp(8), dp(16), dp(8));
+        TextView zurueck = new TextView(this);
+        zurueck.setText("\u2190");
+        zurueck.setTextSize(24);
+        zurueck.setTextColor(TEXT);
+        zurueck.setGravity(Gravity.CENTER);
+        zurueck.setContentDescription(getString(R.string.cd_back));
+        zurueck.setOnClickListener(v -> finish());
+        kopf.addView(zurueck, new LinearLayout.LayoutParams(dp(48), dp(48)));
         TextView t = new TextView(this);
         t.setText(R.string.gp_title);
-        t.setTextColor(Color.WHITE);
         t.setTextSize(20);
-        root.addView(t);
+        t.setTextColor(TEXT);
+        t.setPadding(dp(12), 0, 0, 0);
+        kopf.addView(t, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        root.addView(kopf);
 
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        liste = new LinearLayout(this);
+        liste.setOrientation(LinearLayout.VERTICAL);
+        liste.setPadding(dp(16), 0, dp(16), dp(24));
+        sv.addView(liste);
+        root.addView(sv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        setContentView(root);
+        Ui.applyInsets(root);
+
+        String konto = Settings.p(this).getString(Settings.K_GACC, "");
         status = new TextView(this);
-        status.setTextColor(0xFFAAAAAA);
-        status.setPadding(0, 8, 0, 8);
-        status.setText(Settings.p(this).getString(Settings.K_GACC, "").isEmpty() ? getString(R.string.gp_no_account) : Settings.p(this).getString(Settings.K_GACC, ""));
-        root.addView(status);
+        status.setTextColor(AKZENT);
+        status.setTextSize(13);
+        status.setPadding(dp(4), dp(4), dp(4), dp(12));
+        status.setText(konto.isEmpty() ? getString(R.string.gp_no_account) : konto);
+        liste.addView(status);
 
-        Button neu = knopf(R.string.gp_refresh, v -> aktualisiere());
-        Button wahl = knopf(R.string.gp_pick, v -> {
+        zeile(getString(R.string.gp_refresh), null, v -> aktualisiere());
+        zeile(getString(R.string.gp_pick), null, v -> {
             Intent i = new Intent(Intent.ACTION_GET_CONTENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE);
             startActivityForResult(Intent.createChooser(i, getString(R.string.gp_pick)), REQ_WAHL);
         });
-        Button alt = knopf(R.string.gp_old, v -> {
+        zeile(getString(R.string.gp_old), null, v -> {
             Settings.p(this).edit().putBoolean(Settings.K_ALL, true).apply();
             Toast.makeText(this, R.string.gp_old_on, Toast.LENGTH_LONG).show();
             startActivity(new Intent(this, GalleryActivity.class));
             finish();
         });
-        root.addView(neu);
-        root.addView(wahl);
-        root.addView(alt);
 
         TextView hinweis = new TextView(this);
         hinweis.setText(R.string.gp_hint);
-        hinweis.setTextColor(0xFF888888);
+        hinweis.setTextColor(GRAU);
         hinweis.setTextSize(12);
-        hinweis.setPadding(0, 8, 0, 8);
-        root.addView(hinweis);
+        hinweis.setPadding(dp(4), dp(8), dp(4), dp(8));
+        liste.addView(hinweis);
 
-        ListView lv = new ListView(this);
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>()) {
-            @Override public View getView(int pos, View cv, ViewGroup parent) {
-                TextView tv = (TextView) super.getView(pos, cv, parent);
-                tv.setTextColor(Color.WHITE);
-                return tv;
-            }
-        };
-        lv.setAdapter(adapter);
-        lv.setOnItemClickListener((p, v, pos, id) -> {
-            final GooglePhotos.Item it = items.get(pos);
-            new android.app.AlertDialog.Builder(this).setTitle(it.name).setItems(new String[]{
-                    getString(R.string.gp_m_open), getString(R.string.gp_m_link), getString(R.string.gp_m_check)}, (d, w) -> {
-                if (w == 0) holeUndOeffne(it);
-                else if (w == 1) link(it);
-                else pruefe(it);
-            }).show();
-        });
-        root.addView(lv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-        setContentView(root);
+        itemsBox = new LinearLayout(this);
+        itemsBox.setOrientation(LinearLayout.VERTICAL);
+        liste.addView(itemsBox);
         if (GooglePhotos.hatKonto(this)) aktualisiere();
     }
 
-    private Button knopf(int text, View.OnClickListener l) {
-        Button k = new Button(this);
-        k.setText(text);
-        k.setAllCaps(false);
+    private LinearLayout itemsBox;
+
+    private android.graphics.drawable.GradientDrawable rund() {
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        g.setCornerRadius(dp(14));
+        g.setColor(KARTE);
+        g.setStroke(dp(1), RAND);
+        return g;
+    }
+
+    /** Karte im Stil der Einstellungen; Antippen fuehrt die Aktion aus. */
+    private LinearLayout zeile(String titel, String info, View.OnClickListener l) {
+        LinearLayout k = new LinearLayout(this);
+        k.setOrientation(LinearLayout.VERTICAL);
+        k.setPadding(dp(16), dp(12), dp(16), dp(12));
+        k.setBackground(rund());
+        TextView a = new TextView(this);
+        a.setText(titel);
+        a.setTextColor(TEXT);
+        a.setTextSize(16);
+        k.addView(a);
+        if (info != null) {
+            TextView i = new TextView(this);
+            i.setText(info);
+            i.setTextColor(GRAU);
+            i.setTextSize(12);
+            i.setPadding(0, dp(2), 0, 0);
+            k.addView(i);
+        }
         k.setOnClickListener(l);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dp(8);
+        (itemsBox != null && l == null ? itemsBox : liste).addView(k, lp);
         return k;
+    }
+
+    private void zeigeItems() {
+        itemsBox.removeAllViews();
+        for (GooglePhotos.Item it : items) {
+            LinearLayout k = new LinearLayout(this);
+            k.setOrientation(LinearLayout.VERTICAL);
+            k.setPadding(dp(16), dp(12), dp(16), dp(12));
+            k.setBackground(rund());
+            TextView a = new TextView(this);
+            a.setText(it.name);
+            a.setTextColor(TEXT);
+            a.setTextSize(16);
+            k.addView(a);
+            if (!it.time.isEmpty()) {
+                TextView i = new TextView(this);
+                i.setText(it.time.replace("T", " ").replace("Z", ""));
+                i.setTextColor(GRAU);
+                i.setTextSize(12);
+                k.addView(i);
+            }
+            k.setOnClickListener(v -> new android.app.AlertDialog.Builder(this).setTitle(it.name).setItems(new String[]{
+                    getString(R.string.gp_m_open), getString(R.string.gp_m_link), getString(R.string.gp_m_check)}, (dlg, w) -> {
+                if (w == 0) holeUndOeffne(it);
+                else if (w == 1) link(it);
+                else pruefe(it);
+            }).show());
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = dp(8);
+            itemsBox.addView(k, lp);
+        }
+    }
+
+    private String fehler(Exception e) {
+        String m = String.valueOf(e.getMessage());
+        if (m.contains("UnregisteredOnApiConsole") || m.contains("Unregistered"))
+            return getString(R.string.gp_unreg);
+        return getString(R.string.gp_failed, m);
     }
 
     private void aktualisiere() {
@@ -118,12 +192,11 @@ public class GoogleActivity extends Activity {
                 runOnUiThread(() -> {
                     items.clear();
                     items.addAll(l);
-                    adapter.clear();
-                    for (GooglePhotos.Item it : l) adapter.add(it.name + (it.time.isEmpty() ? "" : "   " + it.time.replace("T", " ").replace("Z", "")));
+                    zeigeItems();
                     status.setText(getString(R.string.gp_count, l.size()));
                 });
             } catch (Exception e) {
-                runOnUiThread(() -> status.setText(getString(R.string.gp_failed, String.valueOf(e.getMessage()))));
+                runOnUiThread(() -> status.setText(fehler(e)));
             }
         }).start();
     }
@@ -139,7 +212,7 @@ public class GoogleActivity extends Activity {
                     startActivity(Intent.createChooser(s, getString(R.string.share_title)));
                 });
             } catch (Exception e) {
-                runOnUiThread(() -> status.setText(getString(R.string.gp_failed, String.valueOf(e.getMessage()))));
+                runOnUiThread(() -> status.setText(fehler(e)));
             }
         }).start();
     }
@@ -153,7 +226,7 @@ public class GoogleActivity extends Activity {
                 String m = getString(R.string.gp_check_result, r.rightJpeg != null ? "\u2713" : "\u2717", r.audio != null ? "\u2713" : "\u2717", "-", g.length / 1024);
                 runOnUiThread(() -> status.setText(m));
             } catch (Exception e) {
-                runOnUiThread(() -> status.setText(getString(R.string.gp_failed, String.valueOf(e.getMessage()))));
+                runOnUiThread(() -> status.setText(fehler(e)));
             }
         }).start();
     }

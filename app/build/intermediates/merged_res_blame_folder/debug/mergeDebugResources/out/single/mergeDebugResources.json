@@ -28,6 +28,10 @@
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_chevron_up.xml"
     },
     {
+        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_cloud.xml.flat",
+        "source": "com.example.stereopano.app-main-6:/drawable/ic_cloud.xml"
+    },
+    {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_arrow_up.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_arrow_up.xml"
     },

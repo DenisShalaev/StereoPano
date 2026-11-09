@@ -227,4 +227,5 @@
     <string name="set_loop_d">Auto vergleicht das Bild mit dem Anfang, glaubt ihm aber nur, wenn es zum Gyro passt (etwa 4,5°). Nur Gyro eignet sich fuer eintoenige Szenen wie Himmel und Wasser.</string>
     <string name="loop_auto">Auto (Bild + Gyro)</string>
     <string name="loop_gyro">Nur Gyro</string>
+    <string name="gp_unreg">Google hat die Anfrage abgelehnt: Die App ist in der Google-Cloud-Konsole noch nicht registriert. OAuth-Client vom Typ Android (Paketname und SHA-1) anlegen und die Photos Library API aktivieren.</string>
 </resources>

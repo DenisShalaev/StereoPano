@@ -58,6 +58,7 @@
     <string name="gp_pick">Foto aus Google Fotos / anderer App waehlen</string>
     <string name="gp_refresh">Liste meiner hochgeladenen Panoramen aktualisieren</string>
     <string name="gp_title">Google Fotos</string>
+    <string name="gp_unreg">Google hat die Anfrage abgelehnt: Die App ist in der Google-Cloud-Konsole noch nicht registriert. OAuth-Client vom Typ Android (Paketname und SHA-1) anlegen und die Photos Library API aktivieren.</string>
     <string name="gp_upload_failed">Upload zu Google Fotos fehlgeschlagen: %s</string>
     <string name="gp_uploaded">Zu Google Fotos hochgeladen.</string>
     <string name="group_no_author">Ohne Autor</string>

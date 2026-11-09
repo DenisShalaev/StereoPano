@@ -58,6 +58,7 @@
     <string name="gp_pick">Выбрать фото из Google Фото / другого приложения</string>
     <string name="gp_refresh">Обновить список моих загруженных панорам</string>
     <string name="gp_title">Google Фото</string>
+    <string name="gp_unreg">Google отклонил запрос: приложение ещё не зарегистрировано в консоли Google Cloud. Создайте OAuth-клиент типа Android (имя пакета и SHA-1) и включите Photos Library API.</string>
     <string name="gp_upload_failed">Не удалось загрузить в Google Фото: %s</string>
     <string name="gp_uploaded">Загружено в Google Фото.</string>
     <string name="group_no_author">Без автора</string>
