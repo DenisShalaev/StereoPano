@@ -40,6 +40,22 @@
     <string name="from_google">Google-Konto</string>
     <string name="gallery_empty">Noch keine Aufnahmen.</string>
     <string name="gallery_title">Meine Panoramen</string>
+    <string name="gp_button">Google Fotos</string>
+    <string name="gp_count">%d Panoramen in Google Fotos</string>
+    <string name="gp_downloading">Lade herunter…</string>
+    <string name="gp_failed">Fehler: %s</string>
+    <string name="gp_hint">Eintrag antippen: wird aufs Telefon kopiert und geoeffnet. Danach liegt er in der Galerie: Ansicht, 3D-Export und Linsenraster-Druck wie gewohnt. Google Fotos listet nur Dateien, die diese App hochgeladen hat; andere Fotos (z. B. alte PANORAMA-Dateien) lassen sich mit dem Knopf oben auswaehlen.</string>
+    <string name="gp_loading">Laedt…</string>
+    <string name="gp_no_account">Kein Google-Konto gewaehlt (Einstellungen → Google Fotos).</string>
+    <string name="gp_no_token">Google hat kein Zugriffstoken geliefert.</string>
+    <string name="gp_none">nicht gesetzt</string>
+    <string name="gp_old">Alte Cardboard-Camera-Dateien auf diesem Telefon zeigen</string>
+    <string name="gp_old_on">Alte .vr.jpg-Dateien anderer Apps erscheinen jetzt in der Galerie (ggf. Speicherzugriff erlauben).</string>
+    <string name="gp_pick">Foto aus Google Fotos / anderer App waehlen</string>
+    <string name="gp_refresh">Liste meiner hochgeladenen Panoramen aktualisieren</string>
+    <string name="gp_title">Google Fotos</string>
+    <string name="gp_upload_failed">Upload zu Google Fotos fehlgeschlagen: %s</string>
+    <string name="gp_uploaded">Zu Google Fotos hochgeladen.</string>
     <string name="group_no_author">Ohne Autor</string>
     <string name="group_no_place">Ohne Ort</string>
     <string name="guides_off">Leitpunkte aus</string>
@@ -128,6 +144,7 @@
     <string name="sec_calibration">Kalibrierung</string>
     <string name="sec_capture">Aufnahme</string>
     <string name="sec_files">Dateien &amp; Metadaten</string>
+    <string name="sec_google">Google Fotos</string>
     <string name="sec_viewer">Betrachter</string>
     <string name="select_all">Alle</string>
     <string name="selected_count">%1$d ausgewählt</string>
@@ -147,6 +164,8 @@
     <string name="set_delta_t">Mittelungsfenster</string>
     <string name="set_focal_d">Korrigiert das berechnete Sichtfeld. Dehnen oder Stauchen sich Objekte im Panorama oder wandern die Leitpunkte, hier nachstellen. Standard 100.</string>
     <string name="set_focal_t">Brennweiten-Korrektur</string>
+    <string name="set_gacc_d">Zum Auswaehlen tippen. Braucht Internet und einmalig eine Freigabe.</string>
+    <string name="set_gacc_t">Google-Konto fuer Fotos</string>
     <string name="set_guides_d">Fadenkreuz, Horizont und Tempo-Punkt über dem Kamerabild.</string>
     <string name="set_guides_t">Leitpunkte anzeigen</string>
     <string name="set_gyro_d">Die Ansicht folgt den Bewegungen des Telefons.</string>
@@ -175,6 +194,8 @@
     <string name="set_sharp_t">Nachschärfung</string>
     <string name="set_stab_d">Bilder, die aufgenommen werden, während das Telefon schneller als dieser Wert nickt oder kippt, zählen weniger (sie werden nie verworfen, daher entstehen keine Lücken). Niedriger = geradere Horizonte und weniger Treppen an waagerechten Kanten, aber eine ruhigere Hand hilft. Maximum = aus. Standard 6°/s.</string>
     <string name="set_stab_t">Bewegungsfilter</string>
+    <string name="set_target_d">Telefon, Telefon + Google Fotos oder nur Google Fotos (die Kopie auf dem Telefon wird erst nach erfolgreichem Upload geloescht).</string>
+    <string name="set_target_t">Panoramen speichern auf</string>
     <string name="set_tempo_d">Geschwindigkeit des roten Leitpunkts. 8°/s ≈ 45 s pro Umdrehung.</string>
     <string name="set_tempo_t">Ziel-Tempo</string>
     <string name="set_wcorr_d">Der Drehsensor zeigt zu wenig Drehung (bei diesem Telefon ca. 3,5 %). Erhöhen, wenn das Ende das Panorama-Anfang überlappt; senken, wenn eine Lücke bleibt.</string>
@@ -190,5 +211,8 @@
     <string name="sort_title">Sortieren nach</string>
     <string name="stereo_hint">Tippen: Leiste · Doppeltippen: zurück zu 2D</string>
     <string name="storage_permission_needed">Zum Lesen von Panoramen anderer Apps wird die Berechtigung zum Lesen von Fotos benötigt.</string>
+    <string name="target_both">Telefon + Google Fotos</string>
+    <string name="target_google">Nur Google Fotos</string>
+    <string name="target_phone">Telefon</string>
     <string name="too_little">Zu wenig aufgenommen – mindestens ca. 20° drehen.</string>
 </resources>

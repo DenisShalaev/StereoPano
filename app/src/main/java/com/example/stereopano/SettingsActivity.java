@@ -128,6 +128,11 @@ public class SettingsActivity extends Activity {
         schalter(R.string.set_loc_t, R.string.set_loc_d, Settings.K_LOC, true);
         schalter(R.string.set_all_t, R.string.set_all_d, Settings.K_ALL, false);
 
+        abschnitt(R.string.sec_google);
+        auswahl(R.string.set_target_t, R.string.set_target_d, Settings.K_SAVE, new int[]{0, 1, 2},
+                new String[]{getString(R.string.target_phone), getString(R.string.target_both), getString(R.string.target_google)}, 0);
+        kontoZeile();
+
         abschnitt(R.string.sec_about);
         TextView info = new TextView(this);
         info.setText(getString(R.string.about_text, version()) + "\nBuild " + BuildInfo.NUMBER);
@@ -268,13 +273,43 @@ public class SettingsActivity extends Activity {
                 }).show());
     }
 
-    private static final int REQ_KONTO = 21;
+    private static final int REQ_KONTO = 21, REQ_GKONTO = 22;
+    private TextView gKontoWert;
+
+    private void kontoZeile() {
+        LinearLayout k = karte();
+        LinearLayout zeile = new LinearLayout(this);
+        zeile.setOrientation(LinearLayout.HORIZONTAL);
+        zeile.addView(text(getString(R.string.set_gacc_t), TEXT, 16), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        String a = sp.getString(Settings.K_GACC, "");
+        gKontoWert = text(a.isEmpty() ? getString(R.string.gp_none) : a, AKZENT, 14);
+        zeile.addView(gKontoWert);
+        k.addView(zeile);
+        TextView i = text(getString(R.string.set_gacc_d), GRAU, 12);
+        i.setPadding(0, dp(2), 0, 0);
+        k.addView(i);
+        k.setOnClickListener(v -> {
+            try {
+                startActivityForResult(AccountManager.newChooseAccountIntent(null, null, new String[]{"com.google"}, null, null, null, null), REQ_GKONTO);
+            } catch (Exception e) {
+                Toast.makeText(this, R.string.account_failed, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private TextView autorWert;
 
     @SuppressWarnings("deprecation")
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
+        if (req == REQ_GKONTO && res == RESULT_OK && data != null) {
+            String n = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+            if (n != null && !n.trim().isEmpty()) {
+                sp.edit().putString(Settings.K_GACC, n.trim()).apply();
+                if (gKontoWert != null) gKontoWert.setText(n.trim());
+            }
+        }
         if (req == REQ_KONTO && res == RESULT_OK && data != null) {
             String n = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
             if (n != null && !n.trim().isEmpty()) {

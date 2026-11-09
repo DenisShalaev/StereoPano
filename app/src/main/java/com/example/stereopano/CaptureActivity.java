@@ -973,7 +973,8 @@ public class CaptureActivity extends Activity {
             String meldung;
             try {
                 Uri uri = speichere(s, ton, kurs);
-                meldung = getString(R.string.saved_toast) + "\n#" + BuildInfo.NUMBER + " " + lastDiag
+                String gp = ladeZuGoogle(uri);
+                meldung = getString(R.string.saved_toast) + (gp.isEmpty() ? "" : "\n" + gp) + "\n#" + BuildInfo.NUMBER + " " + lastDiag
                         + String.format(java.util.Locale.US, " lens=%s f=%.0f/%.0f", objektive.isEmpty() ? "?" : objektive.get(objIndex).name, fPx, fPxGeraet);
             } catch (Exception | OutOfMemoryError e) {
                 meldung = getString(R.string.save_error, String.valueOf(e.getMessage()));
@@ -992,6 +993,30 @@ public class CaptureActivity extends Activity {
     }
 
     // ------------------------------------------------------------------ Speichern
+
+    /** Je nach Einstellung nach Google Fotos hochladen; liefert eine Meldung ("" = nichts zu melden). */
+    private String ladeZuGoogle(Uri uri) {
+        int ziel = Settings.speicherZiel(this);
+        if (ziel == 0) return "";
+        try {
+            if (!GooglePhotos.hatKonto(this)) return getString(R.string.gp_no_account);
+            java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream(8_000_000);
+            try (java.io.InputStream in = getContentResolver().openInputStream(uri)) {
+                byte[] b = new byte[65536];
+                int n;
+                while ((n = in.read(b)) > 0) bo.write(b, 0, n);
+            }
+            String name = "PANO.vr.jpg";
+            try (android.database.Cursor c = getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DISPLAY_NAME}, null, null, null)) {
+                if (c != null && c.moveToFirst()) name = c.getString(0);
+            }
+            GooglePhotos.hochladen(this, bo.toByteArray(), name, ortName);
+            if (ziel == 2) getContentResolver().delete(uri, null, null);     // nur nach erfolgreichem Upload
+            return getString(R.string.gp_uploaded);
+        } catch (Exception | OutOfMemoryError e) {
+            return getString(R.string.gp_upload_failed, String.valueOf(e.getMessage()));
+        }
+    }
 
     private Uri speichere(StereoStitcher s, byte[] ton, double kurs) throws Exception {
         StereoStitcher.Result e = s.result(schaerfe);

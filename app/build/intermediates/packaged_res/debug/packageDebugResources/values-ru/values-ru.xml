@@ -40,6 +40,22 @@
     <string name="from_google">Аккаунт Google</string>
     <string name="gallery_empty">Пока нет снимков.</string>
     <string name="gallery_title">Мои панорамы</string>
+    <string name="gp_button">Google Фото</string>
+    <string name="gp_count">Панорам в Google Фото: %d</string>
+    <string name="gp_downloading">Скачивание…</string>
+    <string name="gp_failed">Ошибка: %s</string>
+    <string name="gp_hint">Нажмите запись: файл копируется на телефон и открывается. Дальше он в галерее: просмотр, 3D-экспорт и печать на линзовый растр как обычно. Google Фото показывает только файлы, загруженные этим приложением; прочие фото (например, старые PANORAMA) выбираются кнопкой выше.</string>
+    <string name="gp_loading">Загрузка…</string>
+    <string name="gp_no_account">Аккаунт Google не выбран (Настройки → Google Фото).</string>
+    <string name="gp_no_token">Google не выдал токен доступа.</string>
+    <string name="gp_none">не задан</string>
+    <string name="gp_old">Показать старые файлы Cardboard Camera на телефоне</string>
+    <string name="gp_old_on">Старые .vr.jpg других приложений теперь видны в галерее (может понадобиться доступ к памяти).</string>
+    <string name="gp_pick">Выбрать фото из Google Фото / другого приложения</string>
+    <string name="gp_refresh">Обновить список моих загруженных панорам</string>
+    <string name="gp_title">Google Фото</string>
+    <string name="gp_upload_failed">Не удалось загрузить в Google Фото: %s</string>
+    <string name="gp_uploaded">Загружено в Google Фото.</string>
     <string name="group_no_author">Без автора</string>
     <string name="group_no_place">Без места</string>
     <string name="guides_off">Ориентиры выключены</string>
@@ -128,6 +144,7 @@
     <string name="sec_calibration">Калибровка</string>
     <string name="sec_capture">Съёмка</string>
     <string name="sec_files">Файлы и метаданные</string>
+    <string name="sec_google">Google Фото</string>
     <string name="sec_viewer">Просмотр</string>
     <string name="select_all">Все</string>
     <string name="selected_count">Выбрано: %1$d</string>
@@ -147,6 +164,8 @@
     <string name="set_delta_t">Окно усреднения</string>
     <string name="set_focal_d">Корректирует вычисленное поле зрения. Если объекты в панораме растянуты или сжаты, а ориентиры «уплывают», настройте здесь. По умолчанию 100.</string>
     <string name="set_focal_t">Поправка фокусного расстояния</string>
+    <string name="set_gacc_d">Нажмите для выбора. Нужен интернет и однократное разрешение.</string>
+    <string name="set_gacc_t">Аккаунт Google для Фото</string>
     <string name="set_guides_d">Перекрестие, горизонт и точка-темп поверх изображения камеры.</string>
     <string name="set_guides_t">Показывать ориентиры</string>
     <string name="set_gyro_d">Вид следует за движениями телефона.</string>
@@ -175,6 +194,8 @@
     <string name="set_sharp_t">Резкость</string>
     <string name="set_stab_d">Кадры, снятые при наклоне телефона вверх-вниз или набок быстрее этого значения, получают меньший вес (они не выбрасываются, поэтому дыр нет). Ниже – ровнее горизонт и меньше «ступенек» на горизонтальных линиях, но помогает твёрдая рука. Максимум = выключено. По умолчанию 6°/с.</string>
     <string name="set_stab_t">Фильтр движения</string>
+    <string name="set_target_d">Телефон, телефон + Google Фото или только Google Фото (копия на телефоне удаляется только после успешной загрузки).</string>
+    <string name="set_target_t">Сохранять панорамы в</string>
     <string name="set_tempo_d">Скорость красной точки-ориентира. 8°/с ≈ 45 с на оборот.</string>
     <string name="set_tempo_t">Целевой темп</string>
     <string name="set_wcorr_d">Датчик поворота занижает поворот (на этом телефоне около 3,5 %). Увеличьте, если конец панорамы заходит на начало; уменьшите, если остаётся разрыв.</string>
@@ -190,5 +211,8 @@
     <string name="sort_title">Сортировать по</string>
     <string name="stereo_hint">Касание: панель · двойное касание: назад в 2D</string>
     <string name="storage_permission_needed">Чтобы читать панорамы других приложений, нужно разрешение на чтение фото.</string>
+    <string name="target_both">Телефон + Google Фото</string>
+    <string name="target_google">Только Google Фото</string>
+    <string name="target_phone">Телефон</string>
     <string name="too_little">Снято слишком мало – повернитесь минимум на 20°.</string>
 </resources>

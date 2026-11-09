@@ -43,6 +43,22 @@
     <string name="from_google">Google account</string>
     <string name="gallery_empty">No panoramas yet.</string>
     <string name="gallery_title">My panoramas</string>
+    <string name="gp_button">Google Photos</string>
+    <string name="gp_count">%d panoramas in Google Photos</string>
+    <string name="gp_downloading">Downloading…</string>
+    <string name="gp_failed">Failed: %s</string>
+    <string name="gp_hint">Tap an entry to copy it to the phone and open it. After that it is in the gallery: view, 3D export and lenticular print work as usual. Google Photos only lists files uploaded by this app; other photos (e.g. old PANORAMA files) can be picked with the button above.</string>
+    <string name="gp_loading">Loading…</string>
+    <string name="gp_no_account">No Google account chosen (Settings → Google Photos).</string>
+    <string name="gp_no_token">Google did not return an access token.</string>
+    <string name="gp_none">not set</string>
+    <string name="gp_old">Show old Cardboard Camera files on this phone</string>
+    <string name="gp_old_on">Old .vr.jpg files of other apps will now appear in the gallery (storage permission may be requested).</string>
+    <string name="gp_pick">Pick a photo from Google Photos / other app</string>
+    <string name="gp_refresh">Refresh list of my uploaded panoramas</string>
+    <string name="gp_title">Google Photos</string>
+    <string name="gp_upload_failed">Google Photos upload failed: %s</string>
+    <string name="gp_uploaded">Uploaded to Google Photos.</string>
     <string name="group_no_author">No author</string>
     <string name="group_no_place">No place</string>
     <string name="guides_off">Guides off</string>
@@ -134,6 +150,7 @@
     <string name="sec_calibration">Calibration</string>
     <string name="sec_capture">Capture</string>
     <string name="sec_files">Files &amp; metadata</string>
+    <string name="sec_google">Google Photos</string>
     <string name="sec_viewer">Viewer</string>
     <string name="select_all">Select all</string>
     <string name="selected_count">%1$d selected</string>
@@ -153,6 +170,8 @@
     <string name="set_delta_t">Blend window</string>
     <string name="set_focal_d">Corrects the computed field of view. If objects look stretched or squeezed in the panorama or the guides drift, adjust here. Default 100.</string>
     <string name="set_focal_t">Focal length correction</string>
+    <string name="set_gacc_d">Tap to choose. Needs internet and a one-time permission dialog.</string>
+    <string name="set_gacc_t">Google account for Photos</string>
     <string name="set_guides_d">Crosshair, horizon and pace dot over the camera image.</string>
     <string name="set_guides_t">Show guides</string>
     <string name="set_gyro_d">The view follows the movements of the phone.</string>
@@ -181,6 +200,8 @@
     <string name="set_sharp_t">Sharpening</string>
     <string name="set_stab_d">Frames recorded while the phone tilts up/down or sideways faster than this count less (they are never discarded, so no gaps appear). Lower = straighter horizons and fewer steps on horizontal edges, but a steadier hand helps. Maximum = off. Default 6°/s.</string>
     <string name="set_stab_t">Motion filter</string>
+    <string name="set_target_d">Phone, phone + Google Photos, or Google Photos only (the phone copy is deleted only after a successful upload).</string>
+    <string name="set_target_t">Save panoramas to</string>
     <string name="set_tempo_d">Speed of the red guide dot. 8°/s ≈ 45 s per revolution.</string>
     <string name="set_tempo_t">Target pace</string>
     <string name="set_wcorr_d">The rotation sensor under-reports the turn (on this phone about 4.5 %). Raise it if the end of the panorama overlaps the start; lower it if a gap remains.</string>
@@ -196,5 +217,8 @@
     <string name="sort_title">Sort by</string>
     <string name="stereo_hint">Tap: toolbar · double tap: back to 2D</string>
     <string name="storage_permission_needed">Reading other apps\' panoramas needs permission to read photos.</string>
+    <string name="target_both">Phone + Google Photos</string>
+    <string name="target_google">Google Photos only</string>
+    <string name="target_phone">Phone</string>
     <string name="too_little">Too little captured – turn at least about 20°.</string>
 </resources>

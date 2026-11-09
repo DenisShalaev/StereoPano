@@ -76,6 +76,22 @@ string finish_first
 string from_google
 string gallery_empty
 string gallery_title
+string gp_button
+string gp_count
+string gp_downloading
+string gp_failed
+string gp_hint
+string gp_loading
+string gp_no_account
+string gp_no_token
+string gp_none
+string gp_old
+string gp_old_on
+string gp_pick
+string gp_refresh
+string gp_title
+string gp_upload_failed
+string gp_uploaded
 string group_no_author
 string group_no_place
 string guides_off
@@ -167,6 +183,7 @@ string sec_about
 string sec_calibration
 string sec_capture
 string sec_files
+string sec_google
 string sec_viewer
 string select_all
 string selected_count
@@ -186,6 +203,8 @@ string set_delta_d
 string set_delta_t
 string set_focal_d
 string set_focal_t
+string set_gacc_d
+string set_gacc_t
 string set_guides_d
 string set_guides_t
 string set_gyro_d
@@ -214,6 +233,8 @@ string set_sharp_d
 string set_sharp_t
 string set_stab_d
 string set_stab_t
+string set_target_d
+string set_target_t
 string set_tempo_d
 string set_tempo_t
 string set_wcorr_d
@@ -229,4 +250,7 @@ string sort_size
 string sort_title
 string stereo_hint
 string storage_permission_needed
+string target_both
+string target_google
+string target_phone
 string too_little
