@@ -223,4 +223,8 @@
     <string name="gp_m_link">Создать ссылку</string>
     <string name="gp_m_check">Проверить стерео и звук</string>
     <string name="gp_check_result">Стерео: %1$s  Звук: %2$s  Идентичен отправленному: %3$s  (%4$d КБ)</string>
+    <string name="set_loop_t">Замыкание кольца</string>
+    <string name="set_loop_d">Авто сверяет картинку с началом, но верит ей, только если она согласуется с гироскопом (около 4,5°). «Только гироскоп» — для однородных сцен: небо, вода.</string>
+    <string name="loop_auto">Авто (картинка + гироскоп)</string>
+    <string name="loop_gyro">Только гироскоп</string>
 </resources>

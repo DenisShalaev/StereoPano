@@ -151,6 +151,8 @@ string lenti_window
 string load_error
 string lock_off
 string lock_on
+string loop_auto
+string loop_gyro
 string mediastore_failed
 string menu_anaglyph
 string menu_delete
@@ -225,6 +227,8 @@ string set_lens_d
 string set_lens_t
 string set_loc_d
 string set_loc_t
+string set_loop_d
+string set_loop_t
 string set_move_d
 string set_move_t
 string set_quality_d

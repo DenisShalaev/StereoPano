@@ -233,4 +233,8 @@
     <string name="gp_m_link">Create share link</string>
     <string name="gp_m_check">Check stereo &amp; sound</string>
     <string name="gp_check_result">Stereo: %1$s  Sound: %2$s  Identical to sent file: %3$s  (%4$d KB)</string>
+    <string name="set_loop_t">Loop closure</string>
+    <string name="set_loop_d">Auto compares the image with the start but only trusts it if it agrees with the gyro (within about 4.5°). Gyro only is for plain scenes such as sky and water.</string>
+    <string name="loop_auto">Auto (image + gyro)</string>
+    <string name="loop_gyro">Gyro only</string>
 </resources>

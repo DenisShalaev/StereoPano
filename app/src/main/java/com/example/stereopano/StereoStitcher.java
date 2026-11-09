@@ -126,6 +126,8 @@ final class StereoStitcher {
     /** Suchbereich (Grad) fuer den Restfehler der Drehung. Ist der Massstab des Sensors schon korrigiert, bleibt der Fehler klein;
      *  grosse Treffer waeren dann Fehlzuordnungen (aehnliche Tuerkanten) und wuerden die Aufnahme zu frueh beenden. */
     static double loopRange = 45.0;
+    /** Groesster Sensorfehler (Grad), dem eine Bild-Messung noch geglaubt wird; groessere Werte gelten als falscher Treffer, es zaehlt der Gyro. */
+    static double loopTrust = 45.0;
     static double hintCap = 394.0;      // bis zu diesem Rohwinkel darf die grobe Schaetzung das Ende hinauszoegern               // Kreisschluss-Erkennung durch Bildvergleich mit dem Anfang
     private static final double LOOP_FROM_DEG = 280.0;   // ab hier wird nach dem Anfang des Panoramas gesucht
     private static final double LOOP_MARGIN_DEG = 3.0;   // so weit hinter den Anfang weiterdrehen (Ueberlappung fuer die Naht)
@@ -625,7 +627,9 @@ final class StereoStitcher {
         double mn = 1e9, mx = -1e9;
         for (double v : near) { mn = Math.min(mn, v); mx = Math.max(mx, v); }
         if (mx - mn > 4.0) return Double.NaN;            // Messungen widersprechen sich (Parallaxe/falscher Treffer): nicht verwenden
-        return median(near);
+        double med = median(near);
+        if (Math.abs(med) > loopTrust) { ldbg[5]++; return Double.NaN; }   // weicht zu stark vom Gyro ab: wahrscheinlich falscher Treffer
+        return med;
     }
 
     /** Grobe Schaetzung aus den allerletzten Messungen (auch weit vom Anfang, evtl. mit etwas Parallaxe); NaN = keine. */
@@ -635,7 +639,9 @@ final class StereoStitcher {
             double[] q = loopSamples.get(i);
             if (q[0] >= maxRaw - 6.0) r.add(q[1]);
         }
-        return r.size() >= 2 ? median(r) : Double.NaN;
+        if (r.size() < 2) return Double.NaN;
+        double m = median(r);
+        return Math.abs(m) > loopTrust + 2.0 ? Double.NaN : m;
     }
 
     private boolean loopReady() { return loopEnabled && !Double.isNaN(loopError()); }
@@ -1452,7 +1458,7 @@ final class StereoStitcher {
                 for (double q : sv) dev.add(Math.abs(q - med));
                 java.util.Collections.sort(dev);
                 double mad = dev.get(dev.size() / 2);
-                double maxShift = (EXT_DEG - 0.5) * panoW / 360.0;       // mehr als ~8 Grad Drift ist unplausibel
+                double maxShift = Math.min(EXT_DEG - 0.5, loopTrust) * panoW / 360.0;       // mehr als ~8 Grad Drift ist unplausibel
                 if (Math.abs(med) >= 1.5 && Math.abs(med) <= maxShift && mad <= Math.max(3.0, 0.35 * Math.abs(med))) d = med;
             }
             // Nahtglaettung: gemeinsame Strecke O beider Augen

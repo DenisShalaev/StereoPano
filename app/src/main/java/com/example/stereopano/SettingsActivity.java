@@ -111,6 +111,8 @@ public class SettingsActivity extends Activity {
         regler(R.string.set_latency_t, R.string.set_latency_d, Settings.K_LATENZ, -50, 50, 1, 0, v -> v + " ms");
         regler(R.string.set_stab_t, R.string.set_stab_d, Settings.K_STAB, 2, 20, 1, 6,
                 v -> v >= 20 ? getString(R.string.off) : v + "\u00B0/s");
+        auswahl(R.string.set_loop_t, R.string.set_loop_d, Settings.K_LOOPMODE, new int[]{0, 1},
+                new String[]{getString(R.string.loop_auto), getString(R.string.loop_gyro)}, 0);
         regler(R.string.set_wcorr_t, R.string.set_wcorr_d, Settings.K_WKORR, 0, 100, 1, 35, v -> String.format(java.util.Locale.US, "%.1f %%", v / 10.0));
         regler(R.string.set_focal_t, R.string.set_focal_d, Settings.K_FPX, 90, 110, 1, 100, v -> v + " %");
 

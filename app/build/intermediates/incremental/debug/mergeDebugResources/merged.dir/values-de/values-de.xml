@@ -115,6 +115,8 @@
     <string name="load_error">Fehler beim Laden: %1$s</string>
     <string name="lock_off">Automatische Belichtung</string>
     <string name="lock_on">Belichtung wird während der Aufnahme fixiert</string>
+    <string name="loop_auto">Auto (Bild + Gyro)</string>
+    <string name="loop_gyro">Nur Gyro</string>
     <string name="mediastore_failed">MediaStore-Eintrag nicht möglich.</string>
     <string name="menu_anaglyph">Als Anaglyphe speichern (Rot/Cyan)</string>
     <string name="menu_delete">Löschen</string>
@@ -186,6 +188,8 @@
     <string name="set_lens_t">Linsenkorrektur (Cardboard)</string>
     <string name="set_loc_d">Schreibt GPS-Position und Ortsnamen (Stadt, Region) als Tags und EXIF in die Datei. Ausschalten, wenn Sie Panoramen öffentlich teilen und Ihren Standort nicht speichern wollen.</string>
     <string name="set_loc_t">Ort speichern</string>
+    <string name="set_loop_d">Auto vergleicht das Bild mit dem Anfang, glaubt ihm aber nur, wenn es zum Gyro passt (etwa 4,5°). Nur Gyro eignet sich fuer eintoenige Szenen wie Himmel und Wasser.</string>
+    <string name="set_loop_t">Kreisschluss</string>
     <string name="set_move_d">Erkennt Personen und andere bewegte Objekte während des Drehens und füllt die Lücken mit dem Hintergrund aus einem anderen Moment. Höher = empfindlicher. Funktioniert am besten bei strukturierten Objekten; einfarbige Objekte werden evtl. nur teilweise entfernt. Braucht ca. 50 MB zusätzlichen Speicher und etwas Rechenzeit. 0 = aus. Experimentell. Standard 0 (aus).</string>
     <string name="set_move_t">Bewegte Objekte</string>
     <string name="set_quality_d">Qualität der gespeicherten Panoramen. Standard 90.</string>
