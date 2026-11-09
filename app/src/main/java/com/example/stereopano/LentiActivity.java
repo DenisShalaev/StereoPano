@@ -47,7 +47,7 @@ public class LentiActivity extends Activity {
     private static final double[][] FORMAT_MM = {{297, 210}, {210, 148}, {148, 105}};   // A4, A5, A6 (quer: lang x kurz)
     private static final String[] FORMAT_NAME = {"A4", "A5", "A6"};
     private static final int[] LPI = {75, 100};
-    private static final int[] DPI = {600, 800, 1200};
+    private static final int[] DPI = {600, 720, 800, 1200, 1440, 2400};
 
     private SharedPreferences sp;
     private Uri src;
@@ -89,7 +89,9 @@ public class LentiActivity extends Activity {
         lpiIdx = sp.getInt("lpi", 0);
         lpiReal = Double.longBitsToDouble(sp.getLong("lpiReal" + lpiIdx, Double.doubleToLongBits(LPI[lpiIdx])));
         fmt = sp.getInt("fmt", 0);
-        dpiIdx = sp.getInt("dpi", 0);
+        dpiIdx = 0;
+        int gespeichert = sp.getInt("dpiVal", 600);
+        for (int i = 0; i < DPI.length; i++) if (DPI[i] == gespeichert) dpiIdx = i;
         views = sp.getInt("views", 8);
         depthPct = sp.getInt("depth", 100);
         portrait = sp.contains("portrait") ? sp.getBoolean("portrait", false) : !ring;   // Teilpanorama: erst Hochformat vorschlagen
@@ -220,7 +222,7 @@ public class LentiActivity extends Activity {
         formular.addView(ueberschrift(getString(R.string.lenti_dpi)));
         String[] dn = new String[DPI.length];
         for (int i = 0; i < DPI.length; i++) dn[i] = String.valueOf(DPI[i]);
-        formular.addView(segment(dn, dpiIdx, i -> { dpiIdx = i; sp.edit().putInt("dpi", i).apply(); aktualisiere(); }));
+        formular.addView(segment(dn, dpiIdx, i -> { dpiIdx = i; sp.edit().putInt("dpiVal", DPI[i]).apply(); aktualisiere(); }));
 
         double period = DPI[dpiIdx] / lpiReal;
         formular.addView(text(String.format(Locale.US, getString(R.string.lenti_px_per_lens), period), 13, GRAU));
@@ -239,7 +241,19 @@ public class LentiActivity extends Activity {
             for (int i = 0; i < vn.length; i++) { vn[i] = String.valueOf(options.get(i)); if (options.get(i) == views) sel = i; }
             formular.addView(segment(vn, sel, i -> { views = options.get(i); sp.edit().putInt("views", views).apply(); aktualisiere(); }));
         }
-        machen.setEnabled(!options.isEmpty() && !laeuft);
+        int[] pxs = druckPixel();
+        double mpx = pxs[0] * (double) pxs[1] / 1e6;
+        boolean zuGross = mpx > 300;
+        if (zuGross) {
+            TextView w = text(String.format(Locale.US, getString(R.string.lenti_too_big), mpx), 14, 0xFFFFB74D);
+            w.setPadding(0, dp(6), 0, dp(6));
+            formular.addView(w);
+        } else if (mpx > 120) {
+            TextView w = text(String.format(Locale.US, getString(R.string.lenti_big), mpx), 13, 0xFFFFB74D);
+            w.setPadding(0, dp(6), 0, dp(6));
+            formular.addView(w);
+        }
+        machen.setEnabled(!options.isEmpty() && !zuGross && !laeuft);
         test.setEnabled(!laeuft);
 
         formular.addView(ueberschrift(getString(R.string.lenti_depth) + ": " + depthPct + " %"));
@@ -465,9 +479,10 @@ public class LentiActivity extends Activity {
         row.setOrientation(LinearLayout.HORIZONTAL);
         for (int i = 0; i < labels.length; i++) {
             final int idx = i;
-            TextView t = text(labels[i], 15, i == sel ? Color.BLACK : TEXT);
+            TextView t = text(labels[i], labels.length > 4 ? 13 : 15, i == sel ? Color.BLACK : TEXT);
             t.setGravity(Gravity.CENTER);
-            t.setPadding(dp(14), dp(10), dp(14), dp(10));
+            int px = labels.length > 4 ? dp(4) : dp(14);
+            t.setPadding(px, dp(10), px, dp(10));
             GradientDrawable g = new GradientDrawable();
             g.setCornerRadius(dp(8));
             g.setColor(i == sel ? AKZENT : KARTE);

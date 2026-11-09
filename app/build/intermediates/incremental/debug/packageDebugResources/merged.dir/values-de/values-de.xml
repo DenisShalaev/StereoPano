@@ -61,6 +61,7 @@
     <string name="lens_on">Linsenkorrektur an</string>
     <string name="lens_other">Kamera %1$s</string>
     <string name="lens_ultrawide">Ultraweitwinkel 0,5×</string>
+    <string name="lenti_big">Sehr große Datei (%1$.0f Megapixel): Berechnung dauert lange und braucht viel Speicher.</string>
     <string name="lenti_cancel">Abbrechen</string>
     <string name="lenti_depth">Tiefenstärke</string>
     <string name="lenti_dpi">Druckerauflösung, DPI</string>
@@ -87,6 +88,7 @@
     <string name="lenti_test_best">Bestes Testband (1-9)</string>
     <string name="lenti_test_done">Testblatt gespeichert. Bänder von oben nach unten: Abstand -1 % … +1 %. Durch das Raster betrachten, das Band ohne Moiré wählen und seine Nummer antippen.</string>
     <string name="lenti_title">Linsenraster-Druck</string>
+    <string name="lenti_too_big">Zu groß (%1$.0f Megapixel, Grenze 300). Kleineres Format oder niedrigere DPI wählen.</string>
     <string name="lenti_views">Anzahl Ansichten</string>
     <string name="lenti_warn_views">Bei %1$d DPI und %2$.1f LPI entfallen nur %3$.1f Pixel auf eine Linse, 8 Ansichten sind nicht möglich. Höhere DPI wählen.</string>
     <string name="lenti_window">Fenstermitte: %1$d°</string>

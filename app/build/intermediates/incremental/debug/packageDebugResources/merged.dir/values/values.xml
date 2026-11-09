@@ -64,6 +64,7 @@
     <string name="lens_on">Lens correction on</string>
     <string name="lens_other">Camera %1$s</string>
     <string name="lens_ultrawide">Ultra-wide 0.5×</string>
+    <string name="lenti_big">Very large file (%1$.0f megapixels): rendering takes long and needs a lot of storage.</string>
     <string name="lenti_cancel">Cancel</string>
     <string name="lenti_depth">Depth strength</string>
     <string name="lenti_dpi">Printer resolution, DPI</string>
@@ -90,6 +91,7 @@
     <string name="lenti_test_best">Best test row (1-9)</string>
     <string name="lenti_test_done">Test sheet saved. Rows from top to bottom: pitch -1 % … +1 %. Look through the lens sheet, pick the row without moire stripes and tap its number.</string>
     <string name="lenti_title">Lenticular print</string>
+    <string name="lenti_too_big">Too large (%1$.0f megapixels, limit 300). Choose a smaller sheet or a lower DPI.</string>
     <string name="lenti_views">Number of views</string>
     <string name="lenti_warn_views">At %1$d DPI and %2$.1f LPI each lens gets only %3$.1f pixels, so 8 views are not possible. Choose a higher DPI.</string>
     <string name="lenti_window">Window centre: %1$d°</string>

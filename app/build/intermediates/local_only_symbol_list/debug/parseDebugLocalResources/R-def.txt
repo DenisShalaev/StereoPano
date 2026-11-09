@@ -97,6 +97,7 @@ string lens_off
 string lens_on
 string lens_other
 string lens_ultrawide
+string lenti_big
 string lenti_cancel
 string lenti_depth
 string lenti_dpi
@@ -123,6 +124,7 @@ string lenti_test
 string lenti_test_best
 string lenti_test_done
 string lenti_title
+string lenti_too_big
 string lenti_views
 string lenti_warn_views
 string lenti_window

@@ -193,4 +193,6 @@
     <string name="lenti_orient_land">Querformat (Ansichten, Gruppenfotos)</string>
     <string name="lenti_orient_port">Hochformat (Teilpanorama, Porträts)</string>
     <string name="lenti_orient_hint">Die Linsenstreifen müssen entlang der senkrechten Bildkante verlaufen (bei Querformat parallel zur kurzen, bei Hochformat zur langen Seite).</string>
+    <string name="lenti_big">Sehr große Datei (%1$.0f Megapixel): Berechnung dauert lange und braucht viel Speicher.</string>
+    <string name="lenti_too_big">Zu groß (%1$.0f Megapixel, Grenze 300). Kleineres Format oder niedrigere DPI wählen.</string>
 </resources>

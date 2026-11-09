@@ -203,4 +203,6 @@
     <string name="lenti_orient_land">Landscape (views, group photos)</string>
     <string name="lenti_orient_port">Portrait (partial panorama, portraits)</string>
     <string name="lenti_orient_hint">The lens ridges must run along the vertical edge of the picture (parallel to the short side for landscape, to the long side for portrait).</string>
+    <string name="lenti_big">Very large file (%1$.0f megapixels): rendering takes long and needs a lot of storage.</string>
+    <string name="lenti_too_big">Too large (%1$.0f megapixels, limit 300). Choose a smaller sheet or a lower DPI.</string>
 </resources>

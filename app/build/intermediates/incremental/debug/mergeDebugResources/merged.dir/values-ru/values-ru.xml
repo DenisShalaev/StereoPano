@@ -61,6 +61,7 @@
     <string name="lens_on">Коррекция линз включена</string>
     <string name="lens_other">Камера %1$s</string>
     <string name="lens_ultrawide">Сверхширокоугольная 0,5×</string>
+    <string name="lenti_big">Очень большой файл (%1$.0f мегапикселей): расчёт займёт много времени и места на диске.</string>
     <string name="lenti_cancel">Отмена</string>
     <string name="lenti_depth">Сила объёма</string>
     <string name="lenti_dpi">Разрешение принтера, DPI</string>
@@ -87,6 +88,7 @@
     <string name="lenti_test_best">Лучший ряд теста (1-9)</string>
     <string name="lenti_test_done">Тестовый лист сохранён. Ряды сверху вниз: шаг -1 % … +1 %. Посмотрите через растр, выберите ряд без муара и нажмите его номер.</string>
     <string name="lenti_title">Печать под линзовый растр</string>
+    <string name="lenti_too_big">Слишком большой файл (%1$.0f мегапикселей, предел 300). Выберите меньший формат или меньший DPI.</string>
     <string name="lenti_views">Количество ракурсов</string>
     <string name="lenti_warn_views">При %1$d DPI и %2$.1f LPI на линзу приходится только %3$.1f пикселя: 8 ракурсов не получить. Выберите больше DPI.</string>
     <string name="lenti_window">Центр окна: %1$d°</string>
