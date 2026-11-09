@@ -196,4 +196,5 @@
     <string name="lenti_window">Window centre: %1$d°</string>
     <string name="lenti_prepare">Preparing views…</string>
     <string name="menu_lenti">Lenticular print…</string>
+    <string name="lenti_marks">Colour alignment strips at the edges (to position the lens sheet)</string>
 </resources>

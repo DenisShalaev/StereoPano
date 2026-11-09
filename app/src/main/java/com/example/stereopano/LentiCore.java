@@ -31,6 +31,8 @@ final class LentiCore {
         int views;                 // Anzahl Ansichten
         boolean reverse = true;    // Reihenfolge der Streifen unter der Linse umkehren
         double depth = 1.0;        // Staerke der Tiefe (Disparitaet * depth)
+        int marginX, marginY;      // Rand mit bunten Ausrichtungsstreifen (Pixel je Seite); 0 = keine
+        int gap;                   // weisser Abstand zwischen Streifen und Bild (Pixel)
     }
 
     // ------------------------------------------------------------------ Disparitaet
@@ -167,7 +169,7 @@ final class LentiCore {
         final int w1 = (Integer) dm[1], h1 = (Integer) dm[2], ds = (Integer) dm[3];
         final double period = p.dpi / p.lpi;
         final int N = p.views;
-        final double sx = (double) w / p.outW, sy = (double) h / p.outH;
+        final double sx = (double) w / (p.outW - 2 * p.marginX), sy = (double) h / (p.outH - 2 * p.marginY);
         final int[] viewIdx = new int[p.outW];
         for (int x = 0; x < p.outW; x++) viewIdx[x] = viewOf(x, period, N, p.reverse);
 
@@ -201,13 +203,26 @@ final class LentiCore {
     private static byte[] renderRow(int[] l, int[] r, int w, int h, float[] disp, int w1, int h1, int ds, Params p,
                                     int[] viewIdx, double sx, double sy, int yo) {
         byte[] row = new byte[p.outW * 3];
-        double v = (yo + 0.5) * sy - 0.5;
+        if (p.marginX > 0 && (yo < p.marginY || yo >= p.outH - p.marginY)) {
+            int innerGap = p.marginY - p.gap;                              // Streifen aussen, weisse Luecke innen
+            boolean inGap = yo >= innerGap && yo < p.marginY || yo >= p.outH - p.marginY && yo < p.outH - innerGap;
+            for (int xo = 0; xo < p.outW; xo++) markPixel(row, xo, viewIdx[xo], N0(p), inGap);
+            return row;
+        }
+        int yi = yo - p.marginY;
+        double v = (yi + 0.5) * sy - 0.5;
         if (v < 0) v = 0; if (v > h - 1.001) v = h - 1.001;
         int N = p.views;
         double gy = Math.min(h1 - 1.001, Math.max(0, v / ds));
         int gy0 = (int) gy; double fy = gy - gy0;
         for (int xo = 0; xo < p.outW; xo++) {
-            double u = (xo + 0.5) * sx - 0.5;
+            if (p.marginX > 0 && (xo < p.marginX || xo >= p.outW - p.marginX)) {
+                int innerGap = p.marginX - p.gap;
+                boolean inGap = xo >= innerGap && xo < p.marginX || xo >= p.outW - p.marginX && xo < p.outW - innerGap;
+                markPixel(row, xo, viewIdx[xo], N, inGap);
+                continue;
+            }
+            double u = (xo - p.marginX + 0.5) * sx - 0.5;
             int k = viewIdx[xo];
             double t = N == 1 ? 0 : (double) k / (N - 1);
             double gx = Math.min(w1 - 1.001, Math.max(0, u / ds));
@@ -223,6 +238,31 @@ final class LentiCore {
             row[xo * 3] = (byte) R; row[xo * 3 + 1] = (byte) G; row[xo * 3 + 2] = (byte) B;
         }
         return row;
+    }
+
+    private static int N0(Params p) { return p.views; }
+
+    /** Ausrichtungsstreifen: jede Ansicht eine eigene Regenbogenfarbe (Lueckenpixel weiss). */
+    private static void markPixel(byte[] row, int xo, int view, int views, boolean gap) {
+        int c = gap ? 0xFFFFFF : hue(views <= 1 ? 0 : (double) view / views);
+        row[xo * 3] = (byte) (c >> 16); row[xo * 3 + 1] = (byte) (c >> 8); row[xo * 3 + 2] = (byte) c;
+    }
+
+    /** Volle Saettigung, h in [0,1) -> RGB. */
+    static int hue(double h) {
+        double x = h * 6, f = x - Math.floor(x);
+        int i = (int) Math.floor(x) % 6;
+        double q = 1 - f, t = f;
+        double r, g, b;
+        switch (i) {
+            case 0: r = 1; g = t; b = 0; break;
+            case 1: r = q; g = 1; b = 0; break;
+            case 2: r = 0; g = 1; b = t; break;
+            case 3: r = 0; g = q; b = 1; break;
+            case 4: r = t; g = 0; b = 1; break;
+            default: r = 1; g = 0; b = q; break;
+        }
+        return ((int) Math.round(r * 255) << 16) | ((int) Math.round(g * 255) << 8) | (int) Math.round(b * 255);
     }
 
     private static int bil(int[] a, int w, int h, double x, double y) {

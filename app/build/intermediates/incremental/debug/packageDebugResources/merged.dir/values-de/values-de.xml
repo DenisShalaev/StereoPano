@@ -71,6 +71,7 @@
     <string name="lenti_lpi">Linsenraster, LPI</string>
     <string name="lenti_lpi_real">Tatsächliche LPI (aus dem Testblatt)</string>
     <string name="lenti_make">Druckdatei erzeugen</string>
+    <string name="lenti_marks">Bunte Ausrichtungsstreifen am Rand (zum Positionieren des Linsenrasters)</string>
     <string name="lenti_portrait">Hochformat</string>
     <string name="lenti_prepare">Ansichten werden vorbereitet…</string>
     <string name="lenti_px_per_lens">Pixel pro Linse: %1$.1f</string>

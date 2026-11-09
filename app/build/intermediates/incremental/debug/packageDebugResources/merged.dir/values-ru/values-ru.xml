@@ -71,6 +71,7 @@
     <string name="lenti_lpi">Растр, LPI</string>
     <string name="lenti_lpi_real">Фактический LPI (по тестовому листу)</string>
     <string name="lenti_make">Создать файл для печати</string>
+    <string name="lenti_marks">Разноцветные полосы по краям (для совмещения линзового листа)</string>
     <string name="lenti_portrait">Книжная ориентация</string>
     <string name="lenti_prepare">Подготовка ракурсов…</string>
     <string name="lenti_px_per_lens">Пикселей на линзу: %1$.1f</string>

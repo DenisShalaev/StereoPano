@@ -186,4 +186,5 @@
     <string name="lenti_window">Fenstermitte: %1$d°</string>
     <string name="lenti_prepare">Ansichten werden vorbereitet…</string>
     <string name="menu_lenti">Linsenraster-Druck…</string>
+    <string name="lenti_marks">Bunte Ausrichtungsstreifen am Rand (zum Positionieren des Linsenrasters)</string>
 </resources>

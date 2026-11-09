@@ -60,7 +60,7 @@ public class LentiActivity extends Activity {
 
     private int lpiIdx, fmt, dpiIdx, views, depthPct, pos;
     private double lpiReal;
-    private boolean portrait, reverse;
+    private boolean portrait, reverse, marks;
 
     private ImageView vorschau;
     private TextView posText, info, status;
@@ -93,6 +93,7 @@ public class LentiActivity extends Activity {
         depthPct = sp.getInt("depth", 100);
         portrait = sp.getBoolean("portrait", false);
         reverse = sp.getBoolean("reverse", true);
+        marks = sp.getBoolean("marks", true);
         pos = sp.getInt("pos", 500);
         bauen();
         aktualisiere();
@@ -247,6 +248,7 @@ public class LentiActivity extends Activity {
             @Override public void onStopTrackingTouch(SeekBar s) { sp.edit().putInt("depth", depthPct).apply(); aktualisiere(); }
         });
         formular.addView(ds);
+        formular.addView(check(getString(R.string.lenti_marks), marks, c -> { marks = c; sp.edit().putBoolean("marks", c).apply(); aktualisiere(); }));
         formular.addView(check(getString(R.string.lenti_flip), reverse, c -> { reverse = c; sp.edit().putBoolean("reverse", c).apply(); }));
 
         int[] px = druckPixel();
@@ -264,6 +266,13 @@ public class LentiActivity extends Activity {
         } catch (NumberFormatException ignored) { }
     }
 
+    /** Randbreiten fuer die Ausrichtungsstreifen: {seitlich, oben/unten, Luecke} in Pixeln (alles 0 ohne Streifen). */
+    private int[] rand() {
+        if (!marks) return new int[]{0, 0, 0};
+        int dpi = DPI[dpiIdx];
+        return new int[]{(int) Math.round(7 / 25.4 * dpi), (int) Math.round(5 / 25.4 * dpi), (int) Math.round(1.2 / 25.4 * dpi)};
+    }
+
     private int[] druckPixel() {
         double[] mm = FORMAT_MM[fmt];
         double wmm = portrait ? mm[1] : mm[0], hmm = portrait ? mm[0] : mm[1];
@@ -273,7 +282,8 @@ public class LentiActivity extends Activity {
     /** Fenster der Panorama in Quellpixeln: {links, oben, breite, hoehe}. */
     private int[] fenster() {
         double[] mm = FORMAT_MM[fmt];
-        double aspect = portrait ? mm[1] / mm[0] : mm[0] / mm[1];
+        int[] pxs = druckPixel(), rd = rand();
+        double aspect = (pxs[0] - 2.0 * rd[0]) / (pxs[1] - 2.0 * rd[1]);
         int wh = srcH, ww = (int) Math.round(aspect * wh);
         if (ww > srcW) { ww = srcW; wh = (int) Math.round(ww / aspect); }
         ww &= ~1; wh &= ~1;
@@ -341,6 +351,8 @@ public class LentiActivity extends Activity {
                         runOnUiThread(() -> status.setText(R.string.lenti_prepare));
                         int[] wl = fensterPixel(daten, fw), wr = fensterPixel(meta.rightJpeg, fw);
                         LentiCore.Params p = new LentiCore.Params();
+                        int[] rd = rand();
+                        p.marginX = rd[0]; p.marginY = rd[1]; p.gap = rd[2];
                         p.outW = px[0]; p.outH = px[1]; p.dpi = dpi; p.lpi = lpi; p.views = n; p.reverse = rev; p.depth = depth;
                         int maxD = (int) Math.round(6.0 * ppd);
                         LentiCore.render(wl, wr, fw[2], fw[3], maxD, p, os, f -> {
