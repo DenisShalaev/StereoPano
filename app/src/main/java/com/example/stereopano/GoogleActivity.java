@@ -88,7 +88,15 @@ public class GoogleActivity extends Activity {
             }
         };
         lv.setAdapter(adapter);
-        lv.setOnItemClickListener((p, v, pos, id) -> holeUndOeffne(items.get(pos)));
+        lv.setOnItemClickListener((p, v, pos, id) -> {
+            final GooglePhotos.Item it = items.get(pos);
+            new android.app.AlertDialog.Builder(this).setTitle(it.name).setItems(new String[]{
+                    getString(R.string.gp_m_open), getString(R.string.gp_m_link), getString(R.string.gp_m_check)}, (d, w) -> {
+                if (w == 0) holeUndOeffne(it);
+                else if (w == 1) link(it);
+                else pruefe(it);
+            }).show();
+        });
         root.addView(lv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         setContentView(root);
         if (GooglePhotos.hatKonto(this)) aktualisiere();
@@ -114,6 +122,36 @@ public class GoogleActivity extends Activity {
                     for (GooglePhotos.Item it : l) adapter.add(it.name + (it.time.isEmpty() ? "" : "   " + it.time.replace("T", " ").replace("Z", "")));
                     status.setText(getString(R.string.gp_count, l.size()));
                 });
+            } catch (Exception e) {
+                runOnUiThread(() -> status.setText(getString(R.string.gp_failed, String.valueOf(e.getMessage()))));
+            }
+        }).start();
+    }
+
+    private void link(GooglePhotos.Item it) {
+        status.setText(R.string.gp_loading);
+        new Thread(() -> {
+            try {
+                String url = GooglePhotos.linkTeilen(this, it);
+                runOnUiThread(() -> {
+                    status.setText(url);
+                    Intent s = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, url);
+                    startActivity(Intent.createChooser(s, getString(R.string.share_title)));
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> status.setText(getString(R.string.gp_failed, String.valueOf(e.getMessage()))));
+            }
+        }).start();
+    }
+
+    private void pruefe(GooglePhotos.Item it) {
+        status.setText(R.string.gp_downloading);
+        new Thread(() -> {
+            try {
+                byte[] g = GooglePhotos.laden(it);
+                VrJpgReader.Result r = VrJpgReader.parse(g);
+                String m = getString(R.string.gp_check_result, r.rightJpeg != null ? "\u2713" : "\u2717", r.audio != null ? "\u2713" : "\u2717", "-", g.length / 1024);
+                runOnUiThread(() -> status.setText(m));
             } catch (Exception e) {
                 runOnUiThread(() -> status.setText(getString(R.string.gp_failed, String.valueOf(e.getMessage()))));
             }

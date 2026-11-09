@@ -26,11 +26,12 @@ import java.util.List;
  */
 final class GooglePhotos {
     static final String SCOPE = "oauth2:https://www.googleapis.com/auth/photoslibrary.appendonly "
-            + "https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata";
+            + "https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata "
+            + "https://www.googleapis.com/auth/photoslibrary.sharing";
     private static final String BASE = "https://photoslibrary.googleapis.com/v1/";
 
     static final class Item {
-        String id, name, baseUrl, time;
+        String id, name, baseUrl, time, productUrl;
     }
 
     private GooglePhotos() {}
@@ -67,7 +68,7 @@ final class GooglePhotos {
     }
 
     /** Laedt die Datei hoch und legt das Medienobjekt an; liefert die ID. */
-    static String hochladen(Activity a, byte[] daten, String name, String beschreibung) throws Exception {
+    static Item hochladen(Activity a, byte[] daten, String name, String beschreibung) throws Exception {
         String tok = token(a, false, null);
         for (int versuch = 0; ; versuch++) {
             try {
@@ -79,7 +80,7 @@ final class GooglePhotos {
         }
     }
 
-    private static String hochladen1(String tok, byte[] daten, String name, String beschreibung) throws Exception {
+    private static Item hochladen1(String tok, byte[] daten, String name, String beschreibung) throws Exception {
         HttpURLConnection h = (HttpURLConnection) new URL(BASE + "uploads").openConnection();
         h.setRequestMethod("POST");
         h.setDoOutput(true);
@@ -111,7 +112,49 @@ final class GooglePhotos {
         JSONObject r0 = res.getJSONArray("newMediaItemResults").getJSONObject(0);
         JSONObject st = r0.optJSONObject("status");
         if (st != null && st.optInt("code", 0) != 0) throw new Exception(st.optString("message"));
-        return r0.getJSONObject("mediaItem").optString("id");
+        JSONObject mi = r0.getJSONObject("mediaItem");
+        Item it = new Item();
+        it.id = mi.optString("id");
+        it.name = mi.optString("filename", name);
+        it.baseUrl = mi.optString("baseUrl");
+        it.productUrl = mi.optString("productUrl");
+        return it;
+    }
+
+    private static JSONObject post(String tok, String url, JSONObject body) throws Exception {
+        byte[] bb = body.toString().getBytes(StandardCharsets.UTF_8);
+        HttpURLConnection h = (HttpURLConnection) new URL(url).openConnection();
+        h.setRequestMethod("POST");
+        h.setDoOutput(true);
+        h.setConnectTimeout(20000);
+        h.setReadTimeout(60000);
+        h.setRequestProperty("Authorization", "Bearer " + tok);
+        h.setRequestProperty("Content-type", "application/json; charset=utf-8");
+        try (OutputStream os = h.getOutputStream()) { os.write(bb); }
+        return new JSONObject(new String(lese(h), StandardCharsets.UTF_8));
+    }
+
+    /** Legt ein Album mit dem Objekt an und gibt es per Link frei (nur ansehen); liefert die Freigabe-URL. */
+    static String linkTeilen(Activity a, Item it) throws Exception {
+        String tok = token(a, false, null);
+        String titel = "StereoPano " + it.name;
+        String albumId = post(tok, BASE + "albums", new JSONObject().put("album", new JSONObject().put("title", titel))).getString("id");
+        post(tok, BASE + "albums/" + albumId + ":batchAddMediaItems",
+                new JSONObject().put("mediaItemIds", new JSONArray().put(it.id)));
+        JSONObject r = post(tok, BASE + "albums/" + albumId + ":share", new JSONObject().put("sharedAlbumOptions",
+                new JSONObject().put("isCollaborative", false).put("isCommentable", false)));
+        String url = r.getJSONObject("shareInfo").optString("shareableUrl");
+        if (url.isEmpty()) throw new Exception("no shareableUrl");
+        return url;
+    }
+
+    /** Laedt das Original zurueck und prueft, ob rechtes Auge und Ton noch enthalten sind (und die Bytes identisch). */
+    static String pruefen(Activity a, Item it, byte[] gesendet) throws Exception {
+        byte[] g = laden(it);
+        VrJpgReader.Result r = VrJpgReader.parse(g);
+        boolean gleich = java.util.Arrays.equals(g, gesendet);
+        return a.getString(R.string.gp_check_result, r.rightJpeg != null ? "\u2713" : "\u2717", r.audio != null ? "\u2713" : "\u2717",
+                gleich ? "\u2713" : "\u2717", g.length / 1024);
     }
 
     /** Alle von dieser App hochgeladenen Objekte (neueste zuerst, wie von der API geliefert). */

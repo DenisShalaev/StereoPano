@@ -229,4 +229,8 @@
     <string name="gp_count">%d panoramas in Google Photos</string>
     <string name="gp_failed">Failed: %s</string>
     <string name="gp_downloading">Downloading…</string>
+    <string name="gp_m_open">Open on phone</string>
+    <string name="gp_m_link">Create share link</string>
+    <string name="gp_m_check">Check stereo &amp; sound</string>
+    <string name="gp_check_result">Stereo: %1$s  Sound: %2$s  Identical to sent file: %3$s  (%4$d KB)</string>
 </resources>

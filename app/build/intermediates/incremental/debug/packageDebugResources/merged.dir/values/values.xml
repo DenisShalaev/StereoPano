@@ -44,11 +44,15 @@
     <string name="gallery_empty">No panoramas yet.</string>
     <string name="gallery_title">My panoramas</string>
     <string name="gp_button">Google Photos</string>
+    <string name="gp_check_result">Stereo: %1$s  Sound: %2$s  Identical to sent file: %3$s  (%4$d KB)</string>
     <string name="gp_count">%d panoramas in Google Photos</string>
     <string name="gp_downloading">Downloading…</string>
     <string name="gp_failed">Failed: %s</string>
     <string name="gp_hint">Tap an entry to copy it to the phone and open it. After that it is in the gallery: view, 3D export and lenticular print work as usual. Google Photos only lists files uploaded by this app; other photos (e.g. old PANORAMA files) can be picked with the button above.</string>
     <string name="gp_loading">Loading…</string>
+    <string name="gp_m_check">Check stereo &amp; sound</string>
+    <string name="gp_m_link">Create share link</string>
+    <string name="gp_m_open">Open on phone</string>
     <string name="gp_no_account">No Google account chosen (Settings → Google Photos).</string>
     <string name="gp_no_token">Google did not return an access token.</string>
     <string name="gp_none">not set</string>

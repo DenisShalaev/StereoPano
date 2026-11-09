@@ -77,11 +77,15 @@ string from_google
 string gallery_empty
 string gallery_title
 string gp_button
+string gp_check_result
 string gp_count
 string gp_downloading
 string gp_failed
 string gp_hint
 string gp_loading
+string gp_m_check
+string gp_m_link
+string gp_m_open
 string gp_no_account
 string gp_no_token
 string gp_none

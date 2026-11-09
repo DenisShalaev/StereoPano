@@ -1010,9 +1010,12 @@ public class CaptureActivity extends Activity {
             try (android.database.Cursor c = getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DISPLAY_NAME}, null, null, null)) {
                 if (c != null && c.moveToFirst()) name = c.getString(0);
             }
-            GooglePhotos.hochladen(this, bo.toByteArray(), name, ortName);
+            byte[] gesendet = bo.toByteArray();
+            GooglePhotos.Item it = GooglePhotos.hochladen(this, gesendet, name, ortName);
+            String pr;
+            try { pr = GooglePhotos.pruefen(this, it, gesendet); } catch (Exception e) { pr = "?"; }
             if (ziel == 2) getContentResolver().delete(uri, null, null);     // nur nach erfolgreichem Upload
-            return getString(R.string.gp_uploaded);
+            return getString(R.string.gp_uploaded) + "\n" + pr;
         } catch (Exception | OutOfMemoryError e) {
             return getString(R.string.gp_upload_failed, String.valueOf(e.getMessage()));
         }
