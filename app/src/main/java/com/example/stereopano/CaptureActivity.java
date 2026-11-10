@@ -281,7 +281,7 @@ public class CaptureActivity extends Activity {
         winkelKorr = Settings.winkelKorr(this);
         StereoStitcher.hintCap = winkelKorr > 0 ? 366.0 : 394.0;
         StereoStitcher.loopRange = winkelKorr > 0 ? 14.0 : 45.0;
-        StereoStitcher.loopTrust = winkelKorr > 0 ? 4.5 : 45.0;
+        StereoStitcher.loopTrust = winkelKorr > 0 ? 2.5 : 45.0;
         StereoStitcher.loopEnabled = Settings.p(this).getInt(Settings.K_LOOPMODE, 0) == 0;
         jpegQualitaet = Settings.jpegQualitaet(this);
         audioAn = Settings.audio(this);

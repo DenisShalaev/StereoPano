@@ -224,7 +224,7 @@
     <string name="gp_m_check">Stereo &amp; Ton pruefen</string>
     <string name="gp_check_result">Stereo: %1$s  Ton: %2$s  Identisch mit gesendeter Datei: %3$s  (%4$d KB)</string>
     <string name="set_loop_t">Kreisschluss</string>
-    <string name="set_loop_d">Auto vergleicht das Bild mit dem Anfang, glaubt ihm aber nur, wenn es zum Gyro passt (etwa 4,5°). Nur Gyro eignet sich fuer eintoenige Szenen wie Himmel und Wasser.</string>
+    <string name="set_loop_d">Auto vergleicht das Bild mit dem Anfang, glaubt ihm aber nur, wenn es zum Gyro passt (etwa 2,5°). Nur Gyro eignet sich fuer eintoenige Szenen wie Himmel und Wasser.</string>
     <string name="loop_auto">Auto (Bild + Gyro)</string>
     <string name="loop_gyro">Nur Gyro</string>
     <string name="gp_unreg">Google hat die Anfrage abgelehnt: Die App ist in der Google-Cloud-Konsole noch nicht registriert. OAuth-Client vom Typ Android (Paketname und SHA-1) anlegen und die Photos Library API aktivieren.</string>
