@@ -1016,11 +1016,11 @@ public class CaptureActivity extends Activity {
     private void zeigeNaht(StereoStitcher.Result e, byte[] ton, double kurs) {
         final SeamPicker[] sp = new SeamPicker[1];
         sp[0] = new SeamPicker(this, e, new SeamPicker.Done() {
-            @Override public void ok(int shiftPx) {
+            @Override public void ok(int shiftPx, int spanPx) {
                 root.removeView(sp[0]);
                 info.setText(R.string.saving);
                 new Thread(() -> {
-                    try { StereoStitcher.applySeam(e, shiftPx); } catch (Throwable ignored) { }
+                    try { StereoStitcher.applySeam(e, shiftPx, spanPx); } catch (Throwable ignored) { }
                     speichereUndMelde(e, ton, kurs);
                 }).start();
             }
@@ -1158,7 +1158,7 @@ public class CaptureActivity extends Activity {
                     Settings.fpxFaktor(this), Settings.audio(this), Settings.belichtungSperren(this), Settings.geist(this)));
             t.append("loopEnabled=").append(StereoStitcher.loopEnabled).append(" loopRange=").append(StereoStitcher.loopRange)
                     .append(" loopTrust=").append(StereoStitcher.loopTrust).append(" seamOpt=").append(StereoStitcher.seamOpt).append('\n');
-            t.append("manualSeam: extraDeg=").append(StereoStitcher.extraDeg).append(" shiftPx=").append(e.seamShiftPx).append(String.format(L, " (%.2f deg)", e.seamShiftPx * 360.0 / e.panoW)).append('\n');
+            t.append("manualSeam: extraDeg=").append(StereoStitcher.extraDeg).append(" shiftPx=").append(e.seamShiftPx).append(" spanPx=").append(e.seamSpanPx).append(String.format(L, " (%.2f deg)", e.seamShiftPx * 360.0 / e.panoW)).append('\n');
             t.append("diag: ").append(e.diag).append('\n');
             if (lastDiagFull != null) t.append("full: ").append(lastDiagFull).append('\n');
             String txt = bildName.endsWith(".vr.jpg") ? bildName.substring(0, bildName.length() - 7) + ".txt" : bildName + ".txt";

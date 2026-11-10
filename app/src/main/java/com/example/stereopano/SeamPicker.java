@@ -12,17 +12,22 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * Manuelle Naht: zeigt den ganzen aufgenommenen Streifen (360 Grad + Reserve) mit einem verschiebbaren 360-Grad-Rahmen und
  * darunter die Nahtstelle (Ende | Anfang des Rahmens). Nichts wird ueberblendet; erst beim Speichern wird die Helligkeit angeglichen.
  */
 final class SeamPicker extends LinearLayout {
-    interface Done { void ok(int shiftPx); void cancel(); }
+    interface Done { void ok(int shiftPx, int spanPx); void cancel(); }
 
     private final StereoStitcher.Result r;
     private final int w, ext, rows, row0;
     private int shift = 0;
+    private int span;                 // Breite des Fensters in Kreisspalten (w = genau 360 Grad ohne Stauchung)
+    private TextView deltaTxt;
+    private android.widget.SeekBar deltaBar;
+    private boolean setting;
     private final StripView strip;
     private final PreviewView prev;
 
@@ -30,6 +35,7 @@ final class SeamPicker extends LinearLayout {
         super(c);
         r = res;
         w = r.panoW;
+        span = w;
         ext = r.extW;
         row0 = r.height > 0 ? r.y0 : 0;
         rows = r.height > 0 ? r.height : r.panoH;
@@ -59,6 +65,50 @@ final class SeamPicker extends LinearLayout {
         strip = new StripView(c);
         addView(strip, new LayoutParams(LayoutParams.MATCH_PARENT, (int) (110 * d)));
 
+        // Kreiskorrektur: wie viele Grad der Umlauf wirklich hat (Fenster wird beim Speichern auf 360 Grad gestaucht/gedehnt)
+        LinearLayout row = new LinearLayout(c);
+        row.setOrientation(HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, (int) (12 * d), 0, 0);
+        deltaTxt = new TextView(c);
+        deltaTxt.setTextColor(Ui.GRAU);
+        deltaTxt.setTextSize(12);
+        deltaTxt.setMinWidth((int) (84 * d));
+        row.addView(deltaTxt);
+        deltaBar = new android.widget.SeekBar(c);
+        Ui.regler(deltaBar);
+        final double ppd = w / 360.0;
+        final int minDeg10 = -100, maxDeg10 = (int) Math.round(ext / ppd * 10);
+        deltaBar.setMax(maxDeg10 - minDeg10);
+        deltaBar.setProgress(-minDeg10);
+        deltaBar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(android.widget.SeekBar s, int p, boolean user) {
+                if (!user || setting) return;
+                setSpan(w + (int) Math.round((p + minDeg10) / 10.0 * ppd));
+            }
+            @Override public void onStartTrackingTouch(android.widget.SeekBar s) { }
+            @Override public void onStopTrackingTouch(android.widget.SeekBar s) { }
+        });
+        row.addView(deltaBar, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+        android.widget.Button auto = Ui.pille(c, R.string.seam_auto, false);
+        auto.setOnClickListener(v -> {
+            auto.setEnabled(false);
+            Toast.makeText(c, R.string.seam_auto_running, Toast.LENGTH_SHORT).show();
+            new Thread(() -> {
+                final double m = StereoStitcher.measureSpan(r);
+                post(() -> {
+                    auto.setEnabled(true);
+                    if (Double.isNaN(m)) Toast.makeText(c, R.string.seam_auto_none, Toast.LENGTH_LONG).show();
+                    else setSpan((int) Math.round(m));
+                });
+            }).start();
+        });
+        LayoutParams alp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        alp.leftMargin = (int) (8 * d);
+        row.addView(auto, alp);
+        addView(row);
+        updateDelta();
+
         TextView pl = new TextView(c);
         pl.setText(R.string.seam_preview);
         pl.setTextColor(Ui.GRAU);
@@ -74,7 +124,7 @@ final class SeamPicker extends LinearLayout {
         android.widget.Button cancel = Ui.pille(c, R.string.seam_cancel, false);
         android.widget.Button save = Ui.pille(c, R.string.seam_save, true);
         cancel.setOnClickListener(v -> cb.cancel());
-        save.setOnClickListener(v -> cb.ok(shift));
+        save.setOnClickListener(v -> cb.ok(shift, span));
         LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         lp.rightMargin = (int) (10 * d);
         bar.addView(cancel, lp);
@@ -85,6 +135,23 @@ final class SeamPicker extends LinearLayout {
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         requestApplyInsets();
+    }
+
+    private void setSpan(int sp) {
+        sp = Math.max(w - (int) (10.0 * w / 360.0), Math.min(sp, w + ext));
+        span = sp;
+        shift = Math.max(0, Math.min(shift, w + ext - span));
+        updateDelta();
+        strip.invalidate();
+        prev.rebuild();
+    }
+
+    private void updateDelta() {
+        double deg = (span - w) * 360.0 / w;
+        deltaTxt.setText(String.format(java.util.Locale.US, "%s%.1f°", deg >= 0 ? "+" : "", deg));
+        setting = true;
+        deltaBar.setProgress((int) Math.round(deg * 10) + 100);
+        setting = false;
     }
 
     private int pixel(int v, int label) {
@@ -128,7 +195,7 @@ final class SeamPicker extends LinearLayout {
             int th = (int) Math.min(H, (long) bmp.getHeight() * W / bmp.getWidth());
             int top = (H - th) / 2;
             cv.drawBitmap(bmp, null, new Rect(0, top, W, top + th), p);
-            float x0 = (float) (shift / k), x1 = (float) ((shift + w) / k);
+            float x0 = (float) (shift / k), x1 = (float) ((shift + span) / k);
             cv.drawRect(0, top, x0, top + th, dim);
             cv.drawRect(x1, top, W, top + th, dim);
             float s = line.getStrokeWidth();
@@ -142,7 +209,7 @@ final class SeamPicker extends LinearLayout {
                     getParent().requestDisallowInterceptTouchEvent(true);
                     return true;
                 case MotionEvent.ACTION_MOVE:
-                    shift = (int) Math.max(0, Math.min(ext, shift + (e.getX() - lastX) * k));
+                    shift = (int) Math.max(0, Math.min(w + ext - span, shift + (e.getX() - lastX) * k));
                     lastX = e.getX();
                     invalidate();
                     prev.rebuild();
@@ -175,7 +242,7 @@ final class SeamPicker extends LinearLayout {
                 int v = row0 + (int) ((long) y * rows / ph);
                 for (int x = 0; x < pw; x++) {
                     int j = (int) ((long) x * 2 * P / pw);
-                    int label = j < P ? shift + w - P + j : shift + (j - P);
+                    int label = j < P ? shift + span - P + j : shift + (j - P);
                     row[x] = pixel(v, label);
                 }
                 bmp.setPixels(row, 0, pw, 0, y, pw, 1);

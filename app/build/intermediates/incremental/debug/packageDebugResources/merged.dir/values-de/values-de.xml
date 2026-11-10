@@ -152,8 +152,12 @@
     <string name="save_error">Speichern fehlgeschlagen: %1$s</string>
     <string name="saved_toast">Gespeichert in Bilder/StereoPano</string>
     <string name="saving">Speichere …</string>
+    <string name="seam_auto">Auto</string>
+    <string name="seam_auto_none">Nichts Eindeutiges gefunden: Anfang und Ende zeigen kein passendes Detail. Korrektur von Hand einstellen.</string>
+    <string name="seam_auto_running">Messe …</string>
     <string name="seam_cancel">Abbrechen (verwerfen)</string>
-    <string name="seam_hint">Rahmen = 360°. Nach links/rechts ziehen</string>
+    <string name="seam_delta">Kreiskorrektur</string>
+    <string name="seam_hint">Rahmen = 360°. Nach links/rechts ziehen. Regler/Auto = Kreiskorrektur</string>
     <string name="seam_preview">Nahtvorschau (Ende | Anfang)</string>
     <string name="seam_save">Speichern</string>
     <string name="seam_title">Naht</string>

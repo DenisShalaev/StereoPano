@@ -158,8 +158,12 @@
     <string name="save_error">Saving failed: %1$s</string>
     <string name="saved_toast">Saved to Pictures/StereoPano</string>
     <string name="saving">Saving …</string>
+    <string name="seam_auto">Auto</string>
+    <string name="seam_auto_none">Nothing clear found: the start and end of the recording show no matching detail. Set the correction by hand.</string>
+    <string name="seam_auto_running">Measuring…</string>
     <string name="seam_cancel">Cancel (discard)</string>
-    <string name="seam_hint">Frame = 360°. Drag left/right</string>
+    <string name="seam_delta">Circle correction</string>
+    <string name="seam_hint">Frame = 360°. Drag left/right. Slider/Auto = circle correction</string>
     <string name="seam_preview">Seam preview (end | start)</string>
     <string name="seam_save">Save</string>
     <string name="seam_title">Seam</string>

@@ -192,7 +192,11 @@ string reset_done
 string save_error
 string saved_toast
 string saving
+string seam_auto
+string seam_auto_none
+string seam_auto_running
 string seam_cancel
+string seam_delta
 string seam_hint
 string seam_preview
 string seam_save
