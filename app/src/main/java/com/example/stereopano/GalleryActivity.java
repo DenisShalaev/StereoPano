@@ -411,7 +411,7 @@ public class GalleryActivity extends Activity {
             c.drawCircle(cx1, cy, r, wh);
             if (stereo) c.drawCircle(cx2, cy, r, wh);
             if (audio) {
-                float z = r * 1.83f, x0 = cx1 - r - r * 0.67f - z, y0 = cy - z / 2;
+                float z = r * 2.2f, x0 = w - m - z * 1.12f, y0 = getHeight() - m - z;      // unten rechts
                 body.reset();
                 body.moveTo(x0, y0 + .35f * z);
                 body.lineTo(x0 + .3f * z, y0 + .35f * z);
