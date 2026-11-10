@@ -224,6 +224,7 @@ public class CaptureActivity extends Activity {
             if (objIndex >= objektive.size()) objIndex = 0;
             Objektiv o = objektive.get(objIndex);
             kameraId = o.id;
+            ladeWinkelKorr();
             zoom = o.zoom;
             cc = cm.getCameraCharacteristics(kameraId);
 
@@ -278,11 +279,7 @@ public class CaptureActivity extends Activity {
         maxBreite = Settings.maxBreite(this);
         latenzNs = Settings.latenzNs(this);
         fpxFaktor = Settings.fpxFaktor(this);
-        winkelKorr = Settings.winkelKorr(this);
-        StereoStitcher.hintCap = winkelKorr > 0 ? 366.0 : 394.0;
-        StereoStitcher.loopRange = winkelKorr > 0 ? 14.0 : 45.0;
-        StereoStitcher.loopTrust = winkelKorr > 0 ? 4.5 : 45.0;
-        StereoStitcher.wkPercent = winkelKorr * 100.0;
+        ladeWinkelKorr();
         StereoStitcher.loopEnabled = Settings.p(this).getInt(Settings.K_LOOPMODE, 0) == 0;
         jpegQualitaet = Settings.jpegQualitaet(this);
         audioAn = Settings.audio(this);
@@ -545,6 +542,16 @@ public class CaptureActivity extends Activity {
         } catch (CameraAccessException | IllegalStateException ignored) { }
     }
 
+    /** Winkelkorrektur je nach gewaehltem Objektiv (Ultraweitwinkel hat einen eigenen Wert). */
+    private void ladeWinkelKorr() {
+        boolean uw = !objektive.isEmpty() && objIndex < objektive.size() && objektive.get(objIndex).zoom < 0.9;
+        winkelKorr = Settings.winkelKorr(this, uw);
+        StereoStitcher.hintCap = winkelKorr > 0 ? 366.0 : 394.0;
+        StereoStitcher.loopRange = winkelKorr > 0 ? 14.0 : 45.0;
+        StereoStitcher.loopTrust = winkelKorr > 0 ? 4.5 : 45.0;
+        StereoStitcher.wkPercent = winkelKorr * 100.0;
+    }
+
     private void wechsleObjektiv() {
         if (nimmtAuf || objektive.size() <= 1) {
             if (nimmtAuf) Toast.makeText(this, R.string.finish_first, Toast.LENGTH_SHORT).show();
@@ -559,7 +566,8 @@ public class CaptureActivity extends Activity {
         surface.getHolder().setFixedSize(groesse.getWidth(), groesse.getHeight());   // je Kamera andere 4:3-Groesse moeglich
         if (guide != null) guide.setFocalRatio(fPx / groesse.getHeight());
         if (surfaceBereit) oeffneKamera();
-        Toast.makeText(this, getString(R.string.lens_fmt, objektive.get(objIndex).name), Toast.LENGTH_SHORT).show();
+        ladeWinkelKorr();
+        Toast.makeText(this, getString(R.string.lens_fmt, objektive.get(objIndex).name) + String.format(java.util.Locale.US, "  (%.1f %%)", winkelKorr * 100), Toast.LENGTH_SHORT).show();
     }
 
     // Ort fuer die Metadaten (nur wenn erlaubt und in den Einstellungen aktiv)

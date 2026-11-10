@@ -161,7 +161,7 @@
     <string name="delete_many_confirm">%1$d Bilder löschen?</string>
     <string name="actions">Aktionen</string>
     <string name="exported_many">%1$d Bilder exportiert</string>
-    <string name="set_wcorr_t">Winkelkorrektur</string>
+    <string name="set_wcorr_t">Winkelkorrektur: Hauptkamera</string>
     <string name="set_wcorr_d">Der Drehsensor zeigt zu wenig Drehung (bei diesem Telefon ca. 3,5 %). Erhöhen, wenn das Ende das Panorama-Anfang überlappt; senken, wenn eine Lücke bleibt.</string>
     <string name="lenti_title">Linsenraster-Druck</string>
     <string name="lenti_lpi">Linsenraster, LPI</string>
@@ -231,4 +231,6 @@
     <string name="gp_zip">Aus ZIP-Archiv importieren (heruntergeladenes Album)</string>
     <string name="gp_import_done">Importiert: %1$d, davon stereo: %2$d</string>
     <string name="gp_zip_done">ZIP fertig. Neu: %1$d (stereo: %2$d, nur flach/360: %3$d), schon vorhanden: %4$d</string>
+    <string name="set_wcorr_uw_t">Winkelkorrektur: Ultraweitwinkel</string>
+    <string name="set_wcorr_uw_d">Eigener Wert für das 0,5×-Objektiv. Nach einer Aufnahme schlägt die Zeile „wk-&gt;“ auf dem Aufnahmebildschirm einen besseren Wert vor; hier eintragen.</string>
 </resources>

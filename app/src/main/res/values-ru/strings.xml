@@ -161,7 +161,7 @@
     <string name="delete_many_confirm">Удалить выбранные (%1$d)?</string>
     <string name="actions">Действия</string>
     <string name="exported_many">Экспортировано: %1$d</string>
-    <string name="set_wcorr_t">Поправка угла</string>
+    <string name="set_wcorr_t">Поправка угла: основная камера</string>
     <string name="set_wcorr_d">Датчик поворота занижает поворот (на этом телефоне около 3,5 %). Увеличьте, если конец панорамы заходит на начало; уменьшите, если остаётся разрыв.</string>
     <string name="lenti_title">Печать под линзовый растр</string>
     <string name="lenti_lpi">Растр, LPI</string>
@@ -231,4 +231,6 @@
     <string name="gp_zip">Импорт из ZIP-архива (скачанный альбом)</string>
     <string name="gp_import_done">Импортировано: %1$d, из них стерео: %2$d</string>
     <string name="gp_zip_done">ZIP готов. Новых: %1$d (стерео: %2$d, только плоские/360: %3$d), уже было: %4$d</string>
+    <string name="set_wcorr_uw_t">Поправка угла: сверхширокая камера</string>
+    <string name="set_wcorr_uw_d">Своё значение для объектива 0,5×. После съёмки строка «wk-&gt;» на экране съёмки предлагает более точное значение; введите его здесь.</string>
 </resources>

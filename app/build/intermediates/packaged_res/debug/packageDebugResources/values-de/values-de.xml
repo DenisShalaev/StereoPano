@@ -211,7 +211,9 @@
     <string name="set_tempo_d">Geschwindigkeit des roten Leitpunkts. 8°/s ≈ 45 s pro Umdrehung.</string>
     <string name="set_tempo_t">Ziel-Tempo</string>
     <string name="set_wcorr_d">Der Drehsensor zeigt zu wenig Drehung (bei diesem Telefon ca. 3,5 %). Erhöhen, wenn das Ende das Panorama-Anfang überlappt; senken, wenn eine Lücke bleibt.</string>
-    <string name="set_wcorr_t">Winkelkorrektur</string>
+    <string name="set_wcorr_t">Winkelkorrektur: Hauptkamera</string>
+    <string name="set_wcorr_uw_d">Eigener Wert für das 0,5×-Objektiv. Nach einer Aufnahme schlägt die Zeile „wk->“ auf dem Aufnahmebildschirm einen besseren Wert vor; hier eintragen.</string>
+    <string name="set_wcorr_uw_t">Winkelkorrektur: Ultraweitwinkel</string>
     <string name="settings_title">Einstellungen</string>
     <string name="share_title">Panorama teilen</string>
     <string name="sort_author">Autor</string>

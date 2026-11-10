@@ -171,7 +171,7 @@
     <string name="delete_many_confirm">Delete %1$d images?</string>
     <string name="actions">Actions</string>
     <string name="exported_many">%1$d images exported</string>
-    <string name="set_wcorr_t">Angle correction</string>
+    <string name="set_wcorr_t">Angle correction: main camera</string>
     <string name="set_wcorr_d">The rotation sensor under-reports the turn (on this phone about 4.5 %). Raise it if the end of the panorama overlaps the start; lower it if a gap remains.</string>
     <string name="lenti_title">Lenticular print</string>
     <string name="lenti_lpi">Lens sheet, LPI</string>
@@ -241,4 +241,6 @@
     <string name="gp_zip">Import from a ZIP archive (downloaded album)</string>
     <string name="gp_import_done">Imported: %1$d, of them stereo: %2$d</string>
     <string name="gp_zip_done">ZIP finished. New: %1$d (stereo: %2$d, flat/360 only: %3$d), already present: %4$d</string>
+    <string name="set_wcorr_uw_t">Angle correction: ultra-wide camera</string>
+    <string name="set_wcorr_uw_d">Own value for the 0.5× lens. After a capture the line “wk-&gt;” on the capture screen suggests a better value; enter it here.</string>
 </resources>

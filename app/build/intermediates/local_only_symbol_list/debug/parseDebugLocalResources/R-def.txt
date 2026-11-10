@@ -252,6 +252,8 @@ string set_tempo_d
 string set_tempo_t
 string set_wcorr_d
 string set_wcorr_t
+string set_wcorr_uw_d
+string set_wcorr_uw_t
 string settings_title
 string share_title
 string sort_author

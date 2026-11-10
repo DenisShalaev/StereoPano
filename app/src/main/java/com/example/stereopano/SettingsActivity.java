@@ -114,6 +114,7 @@ public class SettingsActivity extends Activity {
         auswahl(R.string.set_loop_t, R.string.set_loop_d, Settings.K_LOOPMODE, new int[]{0, 1},
                 new String[]{getString(R.string.loop_auto), getString(R.string.loop_gyro)}, 0);
         regler(R.string.set_wcorr_t, R.string.set_wcorr_d, Settings.K_WKORR, 0, 100, 1, 35, v -> String.format(java.util.Locale.US, "%.1f %%", v / 10.0));
+        regler(R.string.set_wcorr_uw_t, R.string.set_wcorr_uw_d, Settings.K_WKORR_UW, 0, 100, 1, 44, v -> String.format(java.util.Locale.US, "%.1f %%", v / 10.0));
         regler(R.string.set_focal_t, R.string.set_focal_d, Settings.K_FPX, 90, 110, 1, 100, v -> v + " %");
 
         abschnitt(R.string.sec_viewer);

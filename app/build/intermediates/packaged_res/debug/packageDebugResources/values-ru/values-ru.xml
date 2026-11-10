@@ -211,7 +211,9 @@
     <string name="set_tempo_d">Скорость красной точки-ориентира. 8°/с ≈ 45 с на оборот.</string>
     <string name="set_tempo_t">Целевой темп</string>
     <string name="set_wcorr_d">Датчик поворота занижает поворот (на этом телефоне около 3,5 %). Увеличьте, если конец панорамы заходит на начало; уменьшите, если остаётся разрыв.</string>
-    <string name="set_wcorr_t">Поправка угла</string>
+    <string name="set_wcorr_t">Поправка угла: основная камера</string>
+    <string name="set_wcorr_uw_d">Своё значение для объектива 0,5×. После съёмки строка «wk->» на экране съёмки предлагает более точное значение; введите его здесь.</string>
+    <string name="set_wcorr_uw_t">Поправка угла: сверхширокая камера</string>
     <string name="settings_title">Настройки</string>
     <string name="share_title">Поделиться панорамой</string>
     <string name="sort_author">Автор</string>
