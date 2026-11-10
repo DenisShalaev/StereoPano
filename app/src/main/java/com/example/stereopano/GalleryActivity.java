@@ -200,7 +200,7 @@ public class GalleryActivity extends Activity {
                     r = new LinearLayout(GalleryActivity.this);
                     r.setOrientation(LinearLayout.HORIZONTAL);
                     for (int k = 0; k < 2; k++) {
-                        ImageView iv = new ImageView(GalleryActivity.this);
+                        ImageView iv = new SymbolView(GalleryActivity.this);
                         iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
                         iv.setBackgroundColor(0xFF222222);
                         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
@@ -277,14 +277,17 @@ public class GalleryActivity extends Activity {
             return true;
         });
         Bitmap bm = cache.get(it.id);
+        Boolean known = stereoMap.get(it.id);
+        setzeSymbol(iv, known);
         if (bm != null) { iv.setImageBitmap(bm); return; }
         iv.setImageDrawable(null);
         pool.execute(() -> {
             try {
-                Bitmap rawBm = getContentResolver().loadThumbnail(it.uri, new Size(640, 320), null);
-                final Bitmap finalBm = mitSymbol(rawBm, istStereo(it.uri));
-                cache.put(it.id, finalBm);
-                runOnUiThread(() -> { Object tag = iv.getTag(); if (tag != null && it.id == (Long) tag) iv.setImageBitmap(finalBm); });
+                Bitmap t = getContentResolver().loadThumbnail(it.uri, new Size(640, 320), null);
+                boolean st = istStereo(it.uri);
+                stereoMap.put(it.id, st);
+                cache.put(it.id, t);
+                runOnUiThread(() -> { Object tag = iv.getTag(); if (tag != null && it.id == (Long) tag) { iv.setImageBitmap(t); setzeSymbol(iv, st); } });
             } catch (Exception ignored) { }
         });
     }
@@ -303,27 +306,46 @@ public class GalleryActivity extends Activity {
         }
     }
 
-    /** Zeichnet oben rechts ein weisses Symbol: zwei Kreise = Stereo, ein Kreis = Mono. */
-    private static Bitmap mitSymbol(Bitmap src, boolean stereo) {
-        Bitmap bm = src.copy(Bitmap.Config.ARGB_8888, true);
-        if (bm == null) return src;
-        android.graphics.Canvas c = new android.graphics.Canvas(bm);
-        float w = bm.getWidth();
-        float r = w * 0.034f, sw = Math.max(2f, w * 0.0075f), gap = r * 1.15f;
-        float cy = r + w * 0.035f, cx2 = w - w * 0.035f - r, cx1 = cx2 - (stereo ? gap : 0);
-        android.graphics.Paint sh = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-        sh.setStyle(android.graphics.Paint.Style.STROKE);
-        sh.setStrokeWidth(sw * 2.2f);
-        sh.setColor(0x88000000);
-        android.graphics.Paint wh = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-        wh.setStyle(android.graphics.Paint.Style.STROKE);
-        wh.setStrokeWidth(sw);
-        wh.setColor(0xFFFFFFFF);
-        c.drawCircle(cx1, cy, r, sh);
-        if (stereo) c.drawCircle(cx2, cy, r, sh);
-        c.drawCircle(cx1, cy, r, wh);
-        if (stereo) c.drawCircle(cx2, cy, r, wh);
-        return bm;
+    private final java.util.Map<Long, Boolean> stereoMap = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static void setzeSymbol(ImageView iv, Boolean stereo) {
+        if (iv instanceof SymbolView) ((SymbolView) iv).setStereo(stereo);
+    }
+
+    /** Miniatur mit weissem Symbol oben rechts (zwei Kreise = Stereo, ein Kreis = Mono), unabhaengig vom Zuschnitt des Bildes. */
+    private static final class SymbolView extends ImageView {
+        private Boolean stereo;
+        private final android.graphics.Paint sh = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Paint wh = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+
+        SymbolView(android.content.Context c) {
+            super(c);
+            sh.setStyle(android.graphics.Paint.Style.STROKE);
+            sh.setColor(0x99000000);
+            wh.setStyle(android.graphics.Paint.Style.STROKE);
+            wh.setColor(0xFFFFFFFF);
+        }
+
+        void setStereo(Boolean s) {
+            stereo = s;
+            invalidate();
+        }
+
+        @Override
+        protected void onDraw(android.graphics.Canvas c) {
+            super.onDraw(c);
+            if (stereo == null || getDrawable() == null) return;
+            float w = getWidth();
+            float r = w * 0.04f, sw = Math.max(2.5f, w * 0.008f), gap = r * 1.15f;
+            float m = w * 0.04f;
+            float cy = r + m, cx2 = w - m - r, cx1 = cx2 - (stereo ? gap : 0);
+            sh.setStrokeWidth(sw * 2.4f);
+            wh.setStrokeWidth(sw);
+            c.drawCircle(cx1, cy, r, sh);
+            if (stereo) c.drawCircle(cx2, cy, r, sh);
+            c.drawCircle(cx1, cy, r, wh);
+            if (stereo) c.drawCircle(cx2, cy, r, wh);
+        }
     }
 
     private static final Pattern AUTOR = Pattern.compile("<dc:creator>.*?<rdf:li[^>]*>([^<]*)</rdf:li>", Pattern.DOTALL);
