@@ -1093,7 +1093,42 @@ public class CaptureActivity extends Activity {
         v.clear();
         v.put(MediaStore.Images.Media.IS_PENDING, 0);
         getContentResolver().update(uri, v, null, null);
+        schreibeProtokoll(name, e, datei.length);
         return uri;
+    }
+
+    /** Schreibt das Aufnahmeprotokoll als Textdatei mit gleichem Namen nach Download/StereoPano (fuer die Fehlersuche). */
+    private void schreibeProtokoll(String bildName, StereoStitcher.Result e, int bytes) {
+        try {
+            StringBuilder t = new StringBuilder();
+            java.util.Locale L = java.util.Locale.US;
+            t.append("StereoPano capture log\n");
+            t.append("file: ").append(bildName).append('\n');
+            t.append("build: ").append(BuildInfo.NUMBER).append('\n');
+            t.append("time: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z", L).format(new Date())).append('\n');
+            t.append("device: ").append(Build.MANUFACTURER).append(' ').append(Build.MODEL).append(", Android ").append(Build.VERSION.RELEASE).append('\n');
+            t.append(String.format(L, "lens: %s  fPx=%.1f (device %.1f)  angleCorr=%.2f%%\n",
+                    objektive.isEmpty() ? "?" : objektive.get(objIndex).name, fPx, fPxGeraet, winkelKorr * 100));
+            t.append(String.format(L, "pano: full=%dx%d crop=%dx%d x0=%d y0=%d panoH=%d elCenter=%.2f deg  bytes=%d\n",
+                    e.panoW, e.panoW / 2, e.width, e.height, e.x0, e.y0, e.panoH, e.elCenterDeg, bytes));
+            t.append(String.format(L, "settings: stereoAngle=%.1f delta=%.1f targetSpeed=%.1f maxPitchRate=%.1f fpxFactor=%.2f audio=%b lockAE=%b ghost=%b\n",
+                    Settings.stereoWinkel(this), Settings.delta(this), Settings.zielTempo(this), Settings.maxNickrate(this),
+                    Settings.fpxFaktor(this), Settings.audio(this), Settings.belichtungSperren(this), Settings.geist(this)));
+            t.append("loopEnabled=").append(StereoStitcher.loopEnabled).append(" loopRange=").append(StereoStitcher.loopRange)
+                    .append(" loopTrust=").append(StereoStitcher.loopTrust).append(" seamOpt=").append(StereoStitcher.seamOpt).append('\n');
+            t.append("diag: ").append(e.diag).append('\n');
+            if (lastDiagFull != null) t.append("full: ").append(lastDiagFull).append('\n');
+            String txt = bildName.endsWith(".vr.jpg") ? bildName.substring(0, bildName.length() - 7) + ".txt" : bildName + ".txt";
+            ContentValues tv = new ContentValues();
+            tv.put(MediaStore.Downloads.DISPLAY_NAME, txt);
+            tv.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
+            tv.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/StereoPano");
+            Uri tu = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, tv);
+            if (tu == null) return;
+            try (OutputStream os = getContentResolver().openOutputStream(tu)) {
+                os.write(t.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+        } catch (Throwable ignored) { }
     }
 
     private static byte[] jpeg(int[] pixel, StereoStitcher.Result e, int qualitaet) {
