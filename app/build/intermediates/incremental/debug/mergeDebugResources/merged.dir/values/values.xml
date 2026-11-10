@@ -158,6 +158,11 @@
     <string name="save_error">Saving failed: %1$s</string>
     <string name="saved_toast">Saved to Pictures/StereoPano</string>
     <string name="saving">Saving …</string>
+    <string name="seam_cancel">Cancel (discard)</string>
+    <string name="seam_hint">Frame = 360°. Drag left/right</string>
+    <string name="seam_preview">Seam preview (end | start)</string>
+    <string name="seam_save">Save</string>
+    <string name="seam_title">Seam</string>
     <string name="sec_about">About</string>
     <string name="sec_calibration">Calibration</string>
     <string name="sec_capture">Capture</string>
@@ -212,6 +217,8 @@
     <string name="set_res_t">Camera resolution</string>
     <string name="set_sbsfov_d">Vertical field of view in glasses mode. Default 45°.</string>
     <string name="set_sbsfov_t">Glasses field of view</string>
+    <string name="set_seamman_d">The circle is NOT closed and nothing is blended. The app records about 14° more than a full turn, then shows the whole strip with a 360° frame. Drag the frame left/right to put the seam where it is least visible (e.g. over a door), then save. Only the brightness at the seam is matched.</string>
+    <string name="set_seamman_t">Manual seam (don\'t close the circle)</string>
     <string name="set_seamopt_d">Places the join along the path of least difference and blends brightness over a wide zone but fine details (branches, edges) only over a few pixels. Helps with nearby objects; needs the overlap at the end of the capture. Off by default.</string>
     <string name="set_seamopt_t">Improved seam (experimental)</string>
     <string name="set_sharp_d">Light sharpening of the finished panorama (brightness only, no colour fringes). Compensates the softness that comes from combining many frames. 0 = off. Default 50.</string>

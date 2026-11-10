@@ -192,6 +192,11 @@ string reset_done
 string save_error
 string saved_toast
 string saving
+string seam_cancel
+string seam_hint
+string seam_preview
+string seam_save
+string seam_title
 string sec_about
 string sec_calibration
 string sec_capture
@@ -246,6 +251,8 @@ string set_res_d
 string set_res_t
 string set_sbsfov_d
 string set_sbsfov_t
+string set_seamman_d
+string set_seamman_t
 string set_seamopt_d
 string set_seamopt_t
 string set_sharp_d

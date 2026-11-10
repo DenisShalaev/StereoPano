@@ -152,6 +152,11 @@
     <string name="save_error">Speichern fehlgeschlagen: %1$s</string>
     <string name="saved_toast">Gespeichert in Bilder/StereoPano</string>
     <string name="saving">Speichere …</string>
+    <string name="seam_cancel">Abbrechen (verwerfen)</string>
+    <string name="seam_hint">Rahmen = 360°. Nach links/rechts ziehen</string>
+    <string name="seam_preview">Nahtvorschau (Ende | Anfang)</string>
+    <string name="seam_save">Speichern</string>
+    <string name="seam_title">Naht</string>
     <string name="sec_about">Info</string>
     <string name="sec_calibration">Kalibrierung</string>
     <string name="sec_capture">Aufnahme</string>
@@ -206,6 +211,8 @@
     <string name="set_res_t">Kameraauflösung</string>
     <string name="set_sbsfov_d">Vertikales Sichtfeld im Brillenmodus. Standard 45°.</string>
     <string name="set_sbsfov_t">Sichtfeld SBS-Brille</string>
+    <string name="set_seamman_d">Der Kreis wird NICHT geschlossen und nichts überblendet. Die App nimmt etwa 14° mehr als eine volle Drehung auf und zeigt danach den ganzen Streifen mit einem 360°-Rahmen. Rahmen nach links/rechts ziehen, bis die Naht möglichst unauffällig liegt (z. B. über einer Tür), dann speichern. Nur die Helligkeit an der Naht wird angeglichen.</string>
+    <string name="set_seamman_t">Naht von Hand (Kreis nicht schließen)</string>
     <string name="set_seamopt_d">Legt die Nahtstelle entlang des Pfades kleinster Abweichung und mischt Helligkeit über eine breite Zone, feine Details (Äste, Kanten) nur über wenige Pixel. Hilft bei nahen Objekten; braucht die Überlappung am Ende der Aufnahme. Standardmäßig aus.</string>
     <string name="set_seamopt_t">Verbesserte Naht (experimentell)</string>
     <string name="set_sharp_d">Leichte Nachschärfung des fertigen Panoramas (nur Helligkeit, keine Farbsäume). Gleicht die Weichheit durch das Zusammensetzen vieler Bilder aus. 0 = aus. Standard 50.</string>

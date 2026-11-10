@@ -65,6 +65,11 @@ final class StereoStitcher {
         double closureShiftPx;   // angewandter Kreisschluss (0 = keiner)
         String diag = "";        // Kurzprotokoll der Aufnahme (fuer die Fehlersuche, steht in den Tags)
         double elCenterDeg;      // Elevation der Panoramamitte (fuer die Metadaten)
+        // Manuelle Naht: der Kreis wird NICHT geschlossen; die Rohdaten (Kreis + Erweiterung) bleiben erhalten, bis der Nutzer das 360-Grad-Fenster gewaehlt hat
+        boolean manualSeam;
+        int[] extL, extR;        // Erweiterung hinter dem Kreisende (Spalten 0..extW-1 entsprechen den Kreisspalten w..w+extW-1)
+        int extW, startL, startR;
+        int seamShiftPx;         // gewaehlte Verschiebung des 360-Grad-Fensters (Spalten ab Kreisanfang)
     }
 
     private static final int W_FULL = 8;    // Gewicht in der Mitte des Dreiecks
@@ -122,6 +127,10 @@ final class StereoStitcher {
     private final java.util.ArrayList<Double> closureSamples = new java.util.ArrayList<>();
     /** Zum Testen abschaltbar. */
     static boolean closureEnabled = true;
+    /** Manuelle Naht: zusaetzliche Grad, die ueber 360 + Fenster hinaus aufgenommen werden (0 = aus). */
+    static double extraDeg = 0;
+    /** Maximal sinnvolle Verschiebung des 360-Grad-Fensters in Grad (so viel Erweiterung wird gespeichert). */
+    static double maxExtraDeg() { return EXT_DEG; }
     static boolean loopEnabled = true;
     /** Suchbereich (Grad) fuer den Restfehler der Drehung. Ist der Massstab des Sensors schon korrigiert, bleibt der Fehler klein;
      *  grosse Treffer waeren dann Fehlzuordnungen (aehnliche Tuerkanten) und wuerden die Aufnahme zu frueh beenden. */
@@ -732,6 +741,48 @@ final class StereoStitcher {
      * allmaehlich herausgerechnet (kaum sichtbar, statt einer harten senkrechten Linie). Vertikaler Versatz wird fuer beide Augen
      * gemeinsam bestimmt (sonst gaebe es vertikale Disparitaet), die Helligkeit je Auge.
      */
+    private static boolean manualSeamActive() { return extraDeg > 0 && !closureEnabled; }
+
+    /** Spalte c des Ergebnisses = Kreisspalte s + c (Spalten >= w stammen aus der Erweiterung; fehlen sie, aus dem Kreisanfang). */
+    private static int[] composeEye(int[] px, int[] ext, int extW, int w, int h, int startCol, int s) {
+        int[] out = new int[w * h];
+        for (int v = 0; v < h; v++)
+            for (int c = 0; c < w; c++) {
+                int i = s + c;
+                int p = rawAt(px, ext, extW, w, startCol, v, i);
+                if (p == 0 && i >= w) p = rawAt(px, ext, extW, w, startCol, v, i - w);
+                out[v * w + c] = p;
+            }
+        return out;
+    }
+
+    /** Pixel der Vorschau: Kreisspalte label (ggf. aus der Erweiterung) eines Auges, 0 = keine Daten. */
+    static int previewPixel(Result r, boolean left, int v, int label) {
+        int w = r.panoW;
+        int[] px = left ? r.left : r.right, ext = left ? r.extL : r.extR;
+        int sc = left ? r.startL : r.startR;
+        int p = rawAt(px, ext, r.extW, w, sc, v, label);
+        if (p == 0 && label >= w) p = rawAt(px, ext, r.extW, w, sc, v, label - w);
+        return p;
+    }
+
+    /**
+     * Manuelle Naht: legt das 360-Grad-Fenster ab Kreisspalte s fest, schneidet hart (keine Ueberblendung, keine Streckung)
+     * und gleicht nur Helligkeit (und einen kleinen vertikalen Versatz) an der Naht sanft aus.
+     */
+    static void applySeam(Result r, int s) {
+        if (!r.manualSeam) return;
+        int w = r.panoW, h = r.panoH;
+        s = Math.max(0, Math.min(s, r.extW));
+        r.left = composeEye(r.left, r.extL, r.extW, w, h, r.startL, s);
+        r.right = composeEye(r.right, r.extR, r.extW, w, h, r.startR, s);
+        wrapFix(r.left, r.right, 0, 0, w, h);
+        r.seamShiftPx = s;
+        r.extL = r.extR = null;
+        r.manualSeam = false;
+        r.diag += " seamShift=" + s + "px";
+    }
+
     static void wrapFix(int[] pl, int[] pr, int startL, int startR, int w, int h) {
         double dy = measureWrapDy(pl, startL, w, h);
         int sh = (int) Math.round(dy);
@@ -1425,7 +1476,7 @@ final class StereoStitcher {
             double hint = recentHint();
             if (!Double.isNaN(hint)) return Math.max(0, 360.0 + win + LOOP_MARGIN_DEG - (maxRaw + hint));
         }
-        return Math.max(0, 360.0 + win + closureNeedDeg() - maxPsi);
+        return Math.max(0, 360.0 + win + closureNeedDeg() + extraDeg - maxPsi);
     }
 
     synchronized boolean isComplete() {
@@ -1441,7 +1492,7 @@ final class StereoStitcher {
             if (!Double.isNaN(hint) && maxRaw + hint < 360.0 + win + LOOP_MARGIN_DEG && maxRaw < hintCap) return false;
         }
         if (!(eyeL.covered >= panoW - gapTol() && eyeR.covered >= panoW - gapTol())) return false;
-        return maxPsi >= 360.0 + win + closureNeedDeg();
+        return maxPsi >= 360.0 + win + closureNeedDeg() + extraDeg;
     }
 
     /**
@@ -1596,6 +1647,12 @@ final class StereoStitcher {
             }
             r.diag = String.format(java.util.Locale.US, "raw=%.1f err=%.1f loopN=%d d=%.1fpx seam=%d,%.0f,%.0f,%.2f reg=%d/%d ppd=%.1f ld=%s wk->%s",
                     maxRaw, Double.isNaN(loopEd) ? 0.0 : loopEd, loopSamples.size(), d, (int) seam[1], seam[2], seam[3], seam[4], regOk, regCalls, panoW / 360.0, java.util.Arrays.toString(ldbg), rec);
+        }
+        if (r.complete && manualSeamActive()) {
+            r.manualSeam = true;
+            r.extL = extL; r.extR = extR; r.extW = extW;
+            r.startL = (int) eyeL.start; r.startR = (int) eyeR.start;
+            r.diag = String.format(java.util.Locale.US, "manual-seam raw=%.1f reg=%d/%d ppd=%.1f", maxRaw, regOk, regCalls, panoW / 360.0);
         }
         if (r.diag.isEmpty())
             r.diag = String.format(java.util.Locale.US, "partial raw=%.1f loopN=%d reg=%d/%d ld=%s", maxRaw, loopSamples.size(), regOk, regCalls, java.util.Arrays.toString(ldbg));

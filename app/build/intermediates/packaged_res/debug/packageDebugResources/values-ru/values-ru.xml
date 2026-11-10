@@ -152,6 +152,11 @@
     <string name="save_error">Не удалось сохранить: %1$s</string>
     <string name="saved_toast">Сохранено в Pictures/StereoPano</string>
     <string name="saving">Сохранение …</string>
+    <string name="seam_cancel">Отмена (удалить)</string>
+    <string name="seam_hint">Рамка = 360°. Тяните влево/вправо</string>
+    <string name="seam_preview">Предпросмотр шва (конец | начало)</string>
+    <string name="seam_save">Сохранить</string>
+    <string name="seam_title">Шов</string>
     <string name="sec_about">О приложении</string>
     <string name="sec_calibration">Калибровка</string>
     <string name="sec_capture">Съёмка</string>
@@ -206,6 +211,8 @@
     <string name="set_res_t">Разрешение камеры</string>
     <string name="set_sbsfov_d">Вертикальное поле зрения в режиме очков. По умолчанию 45°.</string>
     <string name="set_sbsfov_t">Поле зрения SBS-очков</string>
+    <string name="set_seamman_d">Круг НЕ замыкается, ничего не смешивается. Приложение снимает примерно на 14° больше полного оборота, затем показывает всю ленту с рамкой 360°. Двигайте рамку влево/вправо, чтобы шов оказался там, где его меньше видно (например, над дверью), и сохраняйте. Выравнивается только яркость на шве.</string>
+    <string name="set_seamman_t">Шов вручную (не замыкать круг)</string>
     <string name="set_seamopt_d">Ведёт шов по пути наименьшей разницы и смешивает яркость на широкой зоне, а мелкие детали (ветки, края) только на нескольких пикселях. Помогает с ближними предметами; нужно перекрытие в конце съёмки. По умолчанию выключено.</string>
     <string name="set_seamopt_t">Улучшенный шов (экспериментально)</string>
     <string name="set_sharp_d">Лёгкое повышение резкости готовой панорамы (только яркость, без цветных каёмок). Компенсирует мягкость от склейки множества кадров. 0 = выключено. По умолчанию 50.</string>

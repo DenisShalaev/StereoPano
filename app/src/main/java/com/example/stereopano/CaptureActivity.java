@@ -280,7 +280,11 @@ public class CaptureActivity extends Activity {
         latenzNs = Settings.latenzNs(this);
         fpxFaktor = Settings.fpxFaktor(this);
         ladeWinkelKorr();
-        StereoStitcher.loopEnabled = Settings.p(this).getInt(Settings.K_LOOPMODE, 0) == 0;
+        // Manuelle Naht (nicht mit "Start einblenden" kombinierbar): Kreis nicht schliessen, mit Reserve aufnehmen
+        final boolean nahtMan = Settings.nahtManuell(this) && !Settings.geist(this);
+        StereoStitcher.closureEnabled = !nahtMan;
+        StereoStitcher.extraDeg = nahtMan ? 14.0 : 0.0;
+        StereoStitcher.loopEnabled = !nahtMan && Settings.p(this).getInt(Settings.K_LOOPMODE, 0) == 0;
         StereoStitcher.seamOpt = Settings.p(this).getBoolean(Settings.K_SEAMOPT, false);
         jpegQualitaet = Settings.jpegQualitaet(this);
         audioAn = Settings.audio(this);
@@ -952,7 +956,7 @@ public class CaptureActivity extends Activity {
             final double rest = j.s.remainingDeg();
             runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp, rest));
         }
-        if ((!manuellStop && j.s.isComplete()) || j.s.effPsi(j.psi) >= (manuellStop ? 380.0 : 370.0) || j.psi >= 395.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad (manuell: 380)
+        if ((!manuellStop && j.s.isComplete()) || j.s.effPsi(j.psi) >= (manuellStop ? 380.0 : (StereoStitcher.extraDeg > 0 ? 384.0 : 370.0)) || j.psi >= 395.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad (manuell: 380)
     }
 
     private void aktualisiereAnzeige(double fort, double pitch, double psi, double stepDeg, double rest) {
@@ -994,15 +998,54 @@ public class CaptureActivity extends Activity {
         info.setText(R.string.saving);
         final double kurs = startKurs;
         new Thread(() -> {
+            StereoStitcher.Result e0 = null;
+            try {
+                e0 = s.result(schaerfe);
+            } catch (Exception | OutOfMemoryError ex) {
+                final String m = getString(R.string.save_error, String.valueOf(ex.getMessage()));
+                runOnUiThread(() -> { Toast.makeText(this, m, Toast.LENGTH_LONG).show(); knopf.setEnabled(true); setzeAusloeser(false); info.setText(R.string.done_again); });
+                return;
+            }
+            final StereoStitcher.Result e1 = e0;
+            if (e1.manualSeam && e1.width >= 100) runOnUiThread(() -> zeigeNaht(e1, ton, kurs));
+            else speichereUndMelde(e1, ton, kurs);
+        }).start();
+    }
+
+    /** Manuelle Naht: Streifen mit verschiebbarem 360-Grad-Rahmen zeigen; danach hart schneiden, Helligkeit angleichen, speichern. */
+    private void zeigeNaht(StereoStitcher.Result e, byte[] ton, double kurs) {
+        final SeamPicker[] sp = new SeamPicker[1];
+        sp[0] = new SeamPicker(this, e, new SeamPicker.Done() {
+            @Override public void ok(int shiftPx) {
+                root.removeView(sp[0]);
+                info.setText(R.string.saving);
+                new Thread(() -> {
+                    try { StereoStitcher.applySeam(e, shiftPx); } catch (Throwable ignored) { }
+                    speichereUndMelde(e, ton, kurs);
+                }).start();
+            }
+            @Override public void cancel() {
+                root.removeView(sp[0]);
+                knopf.setEnabled(true);
+                setzeAusloeser(false);
+                fortschritt.setProgress(0);
+                info.setText(R.string.done_again);
+            }
+        });
+        root.addView(sp[0], new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+    }
+
+    private void speichereUndMelde(StereoStitcher.Result e, byte[] ton, double kurs) {
+        {
             String meldung;
             String gp = "";
             try {
-                Uri uri = speichere(s, ton, kurs);
+                Uri uri = speichere(e, ton, kurs);
                 gp = ladeZuGoogle(uri);
                 meldung = getString(R.string.saved_toast) + (gp.isEmpty() ? "" : "\n" + gp) + "\n#" + BuildInfo.NUMBER + " " + lastDiag
                         + String.format(java.util.Locale.US, " lens=%s f=%.0f/%.0f", objektive.isEmpty() ? "?" : objektive.get(objIndex).name, fPx, fPxGeraet);
-            } catch (Exception | OutOfMemoryError e) {
-                meldung = getString(R.string.save_error, String.valueOf(e.getMessage()));
+            } catch (Exception | OutOfMemoryError ex) {
+                meldung = getString(R.string.save_error, String.valueOf(ex.getMessage()));
             }
             final String m = meldung;
             final String gpMsg = gp;
@@ -1015,7 +1058,7 @@ public class CaptureActivity extends Activity {
                 info.setText(R.string.done_again);
                 if (lastDiagFull != null) { diagView.setText("#" + BuildInfo.NUMBER + " " + lastDiagFull + (gpMsg.isEmpty() ? "" : "\n" + gpMsg)); diagView.setVisibility(View.VISIBLE); }
             });
-        }).start();
+        }
     }
 
     // ------------------------------------------------------------------ Speichern
@@ -1047,8 +1090,7 @@ public class CaptureActivity extends Activity {
         }
     }
 
-    private Uri speichere(StereoStitcher s, byte[] ton, double kurs) throws Exception {
-        StereoStitcher.Result e = s.result(schaerfe);
+    private Uri speichere(StereoStitcher.Result e, byte[] ton, double kurs) throws Exception {
         if (e.width < 100) throw new Exception(getString(R.string.too_little));
 
         byte[] links = jpeg(e.left, e, jpegQualitaet);
@@ -1075,7 +1117,7 @@ public class CaptureActivity extends Activity {
         m.lat = ortLat;
         m.lon = ortLon;
         // Kompasskurs der Mitte des vollen Panoramas (Spalte 0 = Startrichtung)
-        if (!Double.isNaN(kurs)) m.poseHeading = (kurs + 180) % 360;
+        if (!Double.isNaN(kurs)) m.poseHeading = (kurs + 180 + e.seamShiftPx * 360.0 / e.panoW) % 360;
         byte[] datei = VrJpgWriter.build(links, rechts, ton, m);
 
         String name = "PANO_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date()) + ".vr.jpg";
@@ -1116,6 +1158,7 @@ public class CaptureActivity extends Activity {
                     Settings.fpxFaktor(this), Settings.audio(this), Settings.belichtungSperren(this), Settings.geist(this)));
             t.append("loopEnabled=").append(StereoStitcher.loopEnabled).append(" loopRange=").append(StereoStitcher.loopRange)
                     .append(" loopTrust=").append(StereoStitcher.loopTrust).append(" seamOpt=").append(StereoStitcher.seamOpt).append('\n');
+            t.append("manualSeam: extraDeg=").append(StereoStitcher.extraDeg).append(" shiftPx=").append(e.seamShiftPx).append(String.format(L, " (%.2f deg)", e.seamShiftPx * 360.0 / e.panoW)).append('\n');
             t.append("diag: ").append(e.diag).append('\n');
             if (lastDiagFull != null) t.append("full: ").append(lastDiagFull).append('\n');
             String txt = bildName.endsWith(".vr.jpg") ? bildName.substring(0, bildName.length() - 7) + ".txt" : bildName + ".txt";
