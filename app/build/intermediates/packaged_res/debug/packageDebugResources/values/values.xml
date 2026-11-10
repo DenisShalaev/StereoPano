@@ -210,6 +210,8 @@
     <string name="set_res_t">Camera resolution</string>
     <string name="set_sbsfov_d">Vertical field of view in glasses mode. Default 45°.</string>
     <string name="set_sbsfov_t">Glasses field of view</string>
+    <string name="set_seamopt_d">Places the join along the path of least difference and blends brightness over a wide zone but fine details (branches, edges) only over a few pixels. Helps with nearby objects; needs the overlap at the end of the capture. Off by default.</string>
+    <string name="set_seamopt_t">Improved seam (experimental)</string>
     <string name="set_sharp_d">Light sharpening of the finished panorama (brightness only, no colour fringes). Compensates the softness that comes from combining many frames. 0 = off. Default 50.</string>
     <string name="set_sharp_t">Sharpening</string>
     <string name="set_stab_d">Frames recorded while the phone tilts up/down or sideways faster than this count less (they are never discarded, so no gaps appear). Lower = straighter horizons and fewer steps on horizontal edges, but a steadier hand helps. Maximum = off. Default 6°/s.</string>

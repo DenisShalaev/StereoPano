@@ -244,6 +244,8 @@ string set_res_d
 string set_res_t
 string set_sbsfov_d
 string set_sbsfov_t
+string set_seamopt_d
+string set_seamopt_t
 string set_sharp_d
 string set_sharp_t
 string set_stab_d

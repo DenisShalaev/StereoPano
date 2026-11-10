@@ -281,6 +281,7 @@ public class CaptureActivity extends Activity {
         fpxFaktor = Settings.fpxFaktor(this);
         ladeWinkelKorr();
         StereoStitcher.loopEnabled = Settings.p(this).getInt(Settings.K_LOOPMODE, 0) == 0;
+        StereoStitcher.seamOpt = Settings.p(this).getBoolean(Settings.K_SEAMOPT, false);
         jpegQualitaet = Settings.jpegQualitaet(this);
         audioAn = Settings.audio(this);
         maxNick = Settings.maxNickrate(this);

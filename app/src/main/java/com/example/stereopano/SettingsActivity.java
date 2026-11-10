@@ -104,6 +104,7 @@ public class SettingsActivity extends Activity {
                 v -> v == 0 ? getString(R.string.off) : v + " %");
         regler(R.string.set_quality_t, R.string.set_quality_d, Settings.K_QUALI, 70, 100, 1, 90, v -> v + " %");
         schalter(R.string.set_ae_t, R.string.set_ae_d, Settings.K_AE, true);
+        schalter(R.string.set_seamopt_t, R.string.set_seamopt_d, Settings.K_SEAMOPT, false);
         schalter(R.string.set_ghost_t, R.string.set_ghost_d, Settings.K_GHOST, false);
         schalter(R.string.set_guides_t, R.string.set_guides_d, Settings.K_LEIT, true);
         schalter(R.string.set_audio_t, R.string.set_audio_d, Settings.K_AUDIO, true);

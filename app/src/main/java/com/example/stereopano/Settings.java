@@ -25,6 +25,7 @@ final class Settings {
     static final String K_AUTHOR = "autor";                // Autorenname (XMP dc:creator)
     static final String K_LOC = "ort_speichern";           // Ort (GPS + Ortsnamen) in die Datei schreiben
     static final String K_GHOST = "start_geist";           // am Ende der Aufnahme das erste Bild halbtransparent einblenden
+    static final String K_SEAMOPT = "naht_optimiert";      // verbesserte Naht (Pfad kleinster Abweichung + Mehrband-Mischung)
     static final String K_ALL = "alle_vr_jpg";             // auch .vr.jpg anderer Apps (z. B. Cardboard Camera) zeigen
     static final String K_SAVE = "speicherziel";           // 0 = Telefon, 1 = Telefon + Google Fotos, 2 = nur Google Fotos
     static final String K_GACC = "google_konto";           // Konto (E-Mail) fuer Google Fotos
@@ -44,7 +45,7 @@ final class Settings {
     static final String K_K2 = "lens_k2";                // Hundertstel
     static final String K_SBSFOV = "sbs_fov";            // Grad (vertikal)
 
-    static final String[] ALLE = {K_WINKEL, K_DELTA, K_TEMPO, K_BREITE, K_LATENZ, K_FPX, K_WKORR, K_WKORR_UW, K_STAB, K_MOVE, K_SHARP, K_AUTHOR, K_LOC, K_ALL, K_GHOST, K_LOOPMODE, K_SAVE, K_GACC, K_SORT, K_QUALI, K_AE, K_LEIT,
+    static final String[] ALLE = {K_WINKEL, K_DELTA, K_TEMPO, K_BREITE, K_LATENZ, K_FPX, K_WKORR, K_WKORR_UW, K_STAB, K_MOVE, K_SHARP, K_AUTHOR, K_LOC, K_ALL, K_SEAMOPT, K_GHOST, K_LOOPMODE, K_SAVE, K_GACC, K_SORT, K_QUALI, K_AE, K_LEIT,
             K_AUDIO, K_KOMPASS, K_GYRO, K_HALB, K_LINSEN, K_K1, K_K2, K_SBSFOV};
 
     private Settings() {}

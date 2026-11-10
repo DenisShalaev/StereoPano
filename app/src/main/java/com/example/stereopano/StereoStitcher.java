@@ -130,6 +130,8 @@ final class StereoStitcher {
     static double loopTrust = 45.0;
     /** Aktuelle Winkelkorrektur in Prozent (nur fuer die Empfehlung in der Diagnose). */
     static double wkPercent = 0.0;
+    /** Verbesserte Naht: Pfad kleinster Abweichung statt fester Ueberblendstelle + Mehrband-Mischung. */
+    static boolean seamOpt = false;
     static double hintCap = 394.0;      // bis zu diesem Rohwinkel darf die grobe Schaetzung das Ende hinauszoegern               // Kreisschluss-Erkennung durch Bildvergleich mit dem Anfang
     private static final double LOOP_FROM_DEG = 280.0;   // ab hier wird nach dem Anfang des Panoramas gesucht
     private static final double LOOP_MARGIN_DEG = 3.0;   // so weit hinter den Anfang weiterdrehen (Ueberlappung fuer die Naht)
@@ -884,7 +886,9 @@ final class StereoStitcher {
             }
         }
 
-        if (O > 0 && seam[0] == 1 && (seam[2] != 0 || seam[3] != 0 || Math.abs(seam[4] - 1) > 0.02)) {
+        if (O > 0 && seamOpt && seam.length >= 5 + h && seam[0] == 1) {
+            seamBlend(px, w, h, startCol, O, Rm, aRGB, bRGB, bw, seam);
+        } else if (O > 0 && seam[0] == 1 && (seam[2] != 0 || seam[3] != 0 || Math.abs(seam[4] - 1) > 0.02)) {
             double rx = seam[2], ry = seam[3], g = seam[4];
             for (int v = 0; v < h; v++) {
                 for (int t = 0; t < O; t++) {
@@ -905,6 +909,107 @@ final class StereoStitcher {
                 }
             }
         }
+    }
+
+    /**
+     * Verbesserte Naht: Anfang (A) und Fortsetzung des Endes (B) werden nicht an fester Stelle, sondern entlang eines Pfades
+     * kleinster Abweichung (dynamische Programmierung, beide Augen teilen ihn) uebergeblendet. Tiefe Frequenzen (Helligkeit,
+     * Farbe) werden ueber eine breite Zone gemischt, feine Details (Aeste, Kanten) nur ueber wenige Pixel: kein Geisterbild.
+     */
+    static void seamBlend(int[] px, int w, int h, int startCol, int O, int Rm, int[] aRGB, int[] bRGB, int bw, double[] seam) {
+        final double rx = seam[2], ry = seam[3], g = seam[4];
+        final int Wl = Math.max(4, Math.min(O / 4, 16)), fw = 3;
+        int[] bW = new int[O * h];
+        for (int v = 0; v < h; v++) for (int t = 0; t < O; t++) {
+            double wgt = smooth01((double) t / O);
+            int c = bilinearRGB(bRGB, bw, h, t + wgt * rx + Rm, v + wgt * ry);
+            if (c != 0) {
+                double gain = Math.pow(g, wgt);
+                c = 0xFF000000 | (Math.min(255, (int) (((c >> 16) & 255) * gain)) << 16) | (Math.min(255, (int) (((c >> 8) & 255) * gain)) << 8) | Math.min(255, (int) ((c & 255) * gain));
+            }
+            bW[v * O + t] = c;
+        }
+        if (seam[5] < 0) {                                   // Pfad bestimmen (erstes Auge)
+            int lo = Wl, hi = Math.max(lo + 1, O - Wl);
+            float[] cost = new float[O * h];
+            for (int v = 0; v < h; v++) for (int t = lo; t < hi; t++) {
+                int a = aRGB[v * O + t], b = bW[v * O + t];
+                if (a == 0 || b == 0) { cost[v * O + t] = 3e5f; continue; }
+                int dr = ((a >> 16) & 255) - ((b >> 16) & 255), dg = ((a >> 8) & 255) - ((b >> 8) & 255), db = (a & 255) - (b & 255);
+                cost[v * O + t] = (dr * dr + dg * dg + db * db) / 3f;
+            }
+            float[] sm = new float[O * h];                   // waagerecht glaetten (5 Pixel)
+            for (int v = 0; v < h; v++) for (int t = lo; t < hi; t++) {
+                float sum = 0; int n = 0;
+                for (int k = -2; k <= 2; k++) { int tt = t + k; if (tt >= lo && tt < hi) { sum += cost[v * O + tt]; n++; } }
+                sm[v * O + t] = sum / n;
+            }
+            float[] D = new float[O * h];
+            byte[] back = new byte[O * h];
+            final float lam = 20f;
+            for (int t = lo; t < hi; t++) D[t] = sm[t];
+            for (int v = 1; v < h; v++) for (int t = lo; t < hi; t++) {
+                float best = D[(v - 1) * O + t]; byte mv = 0;
+                if (t > lo && D[(v - 1) * O + t - 1] + lam < best) { best = D[(v - 1) * O + t - 1] + lam; mv = -1; }
+                if (t + 1 < hi && D[(v - 1) * O + t + 1] + lam < best) { best = D[(v - 1) * O + t + 1] + lam; mv = 1; }
+                D[v * O + t] = sm[v * O + t] + best; back[v * O + t] = mv;
+            }
+            int t = lo;
+            for (int k = lo; k < hi; k++) if (D[(h - 1) * O + k] < D[(h - 1) * O + t]) t = k;
+            for (int v = h - 1; v >= 0; v--) { seam[5 + v] = t; t += back[v * O + t]; }
+        }
+        // Eingaben auffuellen (fehlt eine Seite, gilt die andere), dann tiefe/feine Anteile getrennt mischen
+        float[][] fa = new float[3][O * h], fb = new float[3][O * h];
+        boolean[] has = new boolean[O * h];
+        for (int i = 0; i < O * h; i++) {
+            int a = aRGB[i], b = bW[i];
+            if (a == 0 && b == 0) continue;
+            has[i] = true;
+            int ca = a != 0 ? a : b, cb = b != 0 ? b : a;
+            fa[0][i] = (ca >> 16) & 255; fa[1][i] = (ca >> 8) & 255; fa[2][i] = ca & 255;
+            fb[0][i] = (cb >> 16) & 255; fb[1][i] = (cb >> 8) & 255; fb[2][i] = cb & 255;
+        }
+        final int R = Math.max(3, Math.min(12, O / 8));
+        float[][] la = new float[3][], lb = new float[3][];
+        for (int c = 0; c < 3; c++) { la[c] = boxBlur(fa[c], O, h, R); lb[c] = boxBlur(fb[c], O, h, R); }
+        for (int v = 0; v < h; v++) {
+            double pth = seam[5 + v];
+            for (int t = 0; t < O; t++) {
+                int i = v * O + t;
+                if (!has[i]) continue;
+                double mL = smooth01((t - pth) / (2.0 * Wl) + 0.5), mH = smooth01((t - pth) / (2.0 * fw) + 0.5);
+                int out = 0xFF000000;
+                for (int c = 0; c < 3; c++) {
+                    double val = la[c][i] * mL + lb[c][i] * (1 - mL) + (fa[c][i] - la[c][i]) * mH + (fb[c][i] - lb[c][i]) * (1 - mH);
+                    out |= Math.max(0, Math.min(255, (int) (val + 0.5))) << (16 - 8 * c);
+                }
+                px[v * w + Math.floorMod(startCol + t, w)] = out;
+            }
+        }
+    }
+
+    /** Boxfilter (Radius r, zweimal ~ Gauss), Raender durch Spiegelung der Randwerte. */
+    private static float[] boxBlur(float[] src, int bw, int bh, int r) {
+        float[] a = src.clone(), b = new float[src.length];
+        for (int pass = 0; pass < 2; pass++) {
+            for (int v = 0; v < bh; v++) {                   // waagerecht
+                float sum = 0;
+                for (int k = -r; k <= r; k++) sum += a[v * bw + Math.max(0, Math.min(bw - 1, k))];
+                for (int t = 0; t < bw; t++) {
+                    b[v * bw + t] = sum / (2 * r + 1);
+                    sum += a[v * bw + Math.min(bw - 1, t + r + 1)] - a[v * bw + Math.max(0, t - r)];
+                }
+            }
+            for (int t = 0; t < bw; t++) {                   // senkrecht
+                float sum = 0;
+                for (int k = -r; k <= r; k++) sum += b[Math.max(0, Math.min(bh - 1, k)) * bw + t];
+                for (int v = 0; v < bh; v++) {
+                    a[v * bw + t] = sum / (2 * r + 1);
+                    sum += b[Math.min(bh - 1, v + r + 1) * bw + t] - b[Math.max(0, v - r) * bw + t];
+                }
+            }
+        }
+        return a;
     }
 
     private static int bilinearRGB(int[] a, int aw, int h, double x, double y) {
@@ -1472,7 +1577,9 @@ final class StereoStitcher {
             // Nahtglaettung: gemeinsame Strecke O beider Augen
             int hint = (int) Math.min(panoW - 1, Math.floor(maxRaw * panoW / 360.0));
             int oL = seamLength(extL, extW, panoW, panoH, d, hint), oR = seamLength(extR, extW, panoW, panoH, d, hint);
-            double[] seam = {0, Math.min(oL, oR), 0, 0, 1};
+            double[] seam = new double[5 + panoH];
+            seam[1] = Math.min(oL, oR); seam[4] = 1;
+            java.util.Arrays.fill(seam, 5, seam.length, -1.0);
             closeLoop(r.left, extL, extW, panoW, panoH, d, (int) eyeL.start, seam);
             closeLoop(r.right, extR, extW, panoW, panoH, d, (int) eyeR.start, seam);
             r.closureShiftPx = d;

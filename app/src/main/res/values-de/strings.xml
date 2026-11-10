@@ -235,4 +235,6 @@
     <string name="set_wcorr_uw_d">Eigener Wert für das 0,5×-Objektiv. Nach einer Aufnahme schlägt die Zeile „wk-&gt;“ auf dem Aufnahmebildschirm einen besseren Wert vor; hier eintragen.</string>
     <string name="set_ghost_t">Start am Ende einblenden (manuell stoppen)</string>
     <string name="set_ghost_d">Das erste Bild wird in den letzten 40° eingeblendet (scharf an der roten Startlinie, nach rechts ausblendend). Die Aufnahme stoppt NICHT von selbst: bei Deckung selbst stoppen. Der Winkel in diesem Moment gilt als voller Kreis.</string>
+    <string name="set_seamopt_t">Verbesserte Naht (experimentell)</string>
+    <string name="set_seamopt_d">Legt die Nahtstelle entlang des Pfades kleinster Abweichung und mischt Helligkeit über eine breite Zone, feine Details (Äste, Kanten) nur über wenige Pixel. Hilft bei nahen Objekten; braucht die Überlappung am Ende der Aufnahme. Standardmäßig aus.</string>
 </resources>

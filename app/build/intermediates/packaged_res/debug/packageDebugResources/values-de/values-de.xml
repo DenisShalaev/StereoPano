@@ -204,6 +204,8 @@
     <string name="set_res_t">Kameraauflösung</string>
     <string name="set_sbsfov_d">Vertikales Sichtfeld im Brillenmodus. Standard 45°.</string>
     <string name="set_sbsfov_t">Sichtfeld SBS-Brille</string>
+    <string name="set_seamopt_d">Legt die Nahtstelle entlang des Pfades kleinster Abweichung und mischt Helligkeit über eine breite Zone, feine Details (Äste, Kanten) nur über wenige Pixel. Hilft bei nahen Objekten; braucht die Überlappung am Ende der Aufnahme. Standardmäßig aus.</string>
+    <string name="set_seamopt_t">Verbesserte Naht (experimentell)</string>
     <string name="set_sharp_d">Leichte Nachschärfung des fertigen Panoramas (nur Helligkeit, keine Farbsäume). Gleicht die Weichheit durch das Zusammensetzen vieler Bilder aus. 0 = aus. Standard 50.</string>
     <string name="set_sharp_t">Nachschärfung</string>
     <string name="set_stab_d">Bilder, die aufgenommen werden, während das Telefon schneller als dieser Wert nickt oder kippt, zählen weniger (sie werden nie verworfen, daher entstehen keine Lücken). Niedriger = geradere Horizonte und weniger Treppen an waagerechten Kanten, aber eine ruhigere Hand hilft. Maximum = aus. Standard 6°/s.</string>

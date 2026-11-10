@@ -245,4 +245,6 @@
     <string name="set_wcorr_uw_d">Own value for the 0.5× lens. After a capture the line “wk-&gt;” on the capture screen suggests a better value; enter it here.</string>
     <string name="set_ghost_t">Show the start at the end (manual stop)</string>
     <string name="set_ghost_d">The first frame is overlaid in the last 40° (sharp at the red start line, fading out to the right). Recording does NOT stop by itself: press stop when the live picture lines up. The angle at that moment is taken as a full circle.</string>
+    <string name="set_seamopt_t">Improved seam (experimental)</string>
+    <string name="set_seamopt_d">Places the join along the path of least difference and blends brightness over a wide zone but fine details (branches, edges) only over a few pixels. Helps with nearby objects; needs the overlap at the end of the capture. Off by default.</string>
 </resources>
