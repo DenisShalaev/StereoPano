@@ -276,19 +276,75 @@ public class GalleryActivity extends Activity {
             return true;
         });
         Bitmap bm = cache.get(it.id);
-        Boolean known = stereoMap.get(it.id);
+        Integer known = stereoMap.get(it.id);
         setzeSymbol(iv, known);
         if (bm != null) { iv.setImageBitmap(bm); return; }
         iv.setImageDrawable(null);
         pool.execute(() -> {
             try {
                 Bitmap t = getContentResolver().loadThumbnail(it.uri, new Size(640, 320), null);
-                boolean st = istStereo(it.uri);
+                final int st = symbolFlags(it.uri);
                 stereoMap.put(it.id, st);
                 cache.put(it.id, t);
                 runOnUiThread(() -> { Object tag = iv.getTag(); if (tag != null && it.id == (Long) tag) { iv.setImageBitmap(t); setzeSymbol(iv, st); } });
             } catch (Exception ignored) { }
         });
+    }
+
+    static final int SYM_STEREO = 1, SYM_AUDIO = 2;
+
+    /** Bit 1 = Stereo, Bit 2 = Ton (GAudio im Extended-XMP). */
+    private int symbolFlags(Uri uri) {
+        int f = istStereo(uri) ? SYM_STEREO : 0;
+        if ((f & SYM_STEREO) != 0 && hatTon(uri)) f |= SYM_AUDIO;
+        return f;
+    }
+
+    /**
+     * Ton vorhanden? Das Extended-XMP besteht aus 65000-Byte-Bloecken direkt hinter dem Standard-XMP; GAudio steht am Ende.
+     * Es werden die Bloecke von hinten gelesen, bis GAudio:Data (Ton) oder GImage:Data (kein Ton) auftaucht.
+     */
+    private boolean hatTon(Uri uri) {
+        final byte[] ext = "http://ns.adobe.com/xmp/extension/\0".getBytes(StandardCharsets.ISO_8859_1);
+        try (android.os.ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r")) {
+            if (pfd == null) return false;
+            java.io.FileInputStream fis = new java.io.FileInputStream(pfd.getFileDescriptor());
+            java.nio.channels.FileChannel ch = fis.getChannel();
+            java.util.ArrayList<long[]> bloecke = new java.util.ArrayList<>();      // {Dateiposition der Nutzdaten, Laenge}
+            long pos = 2;
+            java.nio.ByteBuffer hd = java.nio.ByteBuffer.allocate(4 + ext.length);
+            while (bloecke.size() < 400) {
+                hd.clear();
+                if (ch.read(hd, pos) < 4) break;
+                int m = hd.get(1) & 0xFF;
+                if ((hd.get(0) & 0xFF) != 0xFF || m == 0xDA || m == 0xD9) break;
+                int len = ((hd.get(2) & 0xFF) << 8) | (hd.get(3) & 0xFF);
+                if (m == 0xE1 && hd.limit() >= 4 + ext.length && hd.position() >= 4 + ext.length) {
+                    boolean gleich = true;
+                    for (int i = 0; i < ext.length; i++) if (hd.get(4 + i) != ext[i]) { gleich = false; break; }
+                    if (gleich) {
+                        long start = pos + 4 + ext.length + 32 + 8;
+                        long n = len - 2 - ext.length - 32 - 8;
+                        if (n > 0) bloecke.add(new long[]{start, n});
+                    }
+                }
+                pos += 2 + len;
+            }
+            byte[] vorher = new byte[0];
+            for (int i = bloecke.size() - 1; i >= 0; i--) {
+                long[] b = bloecke.get(i);
+                java.nio.ByteBuffer bb = java.nio.ByteBuffer.allocate((int) b[1]);
+                ch.read(bb, b[0]);
+                String s = new String(bb.array(), 0, bb.position(), StandardCharsets.ISO_8859_1);
+                String t = s + new String(vorher, StandardCharsets.ISO_8859_1);      // Marker kann an der Blockgrenze liegen
+                if (t.contains("GAudio:Data")) return true;
+                if (t.contains("GImage:Data")) return false;
+                vorher = s.length() > 40 ? s.substring(0, 40).getBytes(StandardCharsets.ISO_8859_1) : s.getBytes(StandardCharsets.ISO_8859_1);
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /** Stereo, wenn der Standard-XMP einen Verweis auf Extended-XMP (rechtes Auge) oder GImage-Daten enthaelt; liest nur den Dateianfang. */
@@ -305,35 +361,45 @@ public class GalleryActivity extends Activity {
         }
     }
 
-    private final java.util.Map<Long, Boolean> stereoMap = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Map<Long, Integer> stereoMap = new java.util.concurrent.ConcurrentHashMap<>();
 
-    private static void setzeSymbol(ImageView iv, Boolean stereo) {
-        if (iv instanceof SymbolView) ((SymbolView) iv).setStereo(stereo);
+    private static void setzeSymbol(ImageView iv, Integer flags) {
+        if (iv instanceof SymbolView) ((SymbolView) iv).setFlags(flags);
     }
 
-    /** Miniatur mit weissem Symbol oben rechts (zwei Kreise = Stereo, ein Kreis = Mono), unabhaengig vom Zuschnitt des Bildes. */
+    /**
+     * Miniatur mit weissen Symbolen oben rechts, unabhaengig vom Zuschnitt des Bildes:
+     * ein Kreis = Mono, zwei sich schneidende Kreise = Stereo, Lautsprecher = Ton vorhanden
+     * (dieselben Symbole zeigt der Desktop-Viewer).
+     */
     private static final class SymbolView extends ImageView {
-        private Boolean stereo;
+        private Integer flags;
         private final android.graphics.Paint sh = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
         private final android.graphics.Paint wh = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Paint fill = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Path body = new android.graphics.Path(), wave = new android.graphics.Path();
 
         SymbolView(android.content.Context c) {
             super(c);
             sh.setStyle(android.graphics.Paint.Style.STROKE);
             sh.setColor(0x99000000);
+            sh.setStrokeJoin(android.graphics.Paint.Join.ROUND);
             wh.setStyle(android.graphics.Paint.Style.STROKE);
             wh.setColor(0xFFFFFFFF);
+            fill.setStyle(android.graphics.Paint.Style.FILL);
+            fill.setColor(0xFFFFFFFF);
         }
 
-        void setStereo(Boolean s) {
-            stereo = s;
+        void setFlags(Integer f) {
+            flags = f;
             invalidate();
         }
 
         @Override
         protected void onDraw(android.graphics.Canvas c) {
             super.onDraw(c);
-            if (stereo == null || getDrawable() == null) return;
+            if (flags == null || getDrawable() == null) return;
+            boolean stereo = (flags & SYM_STEREO) != 0, audio = (flags & SYM_AUDIO) != 0;
             float w = getWidth();
             float r = w * 0.04f, sw = Math.max(2.5f, w * 0.008f), gap = r * 1.15f;
             float m = w * 0.04f;
@@ -344,6 +410,25 @@ public class GalleryActivity extends Activity {
             if (stereo) c.drawCircle(cx2, cy, r, sh);
             c.drawCircle(cx1, cy, r, wh);
             if (stereo) c.drawCircle(cx2, cy, r, wh);
+            if (audio) {
+                float z = r * 1.83f, x0 = cx1 - r - r * 0.67f - z, y0 = cy - z / 2;
+                body.reset();
+                body.moveTo(x0, y0 + .35f * z);
+                body.lineTo(x0 + .3f * z, y0 + .35f * z);
+                body.lineTo(x0 + .65f * z, y0 + .08f * z);
+                body.lineTo(x0 + .65f * z, y0 + .92f * z);
+                body.lineTo(x0 + .3f * z, y0 + .65f * z);
+                body.lineTo(x0, y0 + .65f * z);
+                body.close();
+                wave.reset();
+                wave.moveTo(x0 + .82f * z, y0 + .33f * z);
+                wave.quadTo(x0 + 1.05f * z, y0 + .5f * z, x0 + .82f * z, y0 + .67f * z);
+                sh.setStrokeWidth(sw * 2.4f);
+                c.drawPath(body, sh);
+                c.drawPath(wave, sh);
+                c.drawPath(body, fill);
+                c.drawPath(wave, wh);
+            }
         }
     }
 
