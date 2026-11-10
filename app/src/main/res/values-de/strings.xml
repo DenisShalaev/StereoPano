@@ -237,4 +237,6 @@
     <string name="set_ghost_d">Das erste Bild wird in den letzten 40° eingeblendet (scharf an der roten Startlinie, nach rechts ausblendend). Die Aufnahme stoppt NICHT von selbst: bei Deckung selbst stoppen. Der Winkel in diesem Moment gilt als voller Kreis.</string>
     <string name="set_seamopt_t">Verbesserte Naht (experimentell)</string>
     <string name="set_seamopt_d">Legt die Nahtstelle entlang des Pfades kleinster Abweichung und mischt Helligkeit über eine breite Zone, feine Details (Äste, Kanten) nur über wenige Pixel. Hilft bei nahen Objekten; braucht die Überlappung am Ende der Aufnahme. Standardmäßig aus.</string>
+    <string name="lenti_gesture_hint">Bild mit einem Finger verschieben, mit zwei Fingern zoomen. Unter ca. 300 dpi der Quelle wird der Druck weich.</string>
+    <string name="lenti_reset_view">Ansicht zurücksetzen</string>
 </resources>

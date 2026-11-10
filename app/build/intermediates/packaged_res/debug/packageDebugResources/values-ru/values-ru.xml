@@ -92,6 +92,7 @@
     <string name="lenti_failed">Ошибка: %1$s</string>
     <string name="lenti_flip">Обратный порядок ракурсов (если объём вывернут)</string>
     <string name="lenti_format">Формат бумаги</string>
+    <string name="lenti_gesture_hint">Двигайте снимок одним пальцем, масштабируйте двумя. Если разрешение источника меньше ~300 dpi, печать будет мягкой.</string>
     <string name="lenti_hint">Печатайте в 100 %%, без масштабирования и «по размеру страницы», без цветокоррекции принтера. Размер файла: %1$d x %2$d px</string>
     <string name="lenti_lpi">Растр, LPI</string>
     <string name="lenti_lpi_real">Фактический LPI (по тестовому листу)</string>
@@ -106,6 +107,7 @@
     <string name="lenti_orient_port">Вертикально (портрет из части панорамы)</string>
     <string name="lenti_prepare">Подготовка ракурсов…</string>
     <string name="lenti_px_per_lens">Пикселей на линзу: %1$.1f</string>
+    <string name="lenti_reset_view">Сбросить вид</string>
     <string name="lenti_saved">Сохранено: %1$s</string>
     <string name="lenti_saving">Расчёт… %1$d%%</string>
     <string name="lenti_test">Тестовый лист</string>

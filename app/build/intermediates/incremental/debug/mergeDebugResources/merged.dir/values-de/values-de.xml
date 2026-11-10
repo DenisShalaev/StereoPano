@@ -92,6 +92,7 @@
     <string name="lenti_failed">Fehler: %1$s</string>
     <string name="lenti_flip">Ansichten umkehren (wenn die Tiefe verkehrt wirkt)</string>
     <string name="lenti_format">Papierformat</string>
+    <string name="lenti_gesture_hint">Bild mit einem Finger verschieben, mit zwei Fingern zoomen. Unter ca. 300 dpi der Quelle wird der Druck weich.</string>
     <string name="lenti_hint">In 100 %% drucken, ohne Skalierung/„an Seite anpassen“, Farbverwaltung des Druckers aus. Dateigröße: %1$d x %2$d px</string>
     <string name="lenti_lpi">Linsenraster, LPI</string>
     <string name="lenti_lpi_real">Tatsächliche LPI (aus dem Testblatt)</string>
@@ -106,6 +107,7 @@
     <string name="lenti_orient_port">Hochformat (Teilpanorama, Porträts)</string>
     <string name="lenti_prepare">Ansichten werden vorbereitet…</string>
     <string name="lenti_px_per_lens">Pixel pro Linse: %1$.1f</string>
+    <string name="lenti_reset_view">Ansicht zurücksetzen</string>
     <string name="lenti_saved">Gespeichert: %1$s</string>
     <string name="lenti_saving">Berechnung… %1$d%%</string>
     <string name="lenti_test">Testblatt</string>

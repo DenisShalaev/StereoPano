@@ -24,6 +24,9 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
+import android.annotation.SuppressLint;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,6 +62,7 @@ public class LentiActivity extends Activity {
     private double ppd;                       // Pixel pro Grad im Quellbild
 
     private int lpiIdx, fmt, dpiIdx, views, depthPct, pos;
+    private double zoom = 1.0, vOff = 0.0;      // Vergroesserung des Ausschnitts (>= 1) und senkrechte Lage (-1..1)
     private double lpiReal;
     private boolean portrait, reverse;
     private int marksMode;                    // 0 keine, 1 links/rechts, 2 rundum
@@ -98,6 +102,8 @@ public class LentiActivity extends Activity {
         reverse = sp.getBoolean("reverse", true);
         marksMode = sp.getInt("marksMode", 2);
         pos = sp.getInt("pos", 500);
+        zoom = Math.max(1.0, Math.min(8.0, sp.getFloat("zoom", 1f)));
+        vOff = Math.max(-1.0, Math.min(1.0, sp.getFloat("voff", 0f)));
         bauen();
         aktualisiere();
     }
@@ -146,6 +152,8 @@ public class LentiActivity extends Activity {
         root.addView(vorschau, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         posText = text("", 13, GRAU);
         root.addView(posText);
+        TextView geste = text(getString(R.string.lenti_gesture_hint), 12, GRAU);
+        root.addView(geste);
         SeekBar sb = new SeekBar(this);
         sb.setMax(1000);
         sb.setProgress(pos);
@@ -155,6 +163,13 @@ public class LentiActivity extends Activity {
             @Override public void onStopTrackingTouch(SeekBar s) { sp.edit().putInt("pos", pos).apply(); }
         });
         root.addView(sb);
+        installiereBedienung(sb);
+        root.addView(knopf(getString(R.string.lenti_reset_view), v -> {
+            zoom = 1.0; vOff = 0.0; pos = 500;
+            sb.setProgress(pos);
+            sp.edit().putInt("pos", pos).putFloat("zoom", 1f).putFloat("voff", 0f).apply();
+            aktualisiereVorschau();
+        }));
 
         formular = new LinearLayout(this);
         formular.setOrientation(LinearLayout.VERTICAL);
@@ -307,10 +322,85 @@ public class LentiActivity extends Activity {
         int wh = srcH, ww = (int) Math.round(aspect * wh);
         if (ww > srcW) { ww = srcW; wh = (int) Math.round(ww / aspect); }
         ww &= ~1; wh &= ~1;
-        int top = (srcH - wh) / 2;
+        double z = Math.max(1.0, zoom);
+        ww = Math.max(16, (int) Math.round(ww / z)); wh = Math.max(16, (int) Math.round(wh / z));
+        ww &= ~1; wh &= ~1;
+        int slack = srcH - wh;
+        int top = (int) Math.round(slack / 2.0 + vOff * slack / 2.0);
+        top = Math.max(0, Math.min(slack, top));
         double f = pos / 1000.0;
         int left = ring ? (int) Math.round(f * srcW) : (int) Math.round(f * (srcW - ww));
         return new int[]{left, top, ww, wh};
+    }
+
+    /** Fenster-Mitte in Quellpixeln beibehalten und Position (pos) fuer ein Fenster der Breite ww setzen. */
+    private void setzeMitte(double cx, int ww) {
+        double left = cx - ww / 2.0;
+        if (ring) pos = (int) Math.round(Math.floorMod((long) Math.round(left), (long) srcW) / (double) srcW * 1000.0);
+        else pos = srcW - ww <= 0 ? 0 : (int) Math.round(Math.max(0, Math.min(srcW - ww, left)) / (srcW - ww) * 1000.0);
+        pos = Math.max(0, Math.min(1000, pos));
+    }
+
+    /** Ein Finger verschiebt das Bild im Rahmen, zwei Finger zoomen (Mitte des Ausschnitts bleibt dabei stehen). */
+    @SuppressLint("ClickableViewAccessibility")
+    private void installiereBedienung(SeekBar sb) {
+        final ScaleGestureDetector sg = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            @Override public boolean onScale(ScaleGestureDetector det) {
+                int[] fw = fenster();
+                double cx = fw[0] + fw[2] / 2.0, cy = fw[1] + fw[3] / 2.0;
+                double nz = Math.max(1.0, Math.min(8.0, zoom * det.getScaleFactor()));
+                if (nz == zoom) return true;
+                zoom = nz;
+                int[] nf = fenster();
+                setzeMitte(cx, nf[2]);
+                int slack = srcH - nf[3];
+                vOff = slack > 0 ? Math.max(-1.0, Math.min(1.0, (cy - nf[3] / 2.0 - slack / 2.0) * 2.0 / slack)) : 0;
+                sb.setProgress(pos);
+                aktualisiereVorschau();
+                return true;
+            }
+        });
+        final float[] last = new float[2];
+        final boolean[] multi = new boolean[1];
+        vorschau.setOnTouchListener((v, e) -> {
+            if (vorschauQuelle == null) return false;
+            sg.onTouchEvent(e);
+            switch (e.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.getParent().requestDisallowInterceptTouchEvent(true);
+                    last[0] = e.getX(); last[1] = e.getY(); multi[0] = false;
+                    break;
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    multi[0] = true;
+                    break;
+                case MotionEvent.ACTION_POINTER_UP:
+                    last[0] = e.getX(e.getActionIndex() == 0 ? 1 : 0); last[1] = e.getY(e.getActionIndex() == 0 ? 1 : 0);
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    if (e.getPointerCount() == 1 && !multi[0] && !sg.isInProgress() && v.getWidth() > 0) {
+                        int[] fw = fenster();
+                        double k = fw[2] / (double) v.getWidth();            // Quellpixel je Bildschirmpixel
+                        double dx = (e.getX() - last[0]) * k, dy = (e.getY() - last[1]) * k;
+                        last[0] = e.getX(); last[1] = e.getY();
+                        setzeMitte(fw[0] + fw[2] / 2.0 - dx, fw[2]);       // Bild folgt dem Finger: Fenster wandert entgegengesetzt
+                        int slack = srcH - fw[3];
+                        if (slack > 0) vOff = Math.max(-1.0, Math.min(1.0, vOff - dy * 2.0 / slack));
+                        sb.setProgress(pos);
+                        aktualisiereVorschau();
+                    } else if (e.getPointerCount() == 1) {
+                        last[0] = e.getX(); last[1] = e.getY();
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    multi[0] = false;
+                    sp.edit().putInt("pos", pos).putFloat("zoom", (float) zoom).putFloat("voff", (float) vOff).apply();
+                    break;
+                default:
+                    break;
+            }
+            return true;
+        });
     }
 
     private void aktualisiereVorschau() {
@@ -333,7 +423,10 @@ public class LentiActivity extends Activity {
         }
         vorschau.setImageBitmap(bm);
         double centre = ((fw[0] + fw[2] / 2.0) / srcW) * 360.0 % 360.0;
-        posText.setText(String.format(Locale.US, getString(R.string.lenti_window), (int) Math.round(centre)));
+        int[] pxs = druckPixel(), rd = rand();
+        double inchW = (pxs[0] - 2.0 * rd[0]) / DPI[dpiIdx];
+        posText.setText(String.format(Locale.US, getString(R.string.lenti_window), (int) Math.round(centre))
+                + String.format(Locale.US, "  \u00B7  \u00D7%.1f  \u00B7  %d dpi", zoom, (int) Math.round(fw[2] / inchW)));
     }
 
     // ------------------------------------------------------------------ Erzeugen

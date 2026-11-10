@@ -95,6 +95,7 @@
     <string name="lenti_failed">Error: %1$s</string>
     <string name="lenti_flip">Reverse view order (if depth looks inverted)</string>
     <string name="lenti_format">Paper size</string>
+    <string name="lenti_gesture_hint">Drag the picture with one finger, pinch with two fingers to zoom. Below ~300 dpi of the source the print gets soft.</string>
     <string name="lenti_hint">Print at 100 %%, no scaling or fit-to-page, printer colour management off. File size: %1$d x %2$d px</string>
     <string name="lenti_lpi">Lens sheet, LPI</string>
     <string name="lenti_lpi_real">Actual LPI (from the test sheet)</string>
@@ -109,6 +110,7 @@
     <string name="lenti_orient_port">Portrait (partial panorama, portraits)</string>
     <string name="lenti_prepare">Preparing views…</string>
     <string name="lenti_px_per_lens">Pixels per lens: %1$.1f</string>
+    <string name="lenti_reset_view">Reset view</string>
     <string name="lenti_saved">Saved: %1$s</string>
     <string name="lenti_saving">Rendering… %1$d%%</string>
     <string name="lenti_test">Test sheet</string>

@@ -129,6 +129,7 @@ string lenti_dpi
 string lenti_failed
 string lenti_flip
 string lenti_format
+string lenti_gesture_hint
 string lenti_hint
 string lenti_lpi
 string lenti_lpi_real
@@ -143,6 +144,7 @@ string lenti_orient_land
 string lenti_orient_port
 string lenti_prepare
 string lenti_px_per_lens
+string lenti_reset_view
 string lenti_saved
 string lenti_saving
 string lenti_test
