@@ -70,6 +70,7 @@ final class StereoStitcher {
         int[] extL, extR;        // Erweiterung hinter dem Kreisende (Spalten 0..extW-1 entsprechen den Kreisspalten w..w+extW-1)
         int extW, startL, startR;
         int seamShiftPx;         // gewaehlte Verschiebung des 360-Grad-Fensters (Spalten ab Kreisanfang)
+        int seamDyPx;            // vertikaler Versatz zwischen Ende und Anfang (wird ueber den Kreis verteilt)
         int seamSpanPx;          // Breite des gewaehlten Fensters in Kreisspalten (wird auf panoW gestaucht/gedehnt)
     }
 
@@ -745,23 +746,26 @@ final class StereoStitcher {
      */
     private static boolean manualSeamActive() { return extraDeg > 0 && !closureEnabled; }
 
-    /** Spalte c des Ergebnisses = Kreisspalte s + c*span/w (span = w: unveraendert; sonst linear auf w Spalten gestaucht/gedehnt). */
-    private static int[] composeEye(int[] px, int[] ext, int extW, int w, int h, int startCol, int s, int span) {
+    /** Spalte c des Ergebnisses = Kreisspalte s + c*span/w (span = w: unveraendert; sonst linear auf w Spalten gestaucht/gedehnt); Zeile v + dy*c/w. */
+    private static int[] composeEye(int[] px, int[] ext, int extW, int w, int h, int startCol, int s, int span, int dy) {
         int[] out = new int[w * h];
-        for (int v = 0; v < h; v++)
-            for (int c = 0; c < w; c++) {
+        for (int c = 0; c < w; c++) {
+            int off = (int) Math.round((double) dy * c / w);
+            double label = s + (double) c * span / w;
+            int i = (int) label;
+            for (int v = 0; v < h; v++) {
+                int vv = Math.max(0, Math.min(h - 1, v + off));
                 int p;
                 if (span == w) {
-                    int i = s + c;
-                    p = rawAt(px, ext, extW, w, startCol, v, i);
-                    if (p == 0 && i >= w) p = rawAt(px, ext, extW, w, startCol, v, i - w);
+                    p = rawAt(px, ext, extW, w, startCol, vv, i);
+                    if (p == 0 && i >= w) p = rawAt(px, ext, extW, w, startCol, vv, i - w);
                 } else {
-                    double label = s + (double) c * span / w;
-                    p = sampleLabel(px, ext, extW, w, startCol, v, label);
-                    if (p == 0 && label >= w) p = sampleLabel(px, ext, extW, w, startCol, v, label - w);
+                    p = sampleLabel(px, ext, extW, w, startCol, vv, label);
+                    if (p == 0 && label >= w) p = sampleLabel(px, ext, extW, w, startCol, vv, label - w);
                 }
                 out[v * w + c] = p;
             }
+        }
         return out;
     }
 
@@ -779,83 +783,100 @@ final class StereoStitcher {
      * Manuelle Naht: legt das Fenster ab Kreisspalte s mit der Breite span fest, staucht/dehnt es linear auf genau 360 Grad,
      * schneidet hart (keine Ueberblendung) und gleicht nur Helligkeit (und einen kleinen vertikalen Versatz) an der Naht sanft aus.
      */
-    static void applySeam(Result r, int s, int span) {
+    static void applySeam(Result r, int s, int span, int dy) {
         if (!r.manualSeam) return;
         int w = r.panoW, h = r.panoH;
         span = Math.max(w / 2, Math.min(span, w + r.extW));
         s = Math.max(0, Math.min(s, w + r.extW - span));
-        r.left = composeEye(r.left, r.extL, r.extW, w, h, r.startL, s, span);
-        r.right = composeEye(r.right, r.extR, r.extW, w, h, r.startR, s, span);
+        dy = Math.max(-h / 8, Math.min(h / 8, dy));
+        r.left = composeEye(r.left, r.extL, r.extW, w, h, r.startL, s, span, dy);
+        r.right = composeEye(r.right, r.extR, r.extW, w, h, r.startR, s, span, dy);
+        if (dy != 0 && r.height > 0) {               // Zeilen, die durch die Verschiebung keine echten Daten haben, abschneiden
+            int ad = Math.abs(dy);
+            if (dy < 0) r.y0 += ad;
+            r.height = Math.max(1, r.height - ad);
+        }
         wrapFix(r.left, r.right, 0, 0, w, h);
         r.seamShiftPx = s;
         r.seamSpanPx = span;
+        r.seamDyPx = dy;
         r.extL = r.extR = null;
         r.manualSeam = false;
-        r.diag += " seamShift=" + s + "px span=" + span + "px";
+        r.diag += " seamShift=" + s + "px span=" + span + "px dy=" + dy + "px";
     }
 
     /**
      * Misst, wie viele Kreisspalten ein voller Umlauf wirklich hat: derselbe Bildinhalt wie am Fensteranfang (Spalte s) kommt
      * in der Erweiterung nochmals vor. Rueckgabe: span (Spalten) oder NaN, wenn nichts Eindeutiges gefunden wurde.
      */
-    private static double[] matchSpan(Result r, int s) {
-        final double[] NONE = null;
-        int w = r.panoW, h = r.panoH;
-        int row0 = r.height > 0 ? r.y0 : 0, rows = r.height > 0 ? r.height : h;
-        int Lc = (int) (16.0 * w / 360.0), colStep = 2;
-        int dmin = -(int) (10.0 * w / 360.0), dmax = r.extW - s - Lc;
-        if (Lc < 16 || dmax <= dmin) return NONE;
-        int vs = Math.max(1, rows / 60), nr = rows / vs, nc = Lc / colStep;
-        double[] a = new double[nr * nc];
+    /** NCC-Suche: Anfangsstueck (Spalten s..s+Lc, Zeilen ra..ra+rn) gegen die Erweiterung; Rueckgabe {beste NCC, d, dy, zweitbeste NCC (anderswo)} oder null. */
+    private static double[] scanSpan(Result r, int ra, int rn, int s, int Lc, int d0, int d1, int dy0, int dy1, int dStep, int dyStep, int colStep, int vs) {
+        int w = r.panoW;
+        int nr = Math.max(1, rn / vs), nc = Math.max(1, Lc / colStep);
+        double[] a = new double[nr * nc], b = new double[nr * nc];
         double ma = 0;
         for (int i = 0; i < nr; i++)
             for (int j = 0; j < nc; j++) {
-                int p = previewPixel(r, true, row0 + i * vs, s + j * colStep);
-                if (p == 0) return NONE;
+                int p = previewPixel(r, true, ra + i * vs, s + j * colStep);
+                if (p == 0) return null;
                 a[i * nc + j] = lum(p);
                 ma += a[i * nc + j];
             }
         ma /= a.length;
         double sa = 0;
         for (int i = 0; i < a.length; i++) { a[i] -= ma; sa += a[i] * a[i]; }
-        if (sa / a.length < 4) return NONE;                         // zu wenig Struktur (einfarbige Flaeche)
-        double[] ncc = new double[dmax - dmin + 1];
-        double best = -2; int bi = -1;
-        double[] b = new double[a.length];
-        for (int d = dmin; d <= dmax; d++) {
-            double mb = 0; boolean ok = true;
-            for (int i = 0; i < nr && ok; i++)
-                for (int j = 0; j < nc; j++) {
-                    int p = previewPixel(r, true, row0 + i * vs, w + s + d + j * colStep);
-                    if (p == 0) { ok = false; break; }
-                    b[i * nc + j] = lum(p);
-                    mb += b[i * nc + j];
-                }
-            double v = -2;
-            if (ok) {
+        if (sa / a.length < 4) return null;                               // zu wenig Struktur (einfarbige Flaeche)
+        int nd = (d1 - d0) / dStep + 1;
+        double[] perD = new double[nd];
+        java.util.Arrays.fill(perD, -2);
+        double best = -2; int bd = d0, bdy = 0;
+        for (int di = 0; di < nd; di++) {
+            int d = d0 + di * dStep;
+            for (int dy = dy0; dy <= dy1; dy += dyStep) {
+                double mb = 0; boolean ok = true;
+                for (int i = 0; i < nr && ok; i++)
+                    for (int j = 0; j < nc; j++) {
+                        int p = previewPixel(r, true, ra + i * vs + dy, w + s + d + j * colStep);
+                        if (p == 0) { ok = false; break; }
+                        b[i * nc + j] = lum(p);
+                        mb += b[i * nc + j];
+                    }
+                if (!ok) continue;
                 mb /= b.length;
                 double sb = 0, sab = 0;
                 for (int i = 0; i < a.length; i++) { double q = b[i] - mb; sb += q * q; sab += a[i] * q; }
-                v = sb < 1e-6 ? -2 : sab / Math.sqrt(sa * sb);
+                if (sb < 1e-6) continue;
+                double v = sab / Math.sqrt(sa * sb);
+                if (v > perD[di]) perD[di] = v;
+                if (v > best) { best = v; bd = d; bdy = dy; }
             }
-            ncc[d - dmin] = v;
-            if (v > best) { best = v; bi = d - dmin; }
         }
-        if (bi < 0 || best < 0.6) return NONE;
         double second = -2;
-        int excl = Math.max(3, (int) (1.5 * w / 360.0));
-        for (int i = 0; i < ncc.length; i++) if (Math.abs(i - bi) > excl && ncc[i] > second) second = ncc[i];
-        if (best - second < 0.05) return NONE;                      // nicht eindeutig
-        double sub = bi;
-        if (bi > 0 && bi < ncc.length - 1) {
-            double y0 = ncc[bi - 1], y1 = ncc[bi], y2 = ncc[bi + 1], den = y0 - 2 * y1 + y2;
-            if (den < -1e-9) sub += Math.max(-0.5, Math.min(0.5, 0.5 * (y0 - y2) / den));
-        }
-        return new double[]{w + dmin + sub, best};
+        int excl = Math.max(1, (int) Math.ceil(1.5 * w / 360.0 / dStep));
+        int bi = (bd - d0) / dStep;
+        for (int i = 0; i < nd; i++) if (Math.abs(i - bi) > excl && perD[i] > second) second = perD[i];
+        return new double[]{best, bd, bdy, second};
     }
 
-    /** Beste Messung der Umlauflaenge ueber mehrere Anfangsstellen s0 im Streifen (die Verschiebung gilt fuer den ganzen Kreis); NaN = nichts Eindeutiges. */
-    static double measureSpan(Result r) {
+    /** Grob (sparsam, mit vertikalem Versatz) und dann fein suchen; Rueckgabe {span, NCC, dy} oder null. */
+    private static double[] matchSpan(Result r, int s) {
+        int w = r.panoW, h = r.panoH;
+        int row0 = r.height > 0 ? r.y0 : 0, rows = r.height > 0 ? r.height : h;
+        int R = (int) Math.round(4.0 * w / 360.0);
+        int Lc = (int) (16.0 * w / 360.0);
+        int dmin = -(int) (10.0 * w / 360.0), dmax = r.extW - s - Lc;
+        if (Lc < 16 || dmax <= dmin || rows < 4 * R) return null;
+        int ra = row0 + R, rn = rows - 2 * R;
+        double[] c = scanSpan(r, ra, rn, s, Lc, dmin, dmax, -R, R, 4, 6, 4, Math.max(1, rn / 36));
+        if (c == null || c[0] < 0.5 || c[0] - c[3] < 0.05) return null;
+        int cd = (int) c[1], cdy = (int) c[2];
+        double[] f = scanSpan(r, ra, rn, s, Lc, Math.max(dmin, cd - 4), Math.min(dmax, cd + 4), Math.max(-R, cdy - 6), Math.min(R, cdy + 6), 1, 1, 2, Math.max(1, rn / 60));
+        if (f == null || f[0] < 0.6) return null;
+        return new double[]{w + f[1], f[0], f[2]};
+    }
+
+    /** Beste Messung ueber mehrere Anfangsstellen im Streifen (gilt fuer den ganzen Kreis); {span, dy} oder null. */
+    static double[] measureSpan(Result r) {
         int w = r.panoW;
         int Lc = (int) (16.0 * w / 360.0), dmin = -(int) (10.0 * w / 360.0);
         double[] bestM = null;
@@ -863,7 +884,7 @@ final class StereoStitcher {
             double[] m = matchSpan(r, s0);
             if (m != null && (bestM == null || m[1] > bestM[1])) bestM = m;
         }
-        return bestM == null ? Double.NaN : bestM[0];
+        return bestM == null ? null : new double[]{bestM[0], bestM[2]};
     }
 
     static void wrapFix(int[] pl, int[] pr, int startL, int startR, int w, int h) {

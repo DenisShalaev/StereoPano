@@ -1,4 +1,4 @@
-#Tue Nov 10 22:50:49 CET 2026
+#Tue Nov 10 23:00:41 CET 2026
 base.0=/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/build/intermediates/dex/debug/mergeProjectDexDebug/0/classes.dex
 base.1=/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/build/intermediates/dex/debug/mergeProjectDexDebug/8/classes.dex
 base.2=/Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/build/intermediates/global_synthetics_dex/debug/generateDebugGlobalSynthetics/classes.dex
