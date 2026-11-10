@@ -281,11 +281,49 @@ public class GalleryActivity extends Activity {
         iv.setImageDrawable(null);
         pool.execute(() -> {
             try {
-                Bitmap t = getContentResolver().loadThumbnail(it.uri, new Size(640, 320), null);
-                cache.put(it.id, t);
-                runOnUiThread(() -> { Object tag = iv.getTag(); if (tag != null && it.id == (Long) tag) iv.setImageBitmap(t); });
+                Bitmap rawBm = getContentResolver().loadThumbnail(it.uri, new Size(640, 320), null);
+                final Bitmap finalBm = mitSymbol(rawBm, istStereo(it.uri));
+                cache.put(it.id, finalBm);
+                runOnUiThread(() -> { Object tag = iv.getTag(); if (tag != null && it.id == (Long) tag) iv.setImageBitmap(finalBm); });
             } catch (Exception ignored) { }
         });
+    }
+
+    /** Stereo, wenn der Standard-XMP einen Verweis auf Extended-XMP (rechtes Auge) oder GImage-Daten enthaelt; liest nur den Dateianfang. */
+    private boolean istStereo(Uri uri) {
+        try (InputStream in = getContentResolver().openInputStream(uri)) {
+            if (in == null) return false;
+            byte[] b = new byte[262144];
+            int n = 0, r;
+            while (n < b.length && (r = in.read(b, n, b.length - n)) > 0) n += r;
+            String x = new String(b, 0, n, StandardCharsets.ISO_8859_1);
+            return x.contains("HasExtendedXMP") || x.contains("GImage:Data");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Zeichnet oben rechts ein weisses Symbol: zwei Kreise = Stereo, ein Kreis = Mono. */
+    private static Bitmap mitSymbol(Bitmap src, boolean stereo) {
+        Bitmap bm = src.copy(Bitmap.Config.ARGB_8888, true);
+        if (bm == null) return src;
+        android.graphics.Canvas c = new android.graphics.Canvas(bm);
+        float w = bm.getWidth();
+        float r = w * 0.034f, sw = Math.max(2f, w * 0.0075f), gap = r * 1.15f;
+        float cy = r + w * 0.035f, cx2 = w - w * 0.035f - r, cx1 = cx2 - (stereo ? gap : 0);
+        android.graphics.Paint sh = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        sh.setStyle(android.graphics.Paint.Style.STROKE);
+        sh.setStrokeWidth(sw * 2.2f);
+        sh.setColor(0x88000000);
+        android.graphics.Paint wh = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        wh.setStyle(android.graphics.Paint.Style.STROKE);
+        wh.setStrokeWidth(sw);
+        wh.setColor(0xFFFFFFFF);
+        c.drawCircle(cx1, cy, r, sh);
+        if (stereo) c.drawCircle(cx2, cy, r, sh);
+        c.drawCircle(cx1, cy, r, wh);
+        if (stereo) c.drawCircle(cx2, cy, r, wh);
+        return bm;
     }
 
     private static final Pattern AUTOR = Pattern.compile("<dc:creator>.*?<rdf:li[^>]*>([^<]*)</rdf:li>", Pattern.DOTALL);
