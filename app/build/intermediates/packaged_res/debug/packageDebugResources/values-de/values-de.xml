@@ -192,7 +192,7 @@
     <string name="set_lens_t">Linsenkorrektur (Cardboard)</string>
     <string name="set_loc_d">Schreibt GPS-Position und Ortsnamen (Stadt, Region) als Tags und EXIF in die Datei. Ausschalten, wenn Sie Panoramen öffentlich teilen und Ihren Standort nicht speichern wollen.</string>
     <string name="set_loc_t">Ort speichern</string>
-    <string name="set_loop_d">Auto vergleicht das Bild mit dem Anfang, glaubt ihm aber nur, wenn es zum Gyro passt (etwa 2,5°). Nur Gyro eignet sich fuer eintoenige Szenen wie Himmel und Wasser.</string>
+    <string name="set_loop_d">Auto vergleicht das Bild mit dem Anfang, glaubt ihm aber nur, wenn es zum Gyro passt (etwa 4,5°). Nur Gyro eignet sich fuer eintoenige Szenen wie Himmel und Wasser.</string>
     <string name="set_loop_t">Kreisschluss</string>
     <string name="set_move_d">Erkennt Personen und andere bewegte Objekte während des Drehens und füllt die Lücken mit dem Hintergrund aus einem anderen Moment. Höher = empfindlicher. Funktioniert am besten bei strukturierten Objekten; einfarbige Objekte werden evtl. nur teilweise entfernt. Braucht ca. 50 MB zusätzlichen Speicher und etwas Rechenzeit. 0 = aus. Experimentell. Standard 0 (aus).</string>
     <string name="set_move_t">Bewegte Objekte</string>

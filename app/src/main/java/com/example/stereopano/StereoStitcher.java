@@ -128,6 +128,8 @@ final class StereoStitcher {
     static double loopRange = 45.0;
     /** Groesster Sensorfehler (Grad), dem eine Bild-Messung noch geglaubt wird; groessere Werte gelten als falscher Treffer, es zaehlt der Gyro. */
     static double loopTrust = 45.0;
+    /** Aktuelle Winkelkorrektur in Prozent (nur fuer die Empfehlung in der Diagnose). */
+    static double wkPercent = 0.0;
     static double hintCap = 394.0;      // bis zu diesem Rohwinkel darf die grobe Schaetzung das Ende hinauszoegern               // Kreisschluss-Erkennung durch Bildvergleich mit dem Anfang
     private static final double LOOP_FROM_DEG = 280.0;   // ab hier wird nach dem Anfang des Panoramas gesucht
     private static final double LOOP_MARGIN_DEG = 3.0;   // so weit hinter den Anfang weiterdrehen (Ueberlappung fuer die Naht)
@@ -1474,8 +1476,13 @@ final class StereoStitcher {
                 if (Math.abs(gl - 1) > 0.02) applyWrap(r.left, (int) eyeL.start, panoW, panoH, 0, gl);
                 if (Math.abs(gr - 1) > 0.02) applyWrap(r.right, (int) eyeR.start, panoW, panoH, 0, gr);
             }
-            r.diag = String.format(java.util.Locale.US, "raw=%.1f err=%.1f loopN=%d d=%.1fpx seam=%d,%.0f,%.0f,%.2f reg=%d/%d ppd=%.1f ld=%s",
-                    maxRaw, Double.isNaN(loopEd) ? 0.0 : loopEd, loopSamples.size(), d, (int) seam[1], seam[2], seam[3], seam[4], regOk, regCalls, panoW / 360.0, java.util.Arrays.toString(ldbg));
+            String rec = "-";
+            if (wkPercent > 0 && (!Double.isNaN(loopEd) || d != 0)) {
+                double sc = Double.isNaN(loopEd) ? 1.0 / (1.0 - d / panoW) : (360.0 - loopEd) / 360.0;
+                rec = String.format(java.util.Locale.US, "%.1f%%", ((1.0 + wkPercent / 100.0) / sc - 1.0) * 100.0);
+            }
+            r.diag = String.format(java.util.Locale.US, "raw=%.1f err=%.1f loopN=%d d=%.1fpx seam=%d,%.0f,%.0f,%.2f reg=%d/%d ppd=%.1f ld=%s wk->%s",
+                    maxRaw, Double.isNaN(loopEd) ? 0.0 : loopEd, loopSamples.size(), d, (int) seam[1], seam[2], seam[3], seam[4], regOk, regCalls, panoW / 360.0, java.util.Arrays.toString(ldbg), rec);
         }
         if (r.diag.isEmpty())
             r.diag = String.format(java.util.Locale.US, "partial raw=%.1f loopN=%d reg=%d/%d ld=%s", maxRaw, loopSamples.size(), regOk, regCalls, java.util.Arrays.toString(ldbg));

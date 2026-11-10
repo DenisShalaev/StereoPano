@@ -198,7 +198,7 @@
     <string name="set_lens_t">Lens correction (Cardboard)</string>
     <string name="set_loc_d">Writes GPS position and place names (city, region) into the file as tags and EXIF. Turn off if you share panoramas publicly and do not want your position stored.</string>
     <string name="set_loc_t">Save location</string>
-    <string name="set_loop_d">Auto compares the image with the start but only trusts it if it agrees with the gyro (within about 2.5°). Gyro only is for plain scenes such as sky and water.</string>
+    <string name="set_loop_d">Auto compares the image with the start but only trusts it if it agrees with the gyro (within about 4.5°). Gyro only is for plain scenes such as sky and water.</string>
     <string name="set_loop_t">Loop closure</string>
     <string name="set_move_d">Detects people and other moving objects while you turn and fills the gaps with the background seen at another moment. Higher = more sensitive. Works best on textured objects; plain-coloured objects may be only partly removed. Uses about 50 MB extra memory and some processing. 0 = off. Experimental. Default 0 (off).</string>
     <string name="set_move_t">Moving objects</string>
