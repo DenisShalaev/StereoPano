@@ -826,6 +826,8 @@ public class CaptureActivity extends Activity {
         }
     }
 
+    private volatile boolean geistFehlt;
+
     private void starteAufnahmeJetzt() {
         startVerzoegert = false;
         if (!gameYaw.hasData() || sitzung == null) return;
@@ -836,6 +838,8 @@ public class CaptureActivity extends Activity {
         startEl = snapElevation(gameYaw.pitch());
         ermittleOrt();
         stitcher = new StereoStitcher(groesse.getHeight(), groesse.getWidth(), fPx, stereoWinkel, deltaGrad, startYaw, true, bewegung, startEl);
+        geistFehlt = Settings.geist(this);
+        if (guide != null) guide.setGhost(null, 1.0);
 
         setzeSperren(true);
         starteAudio();
@@ -930,6 +934,12 @@ public class CaptureActivity extends Activity {
         Job j = offen.getAndSet(null);
         if (j == null || !nimmtAuf || j.s != stitcher) return;
         j.s.addFrame(j.f, j.psi, j.rot, j.ws);
+        if (geistFehlt && j.f instanceof YuvFrame && j.psi < 4.0) {
+            geistFehlt = false;
+            final android.graphics.Bitmap g = ((YuvFrame) j.f).klein(200);
+            final double kk = 1.0 + winkelKorr;
+            runOnUiThread(() -> { if (guide != null) guide.setGhost(g, kk); });
+        }
         long jetzt = System.currentTimeMillis();
         if (jetzt - letzteAnzeige > 100) {
             letzteAnzeige = jetzt;
@@ -1187,5 +1197,16 @@ public class CaptureActivity extends Activity {
         }
 
         private static int clamp(int v) { return v < 0 ? 0 : Math.min(v, 255); }
+
+        /** Verkleinerte Kopie des aufrechten Bildes (Breite bw), z. B. fuer die Anzeige des Startbildes. */
+        android.graphics.Bitmap klein(int bw) {
+            int uw = rot90 ? rawH : rawW, uh = rot90 ? rawW : rawH;
+            int bh = Math.max(1, bw * uh / uw);
+            int[] px = new int[bw * bh];
+            for (int y = 0; y < bh; y++)
+                for (int x = 0; x < bw; x++)
+                    px[y * bw + x] = rgb(Math.min(uw - 1, x * uw / bw), Math.min(uh - 1, y * uh / bh));
+            return android.graphics.Bitmap.createBitmap(px, bw, bh, android.graphics.Bitmap.Config.ARGB_8888);
+        }
     }
 }

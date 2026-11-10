@@ -216,6 +216,8 @@ string set_focal_d
 string set_focal_t
 string set_gacc_d
 string set_gacc_t
+string set_ghost_d
+string set_ghost_t
 string set_guides_d
 string set_guides_t
 string set_gyro_d

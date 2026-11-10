@@ -31,6 +31,9 @@ final class GuideView extends View {
     private double anchor, psi, ziel = Double.NaN, tempo;
     private boolean aufnahme;
     private double focalRatio = 1;
+    private android.graphics.Bitmap ghost;
+    private double ghostKorr = 1.0;
+    private final Paint ghostPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
     private double elVirt;                 // Elevation des virtuellen Horizonts (Sollneigung, z. B. fuer hohe Gebaeude)
     private final Paint lineReal = new Paint(Paint.ANTI_ALIAS_FLAG);     // Brennweite in Pixeln / Breite des aufrechten Kamerabildes
 
@@ -54,6 +57,13 @@ final class GuideView extends View {
     }
 
     void setFocalRatio(double r) { focalRatio = r; }
+
+    /** Erstes Bild der Aufnahme (klein) zum Einblenden am Ende; korr = Faktor der Winkelkorrektur (1 + c). */
+    void setGhost(android.graphics.Bitmap b, double korr) {
+        ghost = b;
+        ghostKorr = korr;
+        ghostPaint.setAlpha(100);
+    }
 
     /**
      * @param rot      Geraet->Welt (3x3 zeilenweise) oder null
@@ -98,6 +108,17 @@ final class GuideView extends View {
         double roll = Math.toDegrees(Math.atan2(rot[6], rot[7]));          // Kippen um die Blickachse
         boolean gerade = Math.abs(pitch) < 3 && Math.abs(roll) < 3;
         int ok = gerade ? 0xFF66FF66 : 0xFFFFC107;
+
+        // Geist des ersten Bildes: in den letzten 40 Grad halbtransparent dort, wo die Startrichtung liegt
+        if (ghost != null && aufnahme) {
+            double delta = psi * ghostKorr - 360.0;            // < 0: Start liegt noch vor dir (rechts)
+            if (delta > -40 && delta < 20) {
+                float cx = (float) (w / 2.0 - focalRatio * w * Math.tan(Math.toRadians(delta)));
+                c.drawBitmap(ghost, null, new android.graphics.RectF(cx - w / 2f, 0, cx + w / 2f, h), ghostPaint);
+                line.setColor(0xFFFF5252);
+                c.drawLine(cx, 0, cx, h, line);
+            }
+        }
 
         // Horizontlinie
         if (Math.abs(elVirt) >= 1) {                       // echter Horizont nur zeigen, wenn er vom virtuellen abweicht

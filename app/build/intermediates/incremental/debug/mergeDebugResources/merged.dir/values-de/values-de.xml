@@ -176,6 +176,8 @@
     <string name="set_focal_t">Brennweiten-Korrektur</string>
     <string name="set_gacc_d">Zum Auswaehlen tippen. Braucht Internet und einmalig eine Freigabe.</string>
     <string name="set_gacc_t">Google-Konto fuer Fotos</string>
+    <string name="set_ghost_d">In den letzten 40° wird das erste Bild halbtransparent eingeblendet, mit roter Linie an der Startrichtung. Anhalten, wenn das Livebild deckungsgleich ist.</string>
+    <string name="set_ghost_t">Start am Ende einblenden</string>
     <string name="set_guides_d">Fadenkreuz, Horizont und Tempo-Punkt über dem Kamerabild.</string>
     <string name="set_guides_t">Leitpunkte anzeigen</string>
     <string name="set_gyro_d">Die Ansicht folgt den Bewegungen des Telefons.</string>

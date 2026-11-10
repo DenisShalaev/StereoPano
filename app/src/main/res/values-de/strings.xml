@@ -233,4 +233,6 @@
     <string name="gp_zip_done">ZIP fertig. Neu: %1$d (stereo: %2$d, nur flach/360: %3$d), schon vorhanden: %4$d</string>
     <string name="set_wcorr_uw_t">Winkelkorrektur: Ultraweitwinkel</string>
     <string name="set_wcorr_uw_d">Eigener Wert für das 0,5×-Objektiv. Nach einer Aufnahme schlägt die Zeile „wk-&gt;“ auf dem Aufnahmebildschirm einen besseren Wert vor; hier eintragen.</string>
+    <string name="set_ghost_t">Start am Ende einblenden</string>
+    <string name="set_ghost_d">In den letzten 40° wird das erste Bild halbtransparent eingeblendet, mit roter Linie an der Startrichtung. Anhalten, wenn das Livebild deckungsgleich ist.</string>
 </resources>

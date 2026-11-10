@@ -176,6 +176,8 @@
     <string name="set_focal_t">Поправка фокусного расстояния</string>
     <string name="set_gacc_d">Нажмите для выбора. Нужен интернет и однократное разрешение.</string>
     <string name="set_gacc_t">Аккаунт Google для Фото</string>
+    <string name="set_ghost_d">В последних 40° первый кадр накладывается полупрозрачно, с красной линией в направлении старта. Остановитесь, когда живая картинка совпадёт с ним.</string>
+    <string name="set_ghost_t">Показывать старт в конце</string>
     <string name="set_guides_d">Перекрестие, горизонт и точка-темп поверх изображения камеры.</string>
     <string name="set_guides_t">Показывать ориентиры</string>
     <string name="set_gyro_d">Вид следует за движениями телефона.</string>

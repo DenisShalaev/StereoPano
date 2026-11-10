@@ -182,6 +182,8 @@
     <string name="set_focal_t">Focal length correction</string>
     <string name="set_gacc_d">Tap to choose. Needs internet and a one-time permission dialog.</string>
     <string name="set_gacc_t">Google account for Photos</string>
+    <string name="set_ghost_d">In the last 40° the first frame is overlaid semi-transparently with a red line where the start direction is. Stop when the live picture lines up with it.</string>
+    <string name="set_ghost_t">Show the start at the end</string>
     <string name="set_guides_d">Crosshair, horizon and pace dot over the camera image.</string>
     <string name="set_guides_t">Show guides</string>
     <string name="set_gyro_d">The view follows the movements of the phone.</string>

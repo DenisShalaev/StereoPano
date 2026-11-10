@@ -243,4 +243,6 @@
     <string name="gp_zip_done">ZIP finished. New: %1$d (stereo: %2$d, flat/360 only: %3$d), already present: %4$d</string>
     <string name="set_wcorr_uw_t">Angle correction: ultra-wide camera</string>
     <string name="set_wcorr_uw_d">Own value for the 0.5× lens. After a capture the line “wk-&gt;” on the capture screen suggests a better value; enter it here.</string>
+    <string name="set_ghost_t">Show the start at the end</string>
+    <string name="set_ghost_d">In the last 40° the first frame is overlaid semi-transparently with a red line where the start direction is. Stop when the live picture lines up with it.</string>
 </resources>
