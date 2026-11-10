@@ -444,7 +444,7 @@ public class GalleryActivity extends Activity {
     private void zeigeSortierMenue() {
         String[] opt = {getString(R.string.sort_date_new), getString(R.string.sort_date_old), getString(R.string.sort_name),
                 getString(R.string.sort_place), getString(R.string.sort_size), getString(R.string.sort_author)};
-        new AlertDialog.Builder(this).setTitle(R.string.sort_title)
+        new Ui.Dlg(this).setTitle(R.string.sort_title)
                 .setSingleChoiceItems(opt, sortModus, (d, w) -> {
                     sortModus = w;
                     Settings.p(this).edit().putInt(Settings.K_SORT, w).apply();
@@ -458,7 +458,7 @@ public class GalleryActivity extends Activity {
     private void zeigeMenue(Item it) {
         String[] eintraege = {getString(R.string.menu_share), getString(R.string.menu_flat), getString(R.string.menu_sbs),
                 getString(R.string.menu_anaglyph), getString(R.string.menu_delete), getString(R.string.menu_select), getString(R.string.menu_lenti)};
-        new AlertDialog.Builder(this).setTitle(it.name).setItems(eintraege, (d, w) -> {
+        new Ui.Dlg(this).setTitle(it.name).setItems(eintraege, (d, w) -> {
             if (w == 0) teilen(it);
             else if (w == 4) frageLoeschen(it);
             else if (w == 6) startActivity(new Intent(this, LentiActivity.class).setData(it.uri).putExtra("name", it.name));
@@ -496,7 +496,7 @@ public class GalleryActivity extends Activity {
         if (gewaehlt.isEmpty()) return;
         String[] eintraege = {getString(R.string.menu_share), getString(R.string.menu_flat), getString(R.string.menu_sbs),
                 getString(R.string.menu_anaglyph), getString(R.string.menu_delete)};
-        new AlertDialog.Builder(this).setTitle(getString(R.string.selected_count, gewaehlt.size())).setItems(eintraege, (d, w) -> {
+        new Ui.Dlg(this).setTitle(getString(R.string.selected_count, gewaehlt.size())).setItems(eintraege, (d, w) -> {
             List<Item> sel = ausgewaehlteItems();
             if (sel.isEmpty()) return;
             if (w == 0) teilenViele(sel);
@@ -569,7 +569,7 @@ public class GalleryActivity extends Activity {
         final List<Uri> uris = new ArrayList<>();
         final List<Long> ids = new ArrayList<>(gewaehlt);
         for (Long id : ids) uris.add(ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id));
-        new AlertDialog.Builder(this)
+        new Ui.Dlg(this)
                 .setMessage(getString(R.string.delete_many_confirm, uris.size()))
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.menu_delete, (d, w) -> {
@@ -592,7 +592,7 @@ public class GalleryActivity extends Activity {
 
     @SuppressWarnings("deprecation")
     private void frageLoeschen(Item it) {
-        new AlertDialog.Builder(this)
+        new Ui.Dlg(this)
                 .setMessage(getString(R.string.delete_confirm, it.name))
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.menu_delete, (d, w) -> {

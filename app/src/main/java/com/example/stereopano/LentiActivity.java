@@ -155,6 +155,7 @@ public class LentiActivity extends Activity {
         TextView geste = text(getString(R.string.lenti_gesture_hint), 12, GRAU);
         root.addView(geste);
         SeekBar sb = new SeekBar(this);
+        Ui.regler(sb);
         sb.setMax(1000);
         sb.setProgress(pos);
         sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -205,6 +206,7 @@ public class LentiActivity extends Activity {
         }));
         formular.addView(ueberschrift(getString(R.string.lenti_lpi_real)));
         lpiEdit = new EditText(this);
+        Ui.eingabe(lpiEdit);
         lpiEdit.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
         lpiEdit.setTextColor(TEXT);
         lpiEdit.setText(String.format(Locale.US, "%.3f", lpiReal));
@@ -273,6 +275,7 @@ public class LentiActivity extends Activity {
 
         formular.addView(ueberschrift(getString(R.string.lenti_depth) + ": " + depthPct + " %"));
         SeekBar ds = new SeekBar(this);
+        Ui.regler(ds);
         ds.setMax(150);
         ds.setProgress(depthPct);
         ds.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -576,7 +579,7 @@ public class LentiActivity extends Activity {
     private View check(String s, boolean v, java.util.function.Consumer<Boolean> cb) {
         android.widget.CheckBox c = new android.widget.CheckBox(this);
         c.setText(s);
-        c.setTextColor(TEXT);
+        Ui.haken(c);
         c.setChecked(v);
         c.setOnCheckedChangeListener((b, on) -> cb.accept(on));
         return c;

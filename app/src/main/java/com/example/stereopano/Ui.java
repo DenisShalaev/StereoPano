@@ -88,4 +88,79 @@ final class Ui {
         b.setBackground(g);
         return b;
     }
+
+    static final int KARTE = 0xFF1E293B, RAND = 0xFF334155, TEXTC = 0xFFFFFFFF, GRAU = 0xFF94A3B8, AKZENT = 0xFF4FC3F7;
+
+    private static android.graphics.drawable.GradientDrawable rund(float d, float r, int fill, int stroke) {
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setCornerRadius(r * d);
+        g.setColor(fill);
+        g.setStroke((int) Math.max(1, d), stroke);
+        return g;
+    }
+
+    /** Ein Dialog im gemeinsamen Stil (dunkle Karte, abgerundet, Akzentfarbe); statt AlertDialog.Builder verwenden. */
+    static final class Dlg extends android.app.AlertDialog.Builder {
+        private final Context ctx;
+
+        Dlg(Context c) {
+            super(c, android.R.style.Theme_DeviceDefault_Dialog_Alert);
+            ctx = c;
+        }
+
+        @Override
+        public android.app.AlertDialog show() {
+            android.app.AlertDialog dlg = create();
+            dlg.show();
+            float d = ctx.getResources().getDisplayMetrics().density;
+            if (dlg.getWindow() != null) {
+                dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.InsetDrawable(rund(d, 16, KARTE, RAND), (int) (12 * d)));
+            }
+            int tid = ctx.getResources().getIdentifier("alertTitle", "id", "android");
+            android.widget.TextView t = tid != 0 ? dlg.findViewById(tid) : null;
+            if (t != null) t.setTextColor(TEXTC);
+            android.widget.TextView m = dlg.findViewById(android.R.id.message);
+            if (m != null) m.setTextColor(0xFFCBD5E1);
+            for (int w : new int[]{android.app.AlertDialog.BUTTON_POSITIVE, android.app.AlertDialog.BUTTON_NEGATIVE, android.app.AlertDialog.BUTTON_NEUTRAL}) {
+                android.widget.Button b = dlg.getButton(w);
+                if (b != null) { b.setTextColor(AKZENT); b.setAllCaps(false); }
+            }
+            android.widget.ListView lv = dlg.getListView();
+            if (lv != null) {
+                lv.setDivider(new android.graphics.drawable.ColorDrawable(RAND));
+                lv.setDividerHeight((int) Math.max(1, d));
+            }
+            return dlg;
+        }
+    }
+
+    /** Ziehregler (SeekBar) in Akzentfarbe. */
+    static void regler(android.widget.SeekBar s) {
+        s.setProgressTintList(android.content.res.ColorStateList.valueOf(AKZENT));
+        s.setThumbTintList(android.content.res.ColorStateList.valueOf(AKZENT));
+        s.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(RAND));
+    }
+
+    /** Kontrollkaestchen in Akzentfarbe. */
+    static void haken(android.widget.CheckBox c) {
+        c.setButtonTintList(new android.content.res.ColorStateList(
+                new int[][]{{android.R.attr.state_checked}, {}}, new int[]{AKZENT, GRAU}));
+        c.setTextColor(TEXTC);
+    }
+
+    /** Schalter in Akzentfarbe. */
+    static void schalter(android.widget.Switch sw) {
+        int[][] st = {{android.R.attr.state_checked}, {}};
+        sw.setThumbTintList(new android.content.res.ColorStateList(st, new int[]{AKZENT, GRAU}));
+        sw.setTrackTintList(new android.content.res.ColorStateList(st, new int[]{0x884FC3F7, RAND}));
+    }
+
+    /** Eingabefeld: weisser Text, abgerundete Karte mit Rand. */
+    static void eingabe(android.widget.EditText e) {
+        float d = e.getResources().getDisplayMetrics().density;
+        e.setTextColor(TEXTC);
+        e.setHintTextColor(GRAU);
+        e.setBackground(rund(d, 10, KARTE, RAND));
+        e.setPadding((int) (12 * d), (int) (10 * d), (int) (12 * d), (int) (10 * d));
+    }
 }

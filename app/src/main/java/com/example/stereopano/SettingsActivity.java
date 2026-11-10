@@ -153,7 +153,7 @@ public class SettingsActivity extends Activity {
         reset.setGravity(Gravity.CENTER);
         reset.setPadding(dp(16), dp(14), dp(16), dp(14));
         reset.setBackground(rund(KARTE, RAND));
-        reset.setOnClickListener(v -> new AlertDialog.Builder(this)
+        reset.setOnClickListener(v -> new Ui.Dlg(this)
                 .setMessage(R.string.reset_confirm)
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.reset, (dlg, w) -> {
@@ -226,6 +226,7 @@ public class SettingsActivity extends Activity {
         tx.addView(i);
         zeile.addView(tx, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         Switch sw = new Switch(this);
+        Ui.schalter(sw);
         sw.setChecked(sp.getBoolean(key, def));
         sw.setOnCheckedChangeListener((b, an) -> sp.edit().putBoolean(key, an).apply());
         zeile.addView(sw);
@@ -246,6 +247,7 @@ public class SettingsActivity extends Activity {
         i.setPadding(0, dp(2), 0, dp(4));
         k.addView(i);
         SeekBar sb = new SeekBar(this);
+        Ui.regler(sb);
         sb.setMax((max - min) / step);
         sb.setProgress((cur - min) / step);
         sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -271,7 +273,7 @@ public class SettingsActivity extends Activity {
         TextView i = text(getString(info), GRAU, 12);
         i.setPadding(0, dp(2), 0, 0);
         k.addView(i);
-        k.setOnClickListener((View v) -> new AlertDialog.Builder(this).setTitle(getString(titel))
+        k.setOnClickListener((View v) -> new Ui.Dlg(this).setTitle(getString(titel))
                 .setItems(labels, (dlg, w) -> {
                     sp.edit().putInt(key, werte[w]).apply();
                     wert.setText(labels[w]);
@@ -351,10 +353,11 @@ public class SettingsActivity extends Activity {
         k.addView(i);
         k.setOnClickListener(v -> {
             final android.widget.EditText et = new android.widget.EditText(this);
+            Ui.eingabe(et);
             et.setSingleLine(true);
             et.setText(sp.getString(key, ""));
             et.setSelection(et.getText().length());
-            AlertDialog.Builder db = new AlertDialog.Builder(this).setTitle(getString(titel)).setView(et)
+            AlertDialog.Builder db = new Ui.Dlg(this).setTitle(getString(titel)).setView(et)
                     .setNegativeButton(R.string.cancel, null);
             if (Settings.K_AUTHOR.equals(key)) db.setNeutralButton(R.string.from_google, (dlg, w) -> waehleKonto());
             db

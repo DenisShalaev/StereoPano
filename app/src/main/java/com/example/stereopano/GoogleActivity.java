@@ -170,7 +170,7 @@ public class GoogleActivity extends Activity {
                 i.setTextSize(12);
                 k.addView(i);
             }
-            k.setOnClickListener(v -> new android.app.AlertDialog.Builder(this).setTitle(it.name).setItems(new String[]{
+            k.setOnClickListener(v -> new Ui.Dlg(this).setTitle(it.name).setItems(new String[]{
                     getString(R.string.gp_m_open), getString(R.string.gp_m_link), getString(R.string.gp_m_check)}, (dlg, w) -> {
                 if (w == 0) holeUndOeffne(it);
                 else if (w == 1) link(it);
