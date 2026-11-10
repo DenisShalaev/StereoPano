@@ -106,6 +106,7 @@ public class SettingsActivity extends Activity {
         schalter(R.string.set_ae_t, R.string.set_ae_d, Settings.K_AE, true);
         schalter(R.string.set_seamopt_t, R.string.set_seamopt_d, Settings.K_SEAMOPT, false);
         schalter(R.string.set_seamman_t, R.string.set_seamman_d, Settings.K_NAHTMAN, true);
+        regler(R.string.set_seamextra_t, R.string.set_seamextra_d, Settings.K_NAHTEXTRA, 10, 40, 2, 30, v -> v + "°");
         schalter(R.string.set_ghost_t, R.string.set_ghost_d, Settings.K_GHOST, false);
         schalter(R.string.set_guides_t, R.string.set_guides_d, Settings.K_LEIT, true);
         schalter(R.string.set_audio_t, R.string.set_audio_d, Settings.K_AUDIO, true);

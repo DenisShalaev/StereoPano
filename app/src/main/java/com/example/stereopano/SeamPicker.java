@@ -82,6 +82,11 @@ final class SeamPicker extends LinearLayout {
         addView(bar);
     }
 
+    @Override protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        requestApplyInsets();
+    }
+
     private int pixel(int v, int label) {
         int p = StereoStitcher.previewPixel(r, true, Math.max(0, Math.min(r.panoH - 1, v)), label);
         return p == 0 ? 0xFF000000 : (p | 0xFF000000);

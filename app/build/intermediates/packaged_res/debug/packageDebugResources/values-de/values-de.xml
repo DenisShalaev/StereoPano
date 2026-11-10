@@ -211,7 +211,9 @@
     <string name="set_res_t">Kameraauflösung</string>
     <string name="set_sbsfov_d">Vertikales Sichtfeld im Brillenmodus. Standard 45°.</string>
     <string name="set_sbsfov_t">Sichtfeld SBS-Brille</string>
-    <string name="set_seamman_d">Der Kreis wird NICHT geschlossen und nichts überblendet. Die App nimmt etwa 14° mehr als eine volle Drehung auf und zeigt danach den ganzen Streifen mit einem 360°-Rahmen. Rahmen nach links/rechts ziehen, bis die Naht möglichst unauffällig liegt (z. B. über einer Tür), dann speichern. Nur die Helligkeit an der Naht wird angeglichen.</string>
+    <string name="set_seamextra_d">Wie viel mehr als eine volle Drehung aufgenommen wird, wenn die Naht von Hand gesetzt wird. Mehr Reserve = mehr Spielraum für den 360°-Rahmen, aber längeres Weiterdrehen.</string>
+    <string name="set_seamextra_t">Reserve für die Naht (Grad über 360°)</string>
+    <string name="set_seamman_d">Der Kreis wird NICHT geschlossen und nichts überblendet. Die App nimmt etwa 30° mehr (einstellbar) als eine volle Drehung auf und zeigt danach den ganzen Streifen mit einem 360°-Rahmen. Rahmen nach links/rechts ziehen, bis die Naht möglichst unauffällig liegt (z. B. über einer Tür), dann speichern. Nur die Helligkeit an der Naht wird angeglichen.</string>
     <string name="set_seamman_t">Naht von Hand (Kreis nicht schließen)</string>
     <string name="set_seamopt_d">Legt die Nahtstelle entlang des Pfades kleinster Abweichung und mischt Helligkeit über eine breite Zone, feine Details (Äste, Kanten) nur über wenige Pixel. Hilft bei nahen Objekten; braucht die Überlappung am Ende der Aufnahme. Standardmäßig aus.</string>
     <string name="set_seamopt_t">Verbesserte Naht (experimentell)</string>

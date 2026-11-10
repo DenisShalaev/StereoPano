@@ -283,7 +283,7 @@ public class CaptureActivity extends Activity {
         // Manuelle Naht (nicht mit "Start einblenden" kombinierbar): Kreis nicht schliessen, mit Reserve aufnehmen
         final boolean nahtMan = Settings.nahtManuell(this) && !Settings.geist(this);
         StereoStitcher.closureEnabled = !nahtMan;
-        StereoStitcher.extraDeg = nahtMan ? 14.0 : 0.0;
+        StereoStitcher.setExtra(nahtMan ? Settings.nahtReserve(this) : 0.0);
         StereoStitcher.loopEnabled = !nahtMan && Settings.p(this).getInt(Settings.K_LOOPMODE, 0) == 0;
         StereoStitcher.seamOpt = Settings.p(this).getBoolean(Settings.K_SEAMOPT, false);
         jpegQualitaet = Settings.jpegQualitaet(this);
@@ -956,7 +956,7 @@ public class CaptureActivity extends Activity {
             final double rest = j.s.remainingDeg();
             runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp, rest));
         }
-        if ((!manuellStop && j.s.isComplete()) || j.s.effPsi(j.psi) >= (manuellStop ? 380.0 : (StereoStitcher.extraDeg > 0 ? 384.0 : 370.0)) || j.psi >= 395.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad (manuell: 380)
+        if ((!manuellStop && j.s.isComplete()) || j.s.effPsi(j.psi) >= (manuellStop ? 380.0 : (StereoStitcher.extraDeg > 0 ? 360.0 + StereoStitcher.extraDeg + 5.0 : 370.0)) || j.psi >= Math.max(395.0, 360.0 + StereoStitcher.extraDeg + 15.0)) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad (manuell: 380)
     }
 
     private void aktualisiereAnzeige(double fort, double pitch, double psi, double stepDeg, double rest) {

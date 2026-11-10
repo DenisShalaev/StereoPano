@@ -130,7 +130,8 @@ final class StereoStitcher {
     /** Manuelle Naht: zusaetzliche Grad, die ueber 360 + Fenster hinaus aufgenommen werden (0 = aus). */
     static double extraDeg = 0;
     /** Maximal sinnvolle Verschiebung des 360-Grad-Fensters in Grad (so viel Erweiterung wird gespeichert). */
-    static double maxExtraDeg() { return EXT_DEG; }
+    /** Reserve einstellen (vor dem Anlegen des Stitchers): Erweiterung = Reserve + Rand; ohne Reserve Standardwert. */
+    static void setExtra(double extra) { extraDeg = extra; EXT_DEG = extra > 0 ? Math.max(24.0, extra + 8.0) : 24.0; }
     static boolean loopEnabled = true;
     /** Suchbereich (Grad) fuer den Restfehler der Drehung. Ist der Massstab des Sensors schon korrigiert, bleibt der Fehler klein;
      *  grosse Treffer waeren dann Fehlzuordnungen (aehnliche Tuerkanten) und wuerden die Aufnahme zu frueh beenden. */
@@ -145,7 +146,7 @@ final class StereoStitcher {
     private static final double LOOP_FROM_DEG = 280.0;   // ab hier wird nach dem Anfang des Panoramas gesucht
     private static final double LOOP_MARGIN_DEG = 3.0;   // so weit hinter den Anfang weiterdrehen (Ueberlappung fuer die Naht)
     private static final double CLOSE_FROM_DEG = 357.0;   // ab hier werden die Bilder mit dem Anfang verglichen
-    private static final double EXT_DEG = 24.0;             // so weit ueber 360 Grad hinaus wird getrennt gespeichert (Erweiterung)
+    private static double EXT_DEG = 24.0;             // so weit ueber 360 Grad hinaus wird getrennt gespeichert (Erweiterung)
     private double stepEma = 0.3;      // typischer Winkelabstand zwischen zwei Bildern (Grad)
     private double curWs = 1.0;     // Gewichtsfaktor des aktuellen Bildes
     private double win;                // aktuelle halbe Fensterbreite (mindestens deltaDeg, waechst bei niedriger Bildrate)

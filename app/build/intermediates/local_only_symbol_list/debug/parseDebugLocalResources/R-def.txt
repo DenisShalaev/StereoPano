@@ -251,6 +251,8 @@ string set_res_d
 string set_res_t
 string set_sbsfov_d
 string set_sbsfov_t
+string set_seamextra_d
+string set_seamextra_t
 string set_seamman_d
 string set_seamman_t
 string set_seamopt_d
