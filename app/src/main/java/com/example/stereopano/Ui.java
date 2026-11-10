@@ -66,4 +66,26 @@ final class Ui {
             return WindowInsets.CONSUMED;
         });
     }
+
+    /** Textknopf im gemeinsamen Stil (abgerundet, Karte mit Rand; primaer = Akzentfarbe). */
+    static android.widget.Button pille(Context c, int textRes, boolean primaer) {
+        float d = c.getResources().getDisplayMetrics().density;
+        android.widget.Button b = new android.widget.Button(c);
+        b.setText(textRes);
+        b.setAllCaps(false);
+        b.setTextSize(14);
+        b.setTextColor(primaer ? 0xFF000000 : 0xFFFFFFFF);
+        b.setStateListAnimator(null);
+        b.setMinHeight(0);
+        b.setMinimumHeight(0);
+        b.setMinWidth(0);
+        b.setMinimumWidth(0);
+        b.setPadding((int) (14 * d), (int) (8 * d), (int) (14 * d), (int) (8 * d));
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setCornerRadius(14 * d);
+        g.setColor(primaer ? 0xFF4FC3F7 : 0xFF1E293B);
+        g.setStroke((int) Math.max(1, d), primaer ? 0xFF4FC3F7 : 0xFF334155);
+        b.setBackground(g);
+        return b;
+    }
 }

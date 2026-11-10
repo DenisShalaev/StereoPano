@@ -148,21 +148,20 @@ public class GalleryActivity extends Activity {
         auswahlZahl.setTextColor(Color.WHITE);
         auswahlZahl.setTextSize(16);
         auswahlLeiste.addView(auswahlZahl, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        android.widget.Button alle = new android.widget.Button(this);
-        alle.setText(R.string.select_all);
+        android.widget.Button alle = Ui.pille(this, R.string.select_all, false);
         alle.setOnClickListener(v -> {
             for (Object z : zeilen) if (z instanceof Item[]) for (Item it : (Item[]) z) if (it != null) gewaehlt.add(it.id);
             aktualisiereAuswahl();
         });
-        auswahlLeiste.addView(alle);
-        android.widget.Button del = new android.widget.Button(this);
-        del.setText(R.string.actions);
+        LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        pl.leftMargin = 8;
+        auswahlLeiste.addView(alle, pl);
+        android.widget.Button del = Ui.pille(this, R.string.actions, true);
         del.setOnClickListener(v -> zeigeAuswahlMenue());
-        auswahlLeiste.addView(del);
-        android.widget.Button abbr = new android.widget.Button(this);
-        abbr.setText(R.string.cancel);
+        auswahlLeiste.addView(del, pl);
+        android.widget.Button abbr = Ui.pille(this, R.string.cancel, false);
         abbr.setOnClickListener(v -> beendeAuswahl());
-        auswahlLeiste.addView(abbr);
+        auswahlLeiste.addView(abbr, pl);
         auswahlLeiste.setVisibility(View.GONE);
         root.addView(auswahlLeiste);
 

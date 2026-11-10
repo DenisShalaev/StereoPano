@@ -183,7 +183,7 @@ public class LentiActivity extends Activity {
         balken.setVisibility(View.GONE);
         root.addView(balken);
 
-        machen = knopf(getString(R.string.lenti_make), v -> starte(false));
+        machen = knopf(getString(R.string.lenti_make), v -> starte(false), true);
         test = knopf(getString(R.string.lenti_test), v -> starte(true));
         abbruch = knopf(getString(R.string.lenti_cancel), v -> abbrechen = true);
         abbruch.setVisibility(View.GONE);
@@ -521,6 +521,8 @@ public class LentiActivity extends Activity {
         abbruch.setVisibility(b ? View.VISIBLE : View.GONE);
         machen.setEnabled(!b);
         test.setEnabled(!b);
+        machen.setAlpha(b ? 0.4f : 1f);
+        test.setAlpha(b ? 0.4f : 1f);
     }
 
     private void fertig() {
@@ -548,9 +550,22 @@ public class LentiActivity extends Activity {
         return t;
     }
 
-    private Button knopf(String s, View.OnClickListener l) {
+    private Button knopf(String s, View.OnClickListener l) { return knopf(s, l, false); }
+
+    /** Knopf im Stil der Einstellungen: abgerundet; primaer = Akzentfarbe, sonst Karte mit Rand. */
+    private Button knopf(String s, View.OnClickListener l, boolean primaer) {
         Button b = new Button(this);
         b.setText(s);
+        b.setAllCaps(false);
+        b.setTextSize(15);
+        b.setTextColor(primaer ? Color.BLACK : TEXT);
+        b.setStateListAnimator(null);
+        b.setMinHeight(dp(48));
+        GradientDrawable g = new GradientDrawable();
+        g.setCornerRadius(dp(14));
+        g.setColor(primaer ? AKZENT : KARTE);
+        g.setStroke(dp(1), primaer ? AKZENT : RAND);
+        b.setBackground(g);
         b.setOnClickListener(l);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = dp(8);
