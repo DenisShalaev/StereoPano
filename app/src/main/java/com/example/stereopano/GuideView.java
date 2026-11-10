@@ -62,7 +62,7 @@ final class GuideView extends View {
     void setGhost(android.graphics.Bitmap b, double korr) {
         ghost = b;
         ghostKorr = korr;
-        ghostPaint.setAlpha(100);
+        ghostPaint.setAlpha(255);
     }
 
     /**

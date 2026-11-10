@@ -826,7 +826,7 @@ public class CaptureActivity extends Activity {
         }
     }
 
-    private volatile boolean geistFehlt;
+    private volatile boolean geistFehlt, manuellStop;
 
     private void starteAufnahmeJetzt() {
         startVerzoegert = false;
@@ -839,6 +839,7 @@ public class CaptureActivity extends Activity {
         ermittleOrt();
         stitcher = new StereoStitcher(groesse.getHeight(), groesse.getWidth(), fPx, stereoWinkel, deltaGrad, startYaw, true, bewegung, startEl);
         geistFehlt = Settings.geist(this);
+        manuellStop = geistFehlt;
         if (guide != null) guide.setGhost(null, 1.0);
 
         setzeSperren(true);
@@ -950,7 +951,7 @@ public class CaptureActivity extends Activity {
             final double rest = j.s.remainingDeg();
             runOnUiThread(() -> aktualisiereAnzeige(fort, pitch, p, stp, rest));
         }
-        if (j.s.isComplete() || j.s.effPsi(j.psi) >= 370.0 || j.psi >= 395.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad
+        if ((!manuellStop && j.s.isComplete()) || j.s.effPsi(j.psi) >= (manuellStop ? 380.0 : 370.0) || j.psi >= 395.0) runOnUiThread(this::beendeAufnahme);   // fertig; Notbremse bei 370 Grad (manuell: 380)
     }
 
     private void aktualisiereAnzeige(double fort, double pitch, double psi, double stepDeg, double rest) {
@@ -983,6 +984,7 @@ public class CaptureActivity extends Activity {
         vibriere(new long[]{0, 80, 90, 80});
         final StereoStitcher s = stitcher;
         stitcher = null;
+        if (manuellStop) s.closeManually();
         s.close();
         final byte[] ton = stopAudio();
         if (sitzung != null) setzeSperren(false);
@@ -1203,9 +1205,17 @@ public class CaptureActivity extends Activity {
             int uw = rot90 ? rawH : rawW, uh = rot90 ? rawW : rawH;
             int bh = Math.max(1, bw * uh / uw);
             int[] px = new int[bw * bh];
+            // Bildmitte = Startrichtung: links davon gehoert nicht zum Panorama (unsichtbar), direkt rechts davon ist das Startbild
+            // scharf (ca. 2 % der Breite) und blendet dann ueber 40 % der Breite langsam aus
             for (int y = 0; y < bh; y++)
-                for (int x = 0; x < bw; x++)
-                    px[y * bw + x] = rgb(Math.min(uw - 1, x * uw / bw), Math.min(uh - 1, y * uh / bh));
+                for (int x = 0; x < bw; x++) {
+                    double dx = x - bw / 2.0, a;
+                    if (dx < 0) a = 0;
+                    else if (dx <= bw * 0.02) a = 1;
+                    else a = Math.max(0, 1 - (dx - bw * 0.02) / (bw * 0.40));
+                    int c = rgb(Math.min(uw - 1, x * uw / bw), Math.min(uh - 1, y * uh / bh));
+                    px[y * bw + x] = ((int) (a * 235) << 24) | (c & 0xFFFFFF);
+                }
             return android.graphics.Bitmap.createBitmap(px, bw, bh, android.graphics.Bitmap.Config.ARGB_8888);
         }
     }

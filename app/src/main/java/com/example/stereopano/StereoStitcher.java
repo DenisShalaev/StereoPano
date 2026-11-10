@@ -1180,6 +1180,12 @@ final class StereoStitcher {
     private final java.util.ArrayList<double[]> loopSamples = new java.util.ArrayList<>();   // {Sensorwinkel, Fehler in Grad}
     private int regCalls = 0, regOk = 0;
     private double maxRaw = 0, epsMin = 0, epsMax = 0;
+    private double manualEd = Double.NaN;       // von Hand gesetzter Kreisschluss (Sensorfehler in Grad)
+
+    /** Der Nutzer hat bei Deckung mit dem Startbild gestoppt: der erreichte Winkel gilt als voller Kreis. */
+    synchronized void closeManually() {
+        if (maxRaw >= 330.0) manualEd = Math.max(-8.0, Math.min(8.0, 360.0 - maxRaw));
+    }
     private double smDx = 0, smDy = 0;
     private double eps = 0, curEps = 0;                 // gelernte Korrektur des Sensorwinkels (Grad) bzw. der aktuell benutzte Wert
     static boolean epsEnabled = false;                // Winkelkorrektur nach Bild (zum Testen abschaltbar)
@@ -1381,7 +1387,7 @@ final class StereoStitcher {
         boolean[] ok = new boolean[panoW];
         int nOk = 0;
         // Kreisschluss erkannt und Sensor hinkt nach: der Kreis ist schon vor Spalte panoW zu; der Rest wird nicht gebraucht
-        final double loopEd = loopEnabled ? loopError() : Double.NaN;
+        final double loopEd = !Double.isNaN(manualEd) ? manualEd : (loopEnabled ? loopError() : Double.NaN);
         final int needL = Double.isNaN(loopEd) ? panoW : needCols(loopEd);
         for (int x = 0; x < panoW; x++) {
             boolean unusedL = needL < panoW && Math.floorMod(x - eyeL.start, (long) panoW) >= needL;
