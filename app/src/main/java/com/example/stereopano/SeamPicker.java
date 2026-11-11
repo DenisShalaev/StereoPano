@@ -110,7 +110,18 @@ final class SeamPicker extends LinearLayout {
         pl.setPadding(0, (int) (14 * d), 0, (int) (4 * d));
         addView(pl);
         prev = new PreviewView(c);
-        addView(prev, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
+        // Vorschau + senkrechter Feinregler fuer die Hoehe direkt daneben
+        LinearLayout pr = new LinearLayout(c);
+        pr.setOrientation(HORIZONTAL);
+        pr.addView(prev, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1f));
+        final int fineV = Math.max(4, (int) Math.round(1.5 * w / 360.0));
+        VSlider vs = new VSlider(c, fineV, new Fine() {
+            int base;
+            @Override public void start() { base = dy; }
+            @Override public void set(int delta) { setDy(base + delta); }
+        });
+        pr.addView(vs, new LayoutParams((int) (48 * d), LayoutParams.MATCH_PARENT));
+        addView(pr, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
 
         // Feste Lupe: bleibt stehen, auch wenn man mit den Reglern feinjustiert
         lens = new LensPanel(c);
@@ -124,11 +135,6 @@ final class SeamPicker extends LinearLayout {
             int base;
             @Override public void start() { base = span; }
             @Override public void set(int delta) { setSpan(base + delta); }
-        }));
-        addView(fineRow(c, d, "\u2195", fineH, new Fine() {
-            int base;
-            @Override public void start() { base = dy; }
-            @Override public void set(int delta) { setDy(base + delta); }
         }));
 
         LinearLayout tools = new LinearLayout(c);
@@ -500,6 +506,54 @@ final class SeamPicker extends LinearLayout {
             cv.drawBitmap(bmp, 0, 0, p);
             cv.drawLine(W / 2f, 0, W / 2f, H, line);
             cv.drawLine(0, H / 2f, W, H / 2f, mark);
+        }
+    }
+
+    /** Senkrechter Feinregler (Mitte = 0, oben = Bild nach oben); springt nach dem Loslassen zur Mitte zurueck. */
+    private final class VSlider extends View {
+        private final int half;
+        private final Fine f;
+        private final Paint track = new Paint(Paint.ANTI_ALIAS_FLAG), thumb = new Paint(Paint.ANTI_ALIAS_FLAG), tick = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private double val;                    // -1 .. 1, positiv = oben
+        private final float dn;
+
+        VSlider(Context c, int half, Fine f) {
+            super(c);
+            this.half = half;
+            this.f = f;
+            dn = c.getResources().getDisplayMetrics().density;
+            track.setColor(0xFF334155);
+            track.setStrokeWidth(4 * dn);
+            track.setStrokeCap(Paint.Cap.ROUND);
+            tick.setColor(0xFF64748B);
+            tick.setStrokeWidth(2 * dn);
+            thumb.setColor(Ui.AKZENT);
+        }
+
+        @Override protected void onDraw(Canvas cv) {
+            float W = getWidth(), H = getHeight(), pad = 18 * dn, cx = W / 2;
+            cv.drawLine(cx, pad, cx, H - pad, track);
+            cv.drawLine(cx - 8 * dn, H / 2, cx + 8 * dn, H / 2, tick);
+            float y = (float) (H / 2 - val * (H / 2 - pad));
+            cv.drawCircle(cx, y, 13 * dn, thumb);
+        }
+
+        @Override public boolean onTouchEvent(MotionEvent e) {
+            float H = getHeight(), pad = 18 * dn;
+            switch (e.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    getParent().requestDisallowInterceptTouchEvent(true);
+                    f.start();
+                case MotionEvent.ACTION_MOVE:
+                    val = Math.max(-1, Math.min(1, (H / 2 - e.getY()) / (H / 2 - pad)));
+                    f.set((int) Math.round(val * half));
+                    invalidate();
+                    return true;
+                default:
+                    val = 0;
+                    invalidate();
+                    return true;
+            }
         }
     }
 }
