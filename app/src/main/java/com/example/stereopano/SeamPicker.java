@@ -28,6 +28,10 @@ final class SeamPicker extends LinearLayout {
     private int dy = 0;               // vertikaler Versatz Ende gegen Anfang (Zeilen)
     private TextView deltaTxt, dyTxt;
     private final int dyMax;
+    private boolean look;               // true: Finger auf der Vorschau verschiebt nichts (nur ansehen)
+    private double lensRow = 0.5;      // Hoehe (Anteil 0..1) der festen Lupe
+    private double lensZoom = 3;       // Pixel je Kreisspalte in der festen Lupe
+    private LensPanel lens;
     private final StripView strip;
     private final PreviewView prev;
 
@@ -108,6 +112,59 @@ final class SeamPicker extends LinearLayout {
         prev = new PreviewView(c);
         addView(prev, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
 
+        // Feste Lupe: bleibt stehen, auch wenn man mit den Reglern feinjustiert
+        lens = new LensPanel(c);
+        LayoutParams llp = new LayoutParams(LayoutParams.MATCH_PARENT, (int) (150 * d));
+        llp.topMargin = (int) (8 * d);
+        addView(lens, llp);
+
+        // Feinregler: gelten relativ zum letzten Fingerwert und springen nach dem Loslassen zur Mitte zurueck
+        final int fineH = Math.max(4, (int) Math.round(1.5 * w / 360.0));
+        addView(fineRow(c, d, "\u2194", fineH, new Fine() {
+            int base;
+            @Override public void start() { base = span; }
+            @Override public void set(int delta) { setSpan(base + delta); }
+        }));
+        addView(fineRow(c, d, "\u2195", fineH, new Fine() {
+            int base;
+            @Override public void start() { base = dy; }
+            @Override public void set(int delta) { setDy(base + delta); }
+        }));
+
+        LinearLayout tools = new LinearLayout(c);
+        tools.setGravity(Gravity.CENTER_VERTICAL);
+        tools.setPadding(0, (int) (6 * d), 0, 0);
+        final android.widget.Button mode = Ui.pille(c, R.string.seam_mode_move, false);
+        mode.setOnClickListener(v -> {
+            look = !look;
+            mode.setText(look ? R.string.seam_mode_look : R.string.seam_mode_move);
+            prev.invalidate();
+        });
+        tools.addView(mode);
+        final TextView zt = new TextView(c);
+        zt.setTextColor(Ui.GRAU);
+        zt.setTextSize(13);
+        zt.setPadding((int) (14 * d), 0, (int) (6 * d), 0);
+        zt.setText(zoomText());
+        android.widget.Button zm = Ui.pille(c, R.string.seam_mode_move, false), zp = Ui.pille(c, R.string.seam_mode_move, false);
+        zm.setText("\u2212");
+        zp.setText("+");
+        final double[] levels = {1.5, 2, 3, 4, 6, 8};
+        View.OnClickListener zl = v -> {
+            int i = 0;
+            for (int k = 0; k < levels.length; k++) if (Math.abs(levels[k] - lensZoom) < 0.01) i = k;
+            i = Math.max(0, Math.min(levels.length - 1, i + (v == zp ? 1 : -1)));
+            lensZoom = levels[i];
+            zt.setText(zoomText());
+            lens.invalidate();
+        };
+        zm.setOnClickListener(zl);
+        zp.setOnClickListener(zl);
+        tools.addView(zt);
+        tools.addView(zm);
+        tools.addView(zp);
+        addView(tools);
+
         LinearLayout bar = new LinearLayout(c);
         bar.setGravity(Gravity.END);
         bar.setPadding(0, (int) (12 * d), 0, 0);
@@ -122,6 +179,35 @@ final class SeamPicker extends LinearLayout {
         addView(bar);
     }
 
+    private interface Fine { void start(); void set(int delta); }
+
+    private String zoomText() { return String.format(java.util.Locale.US, "\ud83d\udd0d \u00d7%s", lensZoom == Math.floor(lensZoom) ? String.valueOf((int) lensZoom) : String.valueOf(lensZoom)); }
+
+    private LinearLayout fineRow(Context c, float d, String sym, int half, Fine f) {
+        LinearLayout row = new LinearLayout(c);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        TextView t = new TextView(c);
+        t.setText(sym);
+        t.setTextColor(Ui.TEXTC);
+        t.setTextSize(16);
+        t.setMinWidth((int) (28 * d));
+        row.addView(t);
+        final android.widget.SeekBar sb = new android.widget.SeekBar(c);
+        Ui.regler(sb);
+        sb.setMax(2 * half);
+        sb.setProgress(half);
+        final boolean[] user = {false};
+        sb.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(android.widget.SeekBar s, int p, boolean fromUser) {
+                if (fromUser && user[0]) f.set(p - half);
+            }
+            @Override public void onStartTrackingTouch(android.widget.SeekBar s) { user[0] = true; f.start(); }
+            @Override public void onStopTrackingTouch(android.widget.SeekBar s) { user[0] = false; s.setProgress(half); }
+        });
+        row.addView(sb, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+        return row;
+    }
+
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         requestApplyInsets();
@@ -134,12 +220,21 @@ final class SeamPicker extends LinearLayout {
         updateDelta();
         strip.invalidate();
         prev.rebuild();
+        if (lens != null) lens.invalidate();
+    }
+
+    private void setLensRow(float ty) {
+        if (prev == null) return;
+        double frac = prev.rowFrac(ty);
+        lensRow = Math.max(0, Math.min(1, frac));
+        if (lens != null) lens.invalidate();
     }
 
     private void setDy(int v) {
         dy = Math.max(-dyMax, Math.min(dyMax, v));
         updateDelta();
         prev.rebuild();
+        if (lens != null) lens.invalidate();
     }
 
     private void updateDelta() {
@@ -230,6 +325,8 @@ final class SeamPicker extends LinearLayout {
         private boolean touching, vertical;
         private float tx, ty, lastX, lastY;
         private double accSpan, accDy;
+        private final double[] hT = new double[16], hS = new double[16], hD = new double[16];
+        private int hN;
 
         PreviewView(Context c) {
             super(c);
@@ -244,6 +341,8 @@ final class SeamPicker extends LinearLayout {
         }
 
         @Override protected void onSizeChanged(int W, int H, int ow, int oh) { rebuild(); }
+
+        double rowFrac(float y) { return bh > 0 ? (y - bt) / bh : 0.5; }
 
         /** Kreisspalten bzw. Zeilen je Anzeigepixel (Bitmap ist gleichmaessig skaliert). */
         private double perPx() { return (2.0 * P / 800.0) / sc; }
@@ -275,6 +374,8 @@ final class SeamPicker extends LinearLayout {
                     vertical = rel < 0.25f || rel > 0.75f;      // oberer / unterer Rand = Hoehe
                     accSpan = span;
                     accDy = dy;
+                    hN = 0;
+                    setLensRow(ty);
                     invalidate();
                     return true;
                 }
@@ -285,20 +386,36 @@ final class SeamPicker extends LinearLayout {
                     tx = e.getX();
                     ty = e.getY();
                     double f = perPx();
-                    if (vertical) {
-                        accDy -= dyy * f;                        // Ende nach unten ziehen = Quellzeile weiter oben
-                        setDy((int) Math.round(accDy));
-                    } else {
-                        accSpan -= dx * f;                       // Ende nach rechts ziehen = frueherer Inhalt an der Naht
-                        setSpan((int) Math.round(accSpan));
+                    setLensRow(ty);
+                    if (!look) {
+                        if (vertical) {
+                            accDy -= dyy * f;                    // Ende nach unten ziehen = Quellzeile weiter oben
+                            setDy((int) Math.round(accDy));
+                        } else {
+                            accSpan -= dx * f;                   // Ende nach rechts ziehen = frueherer Inhalt an der Naht
+                            setSpan((int) Math.round(accSpan));
+                        }
+                        if (hN == hT.length) { System.arraycopy(hT, 1, hT, 0, hN - 1); System.arraycopy(hS, 1, hS, 0, hN - 1); System.arraycopy(hD, 1, hD, 0, hN - 1); hN--; }
+                        hT[hN] = e.getEventTime(); hS[hN] = span; hD[hN] = dy; hN++;
                     }
                     invalidate();
                     return true;
                 }
-                default:
+                default: {
+                    // Beim Abheben rollt der Finger oft noch ein Stueck: den Wert von vor ~70 ms wiederherstellen, wenn es nur ein kleiner Weg war
+                    if (e.getActionMasked() == MotionEvent.ACTION_UP && !look && hN > 0) {
+                        double now = e.getEventTime(), lim = 8 * perPx();
+                        int k = -1;
+                        for (int i = hN - 1; i >= 0; i--) if (hT[i] <= now - 70) { k = i; break; }
+                        if (k >= 0) {
+                            if (vertical && Math.abs(dy - hD[k]) <= lim) setDy((int) hD[k]);
+                            else if (!vertical && Math.abs(span - hS[k]) <= lim) setSpan((int) hS[k]);
+                        }
+                    }
                     touching = false;
                     invalidate();
                     return true;
+                }
             }
         }
 
@@ -312,6 +429,9 @@ final class SeamPicker extends LinearLayout {
             bh = dh;
             cv.drawBitmap(bmp, null, new RectF(bl, bt, bl + dw, bt + dh), p);
             cv.drawLine(W / 2f, bt, W / 2f, bt + dh, line);
+            float my = (float) (bt + lensRow * dh);                  // Hoehe der festen Lupe
+            cv.drawLine(bl, my, bl + 14 * dens, my, mark);
+            cv.drawLine(bl + dw - 14 * dens, my, bl + dw, my, mark);
             if (touching) {
                 if (vertical) {                                  // Hoehengriff sichtbar machen
                     float y = ty < bt + dh / 2 ? bt : bt + dh;
@@ -346,6 +466,40 @@ final class SeamPicker extends LinearLayout {
             cv.drawCircle(cx, cy, R, ring);
             cv.drawLine(cx, cy - R, cx, cy + R, mark);           // Naht
             cv.drawLine(cx - R, cy, cx + R, cy, mark);           // Hoehe des Fingers
+        }
+    }
+
+    /** Feste Lupe: Nahtstelle in der gewaehlten Hoehe, links Ende (mit Hoehenversatz), rechts Anfang; bleibt beim Feinjustieren stehen. */
+    private final class LensPanel extends View {
+        private Bitmap bmp;
+        private final Paint p = new Paint(Paint.FILTER_BITMAP_FLAG), line = new Paint(Paint.ANTI_ALIAS_FLAG), mark = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        LensPanel(Context c) {
+            super(c);
+            float dn = c.getResources().getDisplayMetrics().density;
+            line.setColor(Ui.AKZENT);
+            line.setStrokeWidth(2 * dn);
+            mark.setColor(0x88FFFFFF);
+            mark.setStrokeWidth(1 * dn);
+        }
+
+        @Override protected void onDraw(Canvas cv) {
+            int W = getWidth(), H = getHeight();
+            if (W <= 0 || H <= 0) return;
+            if (bmp == null || bmp.getWidth() != W || bmp.getHeight() != H) bmp = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888);
+            double v0 = row0 + lensRow * rows;
+            int[] px = new int[W];
+            for (int y = 0; y < H; y++) {
+                int v = (int) Math.round(v0 + (y - H / 2) / lensZoom);
+                for (int x = 0; x < W; x++) {
+                    int off = (int) Math.floor((x - W / 2) / lensZoom);
+                    px[x] = x < W / 2 ? pixel(v + dy, shift + span + off) : pixel(v, shift + off);
+                }
+                bmp.setPixels(px, 0, W, 0, y, W, 1);
+            }
+            cv.drawBitmap(bmp, 0, 0, p);
+            cv.drawLine(W / 2f, 0, W / 2f, H, line);
+            cv.drawLine(0, H / 2f, W, H / 2f, mark);
         }
     }
 }

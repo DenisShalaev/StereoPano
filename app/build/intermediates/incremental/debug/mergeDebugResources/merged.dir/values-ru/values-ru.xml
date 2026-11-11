@@ -158,6 +158,8 @@
     <string name="seam_cancel">Отмена (удалить)</string>
     <string name="seam_delta">Поправка круга</string>
     <string name="seam_hint">Сверху: тяните рамку — где заканчиваются 360°. Снизу (предпросмотр шва): тяните вбок — совмещение по горизонтали; у верхнего или нижнего края вверх/вниз — по высоте. Лупа показывает стык. Авто — автоматически.</string>
+    <string name="seam_mode_look">🔍 Только смотреть</string>
+    <string name="seam_mode_move">✋ Двигать</string>
     <string name="seam_preview">Предпросмотр шва (конец | начало)</string>
     <string name="seam_save">Сохранить</string>
     <string name="seam_title">Шов</string>

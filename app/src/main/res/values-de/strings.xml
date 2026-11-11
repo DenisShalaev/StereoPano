@@ -252,4 +252,6 @@
     <string name="seam_auto">Auto</string>
     <string name="seam_auto_running">Messe …</string>
     <string name="seam_auto_none">Nichts Eindeutiges gefunden: Anfang und Ende zeigen kein passendes Detail. Korrektur von Hand einstellen.</string>
+    <string name="seam_mode_move">✋ Verschieben</string>
+    <string name="seam_mode_look">🔍 Nur ansehen</string>
 </resources>

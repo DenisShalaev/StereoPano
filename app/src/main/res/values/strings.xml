@@ -262,4 +262,6 @@
     <string name="seam_auto">Auto</string>
     <string name="seam_auto_running">Measuring…</string>
     <string name="seam_auto_none">Nothing clear found: the start and end of the recording show no matching detail. Set the correction by hand.</string>
+    <string name="seam_mode_move">✋ Move</string>
+    <string name="seam_mode_look">🔍 Look only</string>
 </resources>

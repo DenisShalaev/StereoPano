@@ -198,6 +198,8 @@ string seam_auto_running
 string seam_cancel
 string seam_delta
 string seam_hint
+string seam_mode_look
+string seam_mode_move
 string seam_preview
 string seam_save
 string seam_title

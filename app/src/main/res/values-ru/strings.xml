@@ -252,4 +252,6 @@
     <string name="seam_auto">Авто</string>
     <string name="seam_auto_running">Измеряю…</string>
     <string name="seam_auto_none">Ничего однозначного не найдено: в начале и в конце съёмки нет совпадающих деталей. Задайте поправку вручную.</string>
+    <string name="seam_mode_move">✋ Двигать</string>
+    <string name="seam_mode_look">🔍 Только смотреть</string>
 </resources>

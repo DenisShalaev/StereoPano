@@ -164,6 +164,8 @@
     <string name="seam_cancel">Cancel (discard)</string>
     <string name="seam_delta">Circle correction</string>
     <string name="seam_hint">Top: drag the frame = where the 360° ends. Bottom (joint preview): drag sideways = join left/right; drag at the top or bottom edge = height. A magnifier shows the joint. Auto = automatic.</string>
+    <string name="seam_mode_look">🔍 Look only</string>
+    <string name="seam_mode_move">✋ Move</string>
     <string name="seam_preview">Seam preview (end | start)</string>
     <string name="seam_save">Save</string>
     <string name="seam_title">Seam</string>
