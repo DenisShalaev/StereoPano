@@ -253,7 +253,7 @@
     <string name="set_seamman_d">The circle is NOT closed and nothing is blended. The app records about 30° more (adjustable) than a full turn, then shows the whole strip with a 360° frame. Drag the frame left/right to put the seam where it is least visible (e.g. over a door), then save. Only the brightness at the seam is matched.</string>
     <string name="seam_title">Seam</string>
     <string name="seam_save">Save</string>
-    <string name="seam_hint">Frame = 360°. Drag left/right. Slider/Auto = circle correction</string>
+    <string name="seam_hint">Top: drag the frame = where the 360° ends. Bottom (joint preview): drag sideways = join left/right; drag at the top or bottom edge = height. A magnifier shows the joint. Auto = automatic.</string>
     <string name="seam_cancel">Cancel (discard)</string>
     <string name="seam_preview">Seam preview (end | start)</string>
     <string name="set_seamextra_t">Seam reserve (degrees beyond 360°)</string>

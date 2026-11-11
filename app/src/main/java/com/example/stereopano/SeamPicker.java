@@ -27,9 +27,7 @@ final class SeamPicker extends LinearLayout {
     private int span;                 // Breite des Fensters in Kreisspalten (w = genau 360 Grad ohne Stauchung)
     private int dy = 0;               // vertikaler Versatz Ende gegen Anfang (Zeilen)
     private TextView deltaTxt, dyTxt;
-    private android.widget.SeekBar dyBar;
-    private android.widget.SeekBar deltaBar;
-    private boolean setting;
+    private final int dyMax;
     private final StripView strip;
     private final PreviewView prev;
 
@@ -38,6 +36,7 @@ final class SeamPicker extends LinearLayout {
         r = res;
         w = r.panoW;
         span = w;
+        dyMax = Math.max(1, (int) Math.round(4.0 * w / 360.0));
         ext = r.extW;
         row0 = r.height > 0 ? r.y0 : 0;
         rows = r.height > 0 ? r.height : r.panoH;
@@ -67,31 +66,20 @@ final class SeamPicker extends LinearLayout {
         strip = new StripView(c);
         addView(strip, new LayoutParams(LayoutParams.MATCH_PARENT, (int) (110 * d)));
 
-        // Kreiskorrektur: wie viele Grad der Umlauf wirklich hat (Fenster wird beim Speichern auf 360 Grad gestaucht/gedehnt)
+        // Anzeige der Korrekturen (gesetzt wird per Finger auf der Nahtvorschau) und Auto
         LinearLayout row = new LinearLayout(c);
         row.setOrientation(HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(0, (int) (12 * d), 0, 0);
         deltaTxt = new TextView(c);
-        deltaTxt.setTextColor(Ui.GRAU);
-        deltaTxt.setTextSize(12);
-        deltaTxt.setMinWidth((int) (84 * d));
+        deltaTxt.setTextColor(Ui.TEXTC);
+        deltaTxt.setTextSize(14);
+        deltaTxt.setMinWidth((int) (96 * d));
         row.addView(deltaTxt);
-        deltaBar = new android.widget.SeekBar(c);
-        Ui.regler(deltaBar);
-        final double ppd = w / 360.0;
-        final int minDeg10 = -100, maxDeg10 = (int) Math.round(ext / ppd * 10);
-        deltaBar.setMax(maxDeg10 - minDeg10);
-        deltaBar.setProgress(-minDeg10);
-        deltaBar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(android.widget.SeekBar s, int p, boolean user) {
-                if (!user || setting) return;
-                setSpan(w + (int) Math.round((p + minDeg10) / 10.0 * ppd));
-            }
-            @Override public void onStartTrackingTouch(android.widget.SeekBar s) { }
-            @Override public void onStopTrackingTouch(android.widget.SeekBar s) { }
-        });
-        row.addView(deltaBar, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+        dyTxt = new TextView(c);
+        dyTxt.setTextColor(Ui.TEXTC);
+        dyTxt.setTextSize(14);
+        row.addView(dyTxt, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
         android.widget.Button auto = Ui.pille(c, R.string.seam_auto, false);
         auto.setOnClickListener(v -> {
             auto.setEnabled(false);
@@ -109,30 +97,6 @@ final class SeamPicker extends LinearLayout {
         alp.leftMargin = (int) (8 * d);
         row.addView(auto, alp);
         addView(row);
-        // vertikaler Versatz (z. B. Wand/Decke an der Naht)
-        LinearLayout row2 = new LinearLayout(c);
-        row2.setOrientation(HORIZONTAL);
-        row2.setGravity(Gravity.CENTER_VERTICAL);
-        dyTxt = new TextView(c);
-        dyTxt.setTextColor(Ui.GRAU);
-        dyTxt.setTextSize(12);
-        dyTxt.setMinWidth((int) (84 * d));
-        row2.addView(dyTxt);
-        final int dyMax = Math.max(1, (int) Math.round(4.0 * w / 360.0));
-        dyBar = new android.widget.SeekBar(c);
-        Ui.regler(dyBar);
-        dyBar.setMax(2 * dyMax);
-        dyBar.setProgress(dyMax);
-        dyBar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(android.widget.SeekBar s, int p, boolean user) {
-                if (!user || setting) return;
-                setDy(p - dyMax);
-            }
-            @Override public void onStartTrackingTouch(android.widget.SeekBar s) { }
-            @Override public void onStopTrackingTouch(android.widget.SeekBar s) { }
-        });
-        row2.addView(dyBar, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
-        addView(row2);
         updateDelta();
 
         TextView pl = new TextView(c);
@@ -173,20 +137,15 @@ final class SeamPicker extends LinearLayout {
     }
 
     private void setDy(int v) {
-        int mx = dyBar.getMax() / 2;
-        dy = Math.max(-mx, Math.min(mx, v));
+        dy = Math.max(-dyMax, Math.min(dyMax, v));
         updateDelta();
         prev.rebuild();
     }
 
     private void updateDelta() {
         double deg = (span - w) * 360.0 / w;
-        deltaTxt.setText(String.format(java.util.Locale.US, "%s%.1f°", deg >= 0 ? "+" : "", deg));
-        setting = true;
-        deltaBar.setProgress((int) Math.round(deg * 10) + 100);
+        deltaTxt.setText(String.format(java.util.Locale.US, "\u2194 %s%.2f\u00b0", deg >= 0 ? "+" : "", deg));
         dyTxt.setText("\u2195 " + (dy >= 0 ? "+" : "") + dy + " px");
-        dyBar.setProgress(dy + dyBar.getMax() / 2);
-        setting = false;
     }
 
     private int pixel(int v, int label) {
@@ -255,19 +214,39 @@ final class SeamPicker extends LinearLayout {
         }
     }
 
-    /** Nahtstelle: letzte 45 Grad des Rahmens | erste 45 Grad des Rahmens. */
+    /**
+     * Nahtstelle: letzte 45 Grad des Rahmens | erste 45 Grad des Rahmens. Bedienung mit dem Finger:
+     * waagerecht ziehen = Ende (linke Haelfte) gegen den Anfang verschieben (Kreiskorrektur),
+     * am oberen oder unteren Rand ziehen = Hoehenversatz. Waehrend der Beruehrung zeigt eine Lupe die Nahtstelle vergroessert.
+     */
     private final class PreviewView extends View {
-        private Bitmap bmp;
-        private final Paint p = new Paint(Paint.FILTER_BITMAP_FLAG), line = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private static final float M = 3f;                 // Lupenvergroesserung gegenueber der Anzeige
+        private Bitmap bmp, lensBmp;
+        private final Paint p = new Paint(Paint.FILTER_BITMAP_FLAG), line = new Paint(Paint.ANTI_ALIAS_FLAG),
+                ring = new Paint(Paint.ANTI_ALIAS_FLAG), mark = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final int P = Math.max(8, (int) (45.0 * w / 360.0));
+        private final float dens;
+        private float sc = 1, bl, bt, bh = 1;                // Anzeigeabbildung des Bitmaps
+        private boolean touching, vertical;
+        private float tx, ty, lastX, lastY;
+        private double accSpan, accDy;
 
         PreviewView(Context c) {
             super(c);
+            dens = c.getResources().getDisplayMetrics().density;
             line.setColor(Ui.AKZENT);
-            line.setStrokeWidth(2 * c.getResources().getDisplayMetrics().density);
+            line.setStrokeWidth(2 * dens);
+            ring.setColor(Ui.AKZENT);
+            ring.setStyle(Paint.Style.STROKE);
+            ring.setStrokeWidth(3 * dens);
+            mark.setColor(0xCCFFFFFF);
+            mark.setStrokeWidth(1.5f * dens);
         }
 
         @Override protected void onSizeChanged(int W, int H, int ow, int oh) { rebuild(); }
+
+        /** Kreisspalten bzw. Zeilen je Anzeigepixel (Bitmap ist gleichmaessig skaliert). */
+        private double perPx() { return (2.0 * P / 800.0) / sc; }
 
         void rebuild() {
             int pw = 800, ph = Math.max(1, (int) ((long) rows * pw / (2 * P)));
@@ -285,14 +264,88 @@ final class SeamPicker extends LinearLayout {
             invalidate();
         }
 
+        @Override public boolean onTouchEvent(MotionEvent e) {
+            switch (e.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN: {
+                    getParent().requestDisallowInterceptTouchEvent(true);
+                    touching = true;
+                    lastX = tx = e.getX();
+                    lastY = ty = e.getY();
+                    float rel = bh > 0 ? (ty - bt) / bh : 0.5f;
+                    vertical = rel < 0.25f || rel > 0.75f;      // oberer / unterer Rand = Hoehe
+                    accSpan = span;
+                    accDy = dy;
+                    invalidate();
+                    return true;
+                }
+                case MotionEvent.ACTION_MOVE: {
+                    float dx = e.getX() - lastX, dyy = e.getY() - lastY;
+                    lastX = e.getX();
+                    lastY = e.getY();
+                    tx = e.getX();
+                    ty = e.getY();
+                    double f = perPx();
+                    if (vertical) {
+                        accDy -= dyy * f;                        // Ende nach unten ziehen = Quellzeile weiter oben
+                        setDy((int) Math.round(accDy));
+                    } else {
+                        accSpan -= dx * f;                       // Ende nach rechts ziehen = frueherer Inhalt an der Naht
+                        setSpan((int) Math.round(accSpan));
+                    }
+                    invalidate();
+                    return true;
+                }
+                default:
+                    touching = false;
+                    invalidate();
+                    return true;
+            }
+        }
+
         @Override protected void onDraw(Canvas cv) {
             if (bmp == null) return;
             int W = getWidth(), H = getHeight();
-            float sc = Math.min(W / (float) bmp.getWidth(), H / (float) bmp.getHeight());
+            sc = Math.min(W / (float) bmp.getWidth(), H / (float) bmp.getHeight());
             float dw = bmp.getWidth() * sc, dh = bmp.getHeight() * sc;
-            float l = (W - dw) / 2, t = (H - dh) / 2;
-            cv.drawBitmap(bmp, null, new RectF(l, t, l + dw, t + dh), p);
-            cv.drawLine(W / 2f, t, W / 2f, t + dh, line);
+            bl = (W - dw) / 2;
+            bt = (H - dh) / 2;
+            bh = dh;
+            cv.drawBitmap(bmp, null, new RectF(bl, bt, bl + dw, bt + dh), p);
+            cv.drawLine(W / 2f, bt, W / 2f, bt + dh, line);
+            if (touching) {
+                if (vertical) {                                  // Hoehengriff sichtbar machen
+                    float y = ty < bt + dh / 2 ? bt : bt + dh;
+                    cv.drawLine(bl, y, bl + dw, y, ring);
+                }
+                drawLens(cv, W, H);
+            }
+        }
+
+        /** Lupe: Nahtstelle in Hoehe des Fingers, dreifach vergroessert (links Ende, rechts Anfang), oberhalb des Fingers. */
+        private void drawLens(Canvas cv, int W, int H) {
+            int R = (int) (84 * dens), D = 2 * R;
+            if (lensBmp == null || lensBmp.getWidth() != D) lensBmp = Bitmap.createBitmap(D, D, Bitmap.Config.ARGB_8888);
+            double f = perPx() / M;                              // Kreisspalten bzw. Zeilen je Lupenpixel
+            double v0 = row0 + (ty - bt) * perPx();              // Quellzeile unter dem Finger
+            int[] px = new int[D];
+            for (int y = 0; y < D; y++) {
+                for (int x = 0; x < D; x++) {
+                    int lx = x - R, ly = y - R;
+                    if (lx * lx + ly * ly > R * R) { px[x] = 0; continue; }
+                    int v = (int) Math.round(v0 + ly * f);
+                    if (lx < 0) px[x] = pixel(v + dy, shift + span + (int) Math.floor(lx * f));
+                    else px[x] = pixel(v, shift + (int) Math.floor(lx * f));
+                }
+                lensBmp.setPixels(px, 0, D, 0, y, D, 1);
+            }
+            float cx = Math.max(R, Math.min(W - R, tx));
+            float cy = ty - R * 1.5f;
+            if (cy < R) cy = ty + R * 1.5f;
+            cy = Math.max(R, Math.min(H - R, cy));
+            cv.drawBitmap(lensBmp, cx - R, cy - R, p);
+            cv.drawCircle(cx, cy, R, ring);
+            cv.drawLine(cx, cy - R, cx, cy + R, mark);           // Naht
+            cv.drawLine(cx - R, cy, cx + R, cy, mark);           // Hoehe des Fingers
         }
     }
 }

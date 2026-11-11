@@ -157,7 +157,7 @@
     <string name="seam_auto_running">Messe …</string>
     <string name="seam_cancel">Abbrechen (verwerfen)</string>
     <string name="seam_delta">Kreiskorrektur</string>
-    <string name="seam_hint">Rahmen = 360°. Nach links/rechts ziehen. Regler/Auto = Kreiskorrektur</string>
+    <string name="seam_hint">Oben: Rahmen ziehen = wo die 360° enden. Unten (Nahtvorschau): seitlich ziehen = Naht links/rechts; am oberen oder unteren Rand ziehen = Höhe. Eine Lupe zeigt die Naht. Auto = automatisch.</string>
     <string name="seam_preview">Nahtvorschau (Ende | Anfang)</string>
     <string name="seam_save">Speichern</string>
     <string name="seam_title">Naht</string>
