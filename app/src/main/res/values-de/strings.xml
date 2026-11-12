@@ -255,5 +255,5 @@
     <string name="seam_mode_move">✋ Verschieben</string>
     <string name="seam_mode_look">🔍 Nur ansehen</string>
     <string name="set_arrows_t">Ruhige Richtungspfeile</string>
-    <string name="set_arrows_d">Sanfte Pfeile, die nach rechts laufen, zeigen die Drehrichtung. Sie geben kein Tempo vor: Wenn du anhältst, geht nichts verloren. Nur bei deutlich zu schnellem Drehen werden sie gelb. Aus = roter Tempo-Punkt.</string>
+    <string name="set_arrows_d">Sanfte Pfeile, die nach rechts laufen, zeigen die Drehrichtung. Sie geben kein Tempo vor: Wenn du anhältst, geht nichts verloren. Nur bei deutlich zu schnellem Drehen werden sie gelb und kippen bis 45° nach unten oder oben, wenn die Kamera zu hoch oder zu tief gehalten wird. Aus = roter Tempo-Punkt.</string>
 </resources>

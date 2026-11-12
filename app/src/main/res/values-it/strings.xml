@@ -251,5 +251,5 @@
     <string name="seam_mode_move">✋ Sposta</string>
     <string name="seam_mode_look">🔍 Solo guardare</string>
     <string name="set_arrows_t">Frecce di direzione discrete</string>
-    <string name="set_arrows_d">Frecce morbide che scorrono verso destra indicano il verso di rotazione. Non impongono un ritmo: se ti fermi non si perde nulla. Diventano gialle solo se ruoti molto troppo in fretta. Disattivato = punto rosso del ritmo.</string>
+    <string name="set_arrows_d">Frecce morbide che scorrono verso destra indicano il verso di rotazione. Non impongono un ritmo: se ti fermi non si perde nulla. Diventano gialle solo se ruoti troppo in fretta e si inclinano fino a 45° verso il basso o l\'alto quando la fotocamera è troppo alta o troppo bassa. Disattivato = punto rosso del ritmo.</string>
 </resources>

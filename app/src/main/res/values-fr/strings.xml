@@ -251,5 +251,5 @@
     <string name="seam_mode_move">✋ Déplacer</string>
     <string name="seam_mode_look">🔍 Regarder seulement</string>
     <string name="set_arrows_t">Flèches de direction discrètes</string>
-    <string name="set_arrows_d">Des flèches douces défilant vers la droite indiquent le sens de rotation. Elles n\'imposent pas de cadence : si vous vous arrêtez, rien n\'est perdu. Elles ne deviennent jaunes que si vous tournez bien trop vite. Désactivé = point de cadence rouge.</string>
+    <string name="set_arrows_d">Des flèches douces défilant vers la droite indiquent le sens de rotation. Elles n\'imposent pas de cadence : si vous vous arrêtez, rien n\'est perdu. Elles ne deviennent jaunes que si vous tournez bien trop vite, et s\'inclinent jusqu\'à 45° vers le bas ou le haut quand l\'appareil est tenu trop haut ou trop bas. Désactivé = point de cadence rouge.</string>
 </resources>

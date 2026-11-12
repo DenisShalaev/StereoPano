@@ -32,6 +32,7 @@ final class GuideView extends View {
     private boolean aufnahme;
     private boolean pfeile;                // ruhige Richtungspfeile statt Tempo-Punkt
     private double pfeilTempo = 8;
+    private float pfeilKipp;           // aktuelle Kippung der Pfeile in Grad (+ = nach unten)
     private final Paint chev = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path chevPath = new Path();
     private double focalRatio = 1;
@@ -184,11 +185,17 @@ final class GuideView extends View {
             float sp = 64 * d, s = 13 * d, y = h / 2f + 92 * d;
             float off = (android.os.SystemClock.elapsedRealtime() % 100000L) / 1000f * 56 * d % sp;
             int n = (int) (w / sp) + 3;
+            // Neigung: Pfeilspitzen kippen bis 45 Grad nach unten (Kamera zu hoch) bzw. nach oben (zu tief); +-2 Grad Toleranz
+            double ae = Math.abs(pitch);
+            float kipp = (float) (45.0 * Math.max(0, Math.min(1, (ae - 2) / 4.0)) * Math.signum(pitch));
+            pfeilKipp += (kipp - pfeilKipp) * 0.15f;        // weich nachfuehren
             for (int i = 0; i < n; i++) {
                 float x = -sp + off + i * sp;
                 float env = (float) Math.sin(Math.PI * Math.max(0, Math.min(1, x / w)));
                 int a = (int) (115 * env);
                 if (a < 6) continue;
+                c.save();
+                c.rotate(pfeilKipp, x, y);
                 chevPath.reset();
                 chevPath.moveTo(x - s * 0.5f, y - s);
                 chevPath.lineTo(x + s * 0.5f, y);
@@ -199,6 +206,7 @@ final class GuideView extends View {
                 chev.setStrokeWidth(4.5f * d);
                 chev.setColor((a << 24) | (schnell ? 0xFFC107 : 0xFFFFFF));
                 c.drawPath(chevPath, chev);
+                c.restore();
             }
         }
 

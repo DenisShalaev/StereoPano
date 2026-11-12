@@ -251,5 +251,5 @@
     <string name="seam_mode_move">✋ Mover</string>
     <string name="seam_mode_look">🔍 Solo mirar</string>
     <string name="set_arrows_t">Flechas de dirección discretas</string>
-    <string name="set_arrows_d">Flechas suaves que avanzan hacia la derecha indican el sentido del giro. No marcan un ritmo: si te detienes, no se pierde nada. Solo se vuelven amarillas si giras demasiado rápido. Desactivado = punto rojo de ritmo.</string>
+    <string name="set_arrows_d">Flechas suaves que avanzan hacia la derecha indican el sentido del giro. No marcan un ritmo: si te detienes, no se pierde nada. Solo se vuelven amarillas si giras demasiado rápido, y se inclinan hasta 45° hacia abajo o hacia arriba cuando la cámara está demasiado alta o baja. Desactivado = punto rojo de ritmo.</string>
 </resources>

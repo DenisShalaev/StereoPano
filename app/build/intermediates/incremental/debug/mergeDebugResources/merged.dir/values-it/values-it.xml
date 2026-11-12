@@ -177,7 +177,7 @@
     <string name="set_all_t">Mostra i panorami di altre app</string>
     <string name="set_angle_d">Distanza delle strisce d\'immagine dal centro dell\'immagine. Più grande = effetto 3D più forte (base stereo ≈ 2 × lunghezza del braccio × sin). Predefinito 3,5°.</string>
     <string name="set_angle_t">Angolo stereo</string>
-    <string name="set_arrows_d">Frecce morbide che scorrono verso destra indicano il verso di rotazione. Non impongono un ritmo: se ti fermi non si perde nulla. Diventano gialle solo se ruoti molto troppo in fretta. Disattivato = punto rosso del ritmo.</string>
+    <string name="set_arrows_d">Frecce morbide che scorrono verso destra indicano il verso di rotazione. Non impongono un ritmo: se ti fermi non si perde nulla. Diventano gialle solo se ruoti troppo in fretta e si inclinano fino a 45° verso il basso o l\'alto quando la fotocamera è troppo alta o troppo bassa. Disattivato = punto rosso del ritmo.</string>
     <string name="set_arrows_t">Frecce di direzione discrete</string>
     <string name="set_audio_d">Registra anche il suono ambientale (salvato nel .vr.jpg).</string>
     <string name="set_audio_t">Registra il suono</string>
