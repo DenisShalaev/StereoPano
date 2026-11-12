@@ -252,4 +252,7 @@
     <string name="seam_mode_look">🔍 Solo guardare</string>
     <string name="set_arrows_t">Frecce di direzione discrete</string>
     <string name="set_arrows_d">Frecce morbide che scorrono verso destra indicano il verso di rotazione. Non impongono un ritmo: se ti fermi non si perde nulla. Diventano gialle solo se ruoti troppo in fretta e si inclinano fino a 45° verso il basso o l\'alto quando la fotocamera è troppo alta o troppo bassa. Disattivato = punto rosso del ritmo.</string>
+    <string name="set_strip_t">Salva la striscia completa per il computer</string>
+    <string name="set_strip_d">Salva inoltre l\'intero cerchio più un tratto oltre i 360° come striscia non ritagliata, non chiusa e non sfumata (Download/StereoPano, *_strip.vr.jpg) e registra circa 8° in più, così la fine si sovrappone all\'inizio. StereoPano Viewer sul computer trova la sovrapposizione e chiude il cerchio in base all\'immagine, senza dover disegnare nulla. Richiede più memoria e circa il doppio del tempo di salvataggio. Disattivato di default.</string>
+    <string name="strip_saved">Striscia salvata in Download/StereoPano</string>
 </resources>

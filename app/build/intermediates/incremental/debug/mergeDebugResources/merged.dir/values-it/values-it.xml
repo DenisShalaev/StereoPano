@@ -229,6 +229,8 @@
     <string name="set_sharp_t">Nitidezza</string>
     <string name="set_stab_d">I fotogrammi ripresi mentre il telefono si inclina su/giù o di lato più velocemente di questo valore contano meno (non vengono mai scartati, quindi non compaiono buchi). Più basso = orizzonti più dritti e meno gradini sui bordi orizzontali, ma aiuta una mano più ferma. Massimo = disattivato. Predefinito 6°/s.</string>
     <string name="set_stab_t">Filtro di movimento</string>
+    <string name="set_strip_d">Salva inoltre l\'intero cerchio più un tratto oltre i 360° come striscia non ritagliata, non chiusa e non sfumata (Download/StereoPano, *_strip.vr.jpg) e registra circa 8° in più, così la fine si sovrappone all\'inizio. StereoPano Viewer sul computer trova la sovrapposizione e chiude il cerchio in base all\'immagine, senza dover disegnare nulla. Richiede più memoria e circa il doppio del tempo di salvataggio. Disattivato di default.</string>
+    <string name="set_strip_t">Salva la striscia completa per il computer</string>
     <string name="set_target_d">Telefono, telefono + Google Foto, oppure solo Google Foto (la copia sul telefono viene eliminata solo dopo un caricamento riuscito).</string>
     <string name="set_target_t">Salva i panorami in</string>
     <string name="set_tempo_d">Velocità del punto rosso guida. 8°/s ≈ 45 s per giro.</string>
@@ -248,6 +250,7 @@
     <string name="sort_title">Ordina per</string>
     <string name="stereo_hint">Tocco: barra degli strumenti · doppio tocco: torna al 2D</string>
     <string name="storage_permission_needed">Per leggere i panorami di altre app serve l\'autorizzazione a leggere le foto.</string>
+    <string name="strip_saved">Striscia salvata in Download/StereoPano</string>
     <string name="target_both">Telefono + Google Foto</string>
     <string name="target_google">Solo Google Foto</string>
     <string name="target_phone">Telefono</string>

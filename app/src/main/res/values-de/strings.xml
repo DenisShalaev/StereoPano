@@ -256,4 +256,7 @@
     <string name="seam_mode_look">🔍 Nur ansehen</string>
     <string name="set_arrows_t">Ruhige Richtungspfeile</string>
     <string name="set_arrows_d">Sanfte Pfeile, die nach rechts laufen, zeigen die Drehrichtung. Sie geben kein Tempo vor: Wenn du anhältst, geht nichts verloren. Nur bei deutlich zu schnellem Drehen werden sie gelb und kippen bis 45° nach unten oder oben, wenn die Kamera zu hoch oder zu tief gehalten wird. Aus = roter Tempo-Punkt.</string>
+    <string name="set_strip_t">Unbeschnittenen Streifen für den Computer speichern</string>
+    <string name="set_strip_d">Speichert zusätzlich den ganzen Kreis plus ein Stück über 360° hinaus als unbeschnittenen, ungeschlossenen, nicht überblendeten Streifen (Download/StereoPano, *_strip.vr.jpg) und nimmt etwa 8° länger auf, sodass das Ende den Anfang überlappt. Der StereoPano-Viewer am Computer findet die Überlappung und schließt den Kreis anhand des Bildes, es muss nichts dazugemalt werden. Braucht mehr Speicher und etwa doppelt so lange zum Speichern. Standardmäßig aus.</string>
+    <string name="strip_saved">Streifen in Download/StereoPano gespeichert</string>
 </resources>

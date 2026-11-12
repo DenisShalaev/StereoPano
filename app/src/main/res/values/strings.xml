@@ -266,4 +266,7 @@
     <string name="seam_mode_look">🔍 Look only</string>
     <string name="set_arrows_t">Calm direction arrows</string>
     <string name="set_arrows_d">Soft arrows moving to the right show which way to turn. They do not set a pace: if you pause, nothing is lost. They turn yellow only when you turn much too fast, and tilt up to 45° down or up when the camera is held too high or too low. Off = the red pace dot.</string>
+    <string name="set_strip_t">Save uncut strip for the computer</string>
+    <string name="set_strip_d">Also saves the whole circle plus an extra stretch beyond 360° as an uncut, unclosed, unblended strip (Download/StereoPano, *_strip.vr.jpg) and records about 8° longer, so the end overlaps the start. The StereoPano Viewer on the computer finds the overlap and closes the circle from the image, so nothing has to be painted in. Needs more memory and about twice the saving time. Off by default.</string>
+    <string name="strip_saved">Strip saved to Download/StereoPano</string>
 </resources>

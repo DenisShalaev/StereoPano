@@ -229,6 +229,8 @@
     <string name="set_sharp_t">Netteté</string>
     <string name="set_stab_d">Les images prises pendant que le téléphone s\'incline vers le haut/bas ou sur le côté plus vite que cette valeur comptent moins (elles ne sont jamais écartées, donc aucun trou n\'apparaît). Plus bas = horizons plus droits et moins de marches sur les arêtes horizontales, mais une main plus stable aide. Maximum = désactivé. Par défaut 6°/s.</string>
     <string name="set_stab_t">Filtre de mouvement</string>
+    <string name="set_strip_d">Enregistre aussi le cercle entier plus une portion au-delà de 360° sous forme de bande non rognée, non fermée et non fondue (Download/StereoPano, *_strip.vr.jpg), et enregistre environ 8° de plus pour que la fin chevauche le début. StereoPano Viewer sur l\'ordinateur trouve le chevauchement et ferme le cercle d\'après l\'image, sans rien dessiner. Demande plus de mémoire et environ deux fois plus de temps d\'enregistrement. Désactivé par défaut.</string>
+    <string name="set_strip_t">Enregistrer la bande complète pour l\'ordinateur</string>
     <string name="set_target_d">Téléphone, téléphone + Google Photos, ou Google Photos uniquement (la copie du téléphone n\'est supprimée qu\'après un envoi réussi).</string>
     <string name="set_target_t">Enregistrer les panoramas dans</string>
     <string name="set_tempo_d">Vitesse du point rouge de guidage. 8°/s ≈ 45 s par tour.</string>
@@ -248,6 +250,7 @@
     <string name="sort_title">Trier par</string>
     <string name="stereo_hint">Toucher : barre d\'outils · double toucher : retour en 2D</string>
     <string name="storage_permission_needed">La lecture des panoramas d\'autres applications nécessite l\'autorisation de lire les photos.</string>
+    <string name="strip_saved">Bande enregistrée dans Download/StereoPano</string>
     <string name="target_both">Téléphone + Google Photos</string>
     <string name="target_google">Google Photos uniquement</string>
     <string name="target_phone">Téléphone</string>

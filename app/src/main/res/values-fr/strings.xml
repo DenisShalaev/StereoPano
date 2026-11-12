@@ -252,4 +252,7 @@
     <string name="seam_mode_look">🔍 Regarder seulement</string>
     <string name="set_arrows_t">Flèches de direction discrètes</string>
     <string name="set_arrows_d">Des flèches douces défilant vers la droite indiquent le sens de rotation. Elles n\'imposent pas de cadence : si vous vous arrêtez, rien n\'est perdu. Elles ne deviennent jaunes que si vous tournez bien trop vite, et s\'inclinent jusqu\'à 45° vers le bas ou le haut quand l\'appareil est tenu trop haut ou trop bas. Désactivé = point de cadence rouge.</string>
+    <string name="set_strip_t">Enregistrer la bande complète pour l\'ordinateur</string>
+    <string name="set_strip_d">Enregistre aussi le cercle entier plus une portion au-delà de 360° sous forme de bande non rognée, non fermée et non fondue (Download/StereoPano, *_strip.vr.jpg), et enregistre environ 8° de plus pour que la fin chevauche le début. StereoPano Viewer sur l\'ordinateur trouve le chevauchement et ferme le cercle d\'après l\'image, sans rien dessiner. Demande plus de mémoire et environ deux fois plus de temps d\'enregistrement. Désactivé par défaut.</string>
+    <string name="strip_saved">Bande enregistrée dans Download/StereoPano</string>
 </resources>

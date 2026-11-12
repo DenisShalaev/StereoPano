@@ -229,6 +229,8 @@
     <string name="set_sharp_t">Nachschärfung</string>
     <string name="set_stab_d">Bilder, die aufgenommen werden, während das Telefon schneller als dieser Wert nickt oder kippt, zählen weniger (sie werden nie verworfen, daher entstehen keine Lücken). Niedriger = geradere Horizonte und weniger Treppen an waagerechten Kanten, aber eine ruhigere Hand hilft. Maximum = aus. Standard 6°/s.</string>
     <string name="set_stab_t">Bewegungsfilter</string>
+    <string name="set_strip_d">Speichert zusätzlich den ganzen Kreis plus ein Stück über 360° hinaus als unbeschnittenen, ungeschlossenen, nicht überblendeten Streifen (Download/StereoPano, *_strip.vr.jpg) und nimmt etwa 8° länger auf, sodass das Ende den Anfang überlappt. Der StereoPano-Viewer am Computer findet die Überlappung und schließt den Kreis anhand des Bildes, es muss nichts dazugemalt werden. Braucht mehr Speicher und etwa doppelt so lange zum Speichern. Standardmäßig aus.</string>
+    <string name="set_strip_t">Unbeschnittenen Streifen für den Computer speichern</string>
     <string name="set_target_d">Telefon, Telefon + Google Fotos oder nur Google Fotos (die Kopie auf dem Telefon wird erst nach erfolgreichem Upload geloescht).</string>
     <string name="set_target_t">Panoramen speichern auf</string>
     <string name="set_tempo_d">Geschwindigkeit des roten Leitpunkts. 8°/s ≈ 45 s pro Umdrehung.</string>
@@ -248,6 +250,7 @@
     <string name="sort_title">Sortieren nach</string>
     <string name="stereo_hint">Tippen: Leiste · Doppeltippen: zurück zu 2D</string>
     <string name="storage_permission_needed">Zum Lesen von Panoramen anderer Apps wird die Berechtigung zum Lesen von Fotos benötigt.</string>
+    <string name="strip_saved">Streifen in Download/StereoPano gespeichert</string>
     <string name="target_both">Telefon + Google Fotos</string>
     <string name="target_google">Nur Google Fotos</string>
     <string name="target_phone">Telefon</string>

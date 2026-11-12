@@ -287,6 +287,9 @@ public class CaptureActivity extends Activity {
         StereoStitcher.setExtra(nahtMan ? Settings.nahtReserve(this) : 0.0);
         StereoStitcher.loopEnabled = !nahtMan && Settings.p(this).getInt(Settings.K_LOOPMODE, 0) == 0;
         StereoStitcher.seamOpt = Settings.p(this).getBoolean(Settings.K_SEAMOPT, false);
+        final boolean streifen = Settings.streifen(this) && !nahtMan;
+        StereoStitcher.stripReserve = streifen ? 8.0 : 0.0;
+        StereoStitcher.stripSink = streifen ? CaptureActivity::streifenJpeg : null;
         jpegQualitaet = Settings.jpegQualitaet(this);
         audioAn = Settings.audio(this);
         maxNick = Settings.maxNickrate(this);
@@ -1140,7 +1143,55 @@ public class CaptureActivity extends Activity {
         v.put(MediaStore.Images.Media.IS_PENDING, 0);
         getContentResolver().update(uri, v, null, null);
         schreibeProtokoll(name, e, datei.length);
+        if (e.stripL != null && e.stripR != null) speichereStreifen(name, e, kurs);
         return uri;
+    }
+
+    /** Unbeschnittener Streifen (Kreis + Erweiterung, ohne Schluss und Naht) fuer den Computer; liegt in Download/StereoPano, nicht in der Galerie. */
+    private void speichereStreifen(String bildName, StereoStitcher.Result e, double kurs) {
+        try {
+            int sw = e.panoW + e.stripExtW;
+            VrJpgWriter.Meta m = new VrJpgWriter.Meta();
+            m.fullW = sw; m.fullH = e.panoH; m.cropW = sw; m.cropH = e.panoH; m.cropLeft = 0; m.cropTop = 0;
+            m.author = Settings.author(this);
+            java.util.List<String> tags = new java.util.ArrayList<>();
+            tags.add("StereoPano");
+            tags.add(BuildInfo.TAG);
+            tags.add(String.format(Locale.US, "strip:%d,%d,%d", e.panoW, e.stripExtW, e.panoH));          // Kreisbreite (360 Grad laut Sensor), Erweiterung, Hoehe
+            tags.add(String.format(Locale.US, "stripel:%.2f", e.elCenterDeg));
+            if (!Double.isNaN(kurs)) tags.add(String.format(Locale.US, "stripkurs:%.1f", kurs));
+            tags.add("diag:" + e.diag);
+            m.tags = tags.toArray(new String[0]);
+            byte[] datei = VrJpgWriter.build(e.stripL, e.stripR, null, m);
+            String name = bildName.endsWith(".vr.jpg") ? bildName.substring(0, bildName.length() - 7) + "_strip.vr.jpg" : bildName + "_strip.vr.jpg";
+            ContentValues v = new ContentValues();
+            v.put(MediaStore.Downloads.DISPLAY_NAME, name);
+            v.put(MediaStore.Downloads.MIME_TYPE, "image/jpeg");
+            v.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/StereoPano");
+            Uri u = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+            if (u == null) return;
+            try (OutputStream os = getContentResolver().openOutputStream(u)) { os.write(datei); }
+            runOnUiThread(() -> Toast.makeText(this, R.string.strip_saved, Toast.LENGTH_LONG).show());
+        } catch (Throwable t) {
+            runOnUiThread(() -> Toast.makeText(this, getString(R.string.save_error, String.valueOf(t.getMessage())), Toast.LENGTH_LONG).show());
+        }
+    }
+
+    /** Streifen eines Auges als JPEG: Spalte i = Kreisspalte i (ab Startspalte), danach die Erweiterung; Pixel ohne Daten sind schwarz. */
+    private static byte[] streifenJpeg(int[] px, int[] ext, int extW, int w, int h, int startCol) {
+        int tw = w + extW;
+        int[] row = new int[tw];
+        Bitmap bmp = Bitmap.createBitmap(tw, h, Bitmap.Config.ARGB_8888);
+        for (int v = 0; v < h; v++) {
+            for (int i = 0; i < w; i++) row[i] = px[v * w + Math.floorMod(startCol + i, w)];
+            System.arraycopy(ext, v * extW, row, w, extW);
+            for (int i = 0; i < tw; i++) if (row[i] == 0) row[i] = 0xFF000000;
+            bmp.setPixels(row, 0, tw, 0, v, tw, 1);
+        }
+        ByteArrayOutputStream bo = new ByteArrayOutputStream(8_000_000);
+        bmp.compress(Bitmap.CompressFormat.JPEG, 92, bo);
+        bmp.recycle();
+        return bo.toByteArray();
     }
 
     /** Schreibt das Aufnahmeprotokoll als Textdatei mit gleichem Namen nach Download/StereoPano (fuer die Fehlersuche). */

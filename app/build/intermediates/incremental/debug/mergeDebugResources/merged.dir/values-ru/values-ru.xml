@@ -229,6 +229,8 @@
     <string name="set_sharp_t">Резкость</string>
     <string name="set_stab_d">Кадры, снятые при наклоне телефона вверх-вниз или набок быстрее этого значения, получают меньший вес (они не выбрасываются, поэтому дыр нет). Ниже – ровнее горизонт и меньше «ступенек» на горизонтальных линиях, но помогает твёрдая рука. Максимум = выключено. По умолчанию 6°/с.</string>
     <string name="set_stab_t">Фильтр движения</string>
+    <string name="set_strip_d">Дополнительно сохраняет весь круг и запас за 360° как необрезанную, незамкнутую и несглаженную полосу (Download/StereoPano, *_strip.vr.jpg) и снимает примерно на 8° дольше, чтобы конец перекрывал начало. StereoPano Viewer на компьютере сам находит перекрытие и замыкает круг по изображению, ничего дорисовывать не нужно. Нужно больше памяти и примерно вдвое больше времени на сохранение. По умолчанию выключено.</string>
+    <string name="set_strip_t">Сохранять полную полосу для компьютера</string>
     <string name="set_target_d">Телефон, телефон + Google Фото или только Google Фото (копия на телефоне удаляется только после успешной загрузки).</string>
     <string name="set_target_t">Сохранять панорамы в</string>
     <string name="set_tempo_d">Скорость красной точки-ориентира. 8°/с ≈ 45 с на оборот.</string>
@@ -248,6 +250,7 @@
     <string name="sort_title">Сортировать по</string>
     <string name="stereo_hint">Касание: панель · двойное касание: назад в 2D</string>
     <string name="storage_permission_needed">Чтобы читать панорамы других приложений, нужно разрешение на чтение фото.</string>
+    <string name="strip_saved">Полоса сохранена в Download/StereoPano</string>
     <string name="target_both">Телефон + Google Фото</string>
     <string name="target_google">Только Google Фото</string>
     <string name="target_phone">Телефон</string>

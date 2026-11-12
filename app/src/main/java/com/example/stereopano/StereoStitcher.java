@@ -67,6 +67,8 @@ final class StereoStitcher {
         double elCenterDeg;      // Elevation der Panoramamitte (fuer die Metadaten)
         // Manuelle Naht: der Kreis wird NICHT geschlossen; die Rohdaten (Kreis + Erweiterung) bleiben erhalten, bis der Nutzer das 360-Grad-Fenster gewaehlt hat
         boolean manualSeam;
+        byte[] stripL, stripR;   // unbeschnittener Streifen (Kreis + Erweiterung) je Auge als JPEG, nur wenn angefordert
+        int stripExtW;
         int[] extL, extR;        // Erweiterung hinter dem Kreisende (Spalten 0..extW-1 entsprechen den Kreisspalten w..w+extW-1)
         int extW, startL, startR;
         int seamShiftPx;         // gewaehlte Verschiebung des 360-Grad-Fensters (Spalten ab Kreisanfang)
@@ -146,6 +148,11 @@ final class StereoStitcher {
     static boolean seamOpt = false;
     static double hintCap = 394.0;      // bis zu diesem Rohwinkel darf die grobe Schaetzung das Ende hinauszoegern               // Kreisschluss-Erkennung durch Bildvergleich mit dem Anfang
     private static final double LOOP_FROM_DEG = 280.0;   // ab hier wird nach dem Anfang des Panoramas gesucht
+    /** Zusaetzliche Drehung (Grad) ueber den Kreisschluss hinaus, damit am Ende ein breiter Ueberlapp fuer die Nachbearbeitung am Computer vorliegt. */
+    static double stripReserve = 0;
+    /** Kodiert eine unbeschnittene, ungeschlossene Streifen-Ansicht eines Auges (Kreis ab Startspalte + Erweiterung) als JPEG. */
+    interface StripSink { byte[] encode(int[] circle, int[] ext, int extW, int w, int h, int startCol); }
+    static StripSink stripSink;
     private static final double LOOP_MARGIN_DEG = 3.0;   // so weit hinter den Anfang weiterdrehen (Ueberlappung fuer die Naht)
     private static final double CLOSE_FROM_DEG = 357.0;   // ab hier werden die Bilder mit dem Anfang verglichen
     private static double EXT_DEG = 24.0;             // so weit ueber 360 Grad hinaus wird getrennt gespeichert (Erweiterung)
@@ -1575,12 +1582,12 @@ final class StereoStitcher {
     /** Wie viele Grad muss noch gedreht werden, bis isComplete() erreicht ist (nur wenn alle Spalten schon abgedeckt sind). */
     synchronized double remainingDeg() {
         double ed = loopEnabled ? loopError() : Double.NaN;
-        if (!Double.isNaN(ed)) return Math.max(0, 360.0 + win + LOOP_MARGIN_DEG - (maxRaw + ed));
+        if (!Double.isNaN(ed)) return Math.max(0, 360.0 + win + (LOOP_MARGIN_DEG + stripReserve) - (maxRaw + ed));
         if (loopEnabled) {
             double hint = recentHint();
-            if (!Double.isNaN(hint)) return Math.max(0, 360.0 + win + LOOP_MARGIN_DEG - (maxRaw + hint));
+            if (!Double.isNaN(hint)) return Math.max(0, 360.0 + win + (LOOP_MARGIN_DEG + stripReserve) - (maxRaw + hint));
         }
-        return Math.max(0, 360.0 + win + closureNeedDeg() + extraDeg - maxPsi);
+        return Math.max(0, 360.0 + win + closureNeedDeg() + extraDeg + stripReserve - maxPsi);
     }
 
     synchronized boolean isComplete() {
@@ -1589,14 +1596,14 @@ final class StereoStitcher {
             // Der Kreis ist geschlossen, sobald der WIRKLICHE Winkel (Sensor + Fehler) den Anfang um die Ueberlappung passiert hat
             int need = needCols(ed);
             if (!coveredUpTo(eyeL, need) || !coveredUpTo(eyeR, need)) return false;
-            return maxRaw + ed >= 360.0 + win + LOOP_MARGIN_DEG;
+            return maxRaw + ed >= 360.0 + win + (LOOP_MARGIN_DEG + stripReserve);
         }
         if (loopEnabled) {                                   // noch nicht gesichert: deutet die grobe Schaetzung auf "Anfang noch nicht erreicht"?
             double hint = recentHint();
-            if (!Double.isNaN(hint) && maxRaw + hint < 360.0 + win + LOOP_MARGIN_DEG && maxRaw < hintCap) return false;
+            if (!Double.isNaN(hint) && maxRaw + hint < 360.0 + win + (LOOP_MARGIN_DEG + stripReserve) && maxRaw < hintCap) return false;
         }
         if (!(eyeL.covered >= panoW - gapTol() && eyeR.covered >= panoW - gapTol())) return false;
-        return maxPsi >= 360.0 + win + closureNeedDeg() + extraDeg;
+        return maxPsi >= 360.0 + win + closureNeedDeg() + extraDeg + stripReserve;
     }
 
     /**
@@ -1710,6 +1717,14 @@ final class StereoStitcher {
         eyeR.ew = null;
         eyeR.fr = eyeR.fg = eyeR.fb = null;
         eyeR.fw = null;
+        // Unbeschnittener Streifen fuer die Nachbearbeitung am Computer: vor Kreisschluss und Naht, ohne Beschnitt
+        if (stripSink != null && r.complete) {
+            try {
+                r.stripL = stripSink.encode(r.left, extL, extW, panoW, panoH, (int) eyeL.start);
+                r.stripR = stripSink.encode(r.right, extR, extW, panoW, panoH, (int) eyeR.start);
+                r.stripExtW = extW;
+            } catch (Throwable t) { r.stripL = r.stripR = null; }
+        }
         // Kreisschluss nur bei vollem Kreis (Teilpanoramen werden nicht veraendert)
         r.closureShiftPx = 0;
         if (r.complete && closureEnabled) {

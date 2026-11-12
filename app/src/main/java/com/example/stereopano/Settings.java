@@ -37,6 +37,7 @@ final class Settings {
     static final String K_QUALI = "jpeg_quali";          // 70..100
     static final String K_AE = "belichtung_sperren";
     static final String K_LEIT = "leitpunkte";
+    static final String K_STREIFEN = "streifen_speichern";   // zusaetzlich unbeschnittenen Streifen fuer den Computer sichern
     static final String K_PFEILE = "leit_pfeile";            // true = ruhige Pfeile statt Tempo-Punkt
     static final String K_AUDIO = "audio";
     // Betrachter
@@ -48,7 +49,7 @@ final class Settings {
     static final String K_K2 = "lens_k2";                // Hundertstel
     static final String K_SBSFOV = "sbs_fov";            // Grad (vertikal)
 
-    static final String[] ALLE = {K_WINKEL, K_DELTA, K_TEMPO, K_BREITE, K_LATENZ, K_FPX, K_WKORR, K_WKORR_UW, K_STAB, K_MOVE, K_SHARP, K_AUTHOR, K_LOC, K_ALL, K_SEAMOPT, K_NAHTMAN, K_NAHTEXTRA, K_GHOST, K_LOOPMODE, K_SAVE, K_GACC, K_SORT, K_QUALI, K_AE, K_LEIT, K_PFEILE,
+    static final String[] ALLE = {K_WINKEL, K_DELTA, K_TEMPO, K_BREITE, K_LATENZ, K_FPX, K_WKORR, K_WKORR_UW, K_STAB, K_MOVE, K_SHARP, K_AUTHOR, K_LOC, K_ALL, K_SEAMOPT, K_NAHTMAN, K_NAHTEXTRA, K_GHOST, K_LOOPMODE, K_SAVE, K_GACC, K_SORT, K_QUALI, K_AE, K_LEIT, K_PFEILE, K_STREIFEN,
             K_AUDIO, K_KOMPASS, K_GYRO, K_HALB, K_LINSEN, K_K1, K_K2, K_SBSFOV};
 
     private Settings() {}
@@ -83,6 +84,7 @@ final class Settings {
     static int jpegQualitaet(Context c) { return p(c).getInt(K_QUALI, 90); }
     static boolean belichtungSperren(Context c) { return p(c).getBoolean(K_AE, true); }
     static boolean leitpunkte(Context c) { return p(c).getBoolean(K_LEIT, true); }
+    static boolean streifen(Context c) { return p(c).getBoolean(K_STREIFEN, false); }
     static boolean pfeile(Context c) { return p(c).getBoolean(K_PFEILE, true); }
     static boolean audio(Context c) { return p(c).getBoolean(K_AUDIO, true); }
 

@@ -235,6 +235,8 @@
     <string name="set_sharp_t">Sharpening</string>
     <string name="set_stab_d">Frames recorded while the phone tilts up/down or sideways faster than this count less (they are never discarded, so no gaps appear). Lower = straighter horizons and fewer steps on horizontal edges, but a steadier hand helps. Maximum = off. Default 6°/s.</string>
     <string name="set_stab_t">Motion filter</string>
+    <string name="set_strip_d">Also saves the whole circle plus an extra stretch beyond 360° as an uncut, unclosed, unblended strip (Download/StereoPano, *_strip.vr.jpg) and records about 8° longer, so the end overlaps the start. The StereoPano Viewer on the computer finds the overlap and closes the circle from the image, so nothing has to be painted in. Needs more memory and about twice the saving time. Off by default.</string>
+    <string name="set_strip_t">Save uncut strip for the computer</string>
     <string name="set_target_d">Phone, phone + Google Photos, or Google Photos only (the phone copy is deleted only after a successful upload).</string>
     <string name="set_target_t">Save panoramas to</string>
     <string name="set_tempo_d">Speed of the red guide dot. 8°/s ≈ 45 s per revolution.</string>
@@ -254,6 +256,7 @@
     <string name="sort_title">Sort by</string>
     <string name="stereo_hint">Tap: toolbar · double tap: back to 2D</string>
     <string name="storage_permission_needed">Reading other apps\' panoramas needs permission to read photos.</string>
+    <string name="strip_saved">Strip saved to Download/StereoPano</string>
     <string name="target_both">Phone + Google Photos</string>
     <string name="target_google">Google Photos only</string>
     <string name="target_phone">Phone</string>

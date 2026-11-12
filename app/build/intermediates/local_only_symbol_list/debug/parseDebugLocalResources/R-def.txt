@@ -269,6 +269,8 @@ string set_sharp_d
 string set_sharp_t
 string set_stab_d
 string set_stab_t
+string set_strip_d
+string set_strip_t
 string set_target_d
 string set_target_t
 string set_tempo_d
@@ -288,6 +290,7 @@ string sort_size
 string sort_title
 string stereo_hint
 string storage_permission_needed
+string strip_saved
 string target_both
 string target_google
 string target_phone

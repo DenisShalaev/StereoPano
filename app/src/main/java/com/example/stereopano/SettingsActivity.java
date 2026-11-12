@@ -132,6 +132,7 @@ public class SettingsActivity extends Activity {
         regler(R.string.set_sbsfov_t, R.string.set_sbsfov_d, Settings.K_SBSFOV, 30, 80, 1, 45, v -> v + "\u00B0");
 
         abschnitt(R.string.sec_files);
+        schalter(R.string.set_strip_t, R.string.set_strip_d, Settings.K_STREIFEN, false);
         textfeld(R.string.set_author_t, R.string.set_author_d, Settings.K_AUTHOR);
         schalter(R.string.set_loc_t, R.string.set_loc_d, Settings.K_LOC, true);
         schalter(R.string.set_all_t, R.string.set_all_d, Settings.K_ALL, false);

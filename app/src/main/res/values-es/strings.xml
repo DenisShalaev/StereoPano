@@ -252,4 +252,7 @@
     <string name="seam_mode_look">🔍 Solo mirar</string>
     <string name="set_arrows_t">Flechas de dirección discretas</string>
     <string name="set_arrows_d">Flechas suaves que avanzan hacia la derecha indican el sentido del giro. No marcan un ritmo: si te detienes, no se pierde nada. Solo se vuelven amarillas si giras demasiado rápido, y se inclinan hasta 45° hacia abajo o hacia arriba cuando la cámara está demasiado alta o baja. Desactivado = punto rojo de ritmo.</string>
+    <string name="set_strip_t">Guardar la tira completa para el ordenador</string>
+    <string name="set_strip_d">Guarda además el círculo entero más un tramo más allá de 360° como tira sin recortar, sin cerrar y sin mezclar (Download/StereoPano, *_strip.vr.jpg) y graba unos 8° más, de modo que el final se solape con el principio. StereoPano Viewer en el ordenador encuentra el solape y cierra el círculo a partir de la imagen, sin tener que dibujar nada. Necesita más memoria y unas dos veces más tiempo para guardar. Desactivado por defecto.</string>
+    <string name="strip_saved">Tira guardada en Download/StereoPano</string>
 </resources>
