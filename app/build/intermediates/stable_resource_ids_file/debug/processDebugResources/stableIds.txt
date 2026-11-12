@@ -1,3 +1,4 @@
+com.example.stereopano:xml/locales_config = 0x7f050000
 com.example.stereopano:string/too_little = 0x7f0400fd
 com.example.stereopano:string/target_google = 0x7f0400fb
 com.example.stereopano:string/target_both = 0x7f0400fa

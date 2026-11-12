@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:2:1-59:12
-INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:2:1-59:12
-INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:2:1-59:12
-INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:2:1-59:12
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:2:1-60:12
+INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:2:1-60:12
+INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:2:1-60:12
+INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:2:1-60:12
 	package
 		INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml
 	android:versionName
@@ -77,10 +77,12 @@ ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/
 	android:name
 		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:21:19-63
 application
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:23:5-58:19
-INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:23:5-58:19
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:23:5-59:19
+INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:23:5-59:19
 	android:extractNativeLibs
 		INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml
+	android:localeConfig
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:29:9-51
 	android:label
 		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:27:9-41
 	android:roundIcon
@@ -92,73 +94,73 @@ INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/a
 	android:allowBackup
 		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:24:9-35
 	android:theme
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:29:9-71
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:30:9-71
 activity#com.example.stereopano.CaptureActivity
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:32:9-40:20
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:33:9-41:20
 	android:screenOrientation
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:35:13-49
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:36:13-49
 	android:exported
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:34:13-36
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:35:13-36
 	android:name
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:33:13-44
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:34:13-44
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:36:13-39:29
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:37:13-40:29
 action#android.intent.action.MAIN
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:37:17-69
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:38:17-69
 	android:name
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:37:25-66
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:38:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:38:17-77
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:39:17-77
 	android:name
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:38:27-74
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:39:27-74
 activity#com.example.stereopano.GalleryActivity
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:42:9-78
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:43:9-78
 	android:exported
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:42:51-75
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:43:51-75
 	android:name
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:42:19-50
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:43:19-50
 activity#com.example.stereopano.SettingsActivity
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:43:9-79
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:44:9-79
 	android:exported
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:43:52-76
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:44:52-76
 	android:name
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:43:19-51
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:44:19-51
 activity#com.example.stereopano.LentiActivity
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:44:9-138
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:45:9-138
 	android:exported
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:44:49-73
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:45:49-73
 	android:configChanges
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:44:74-135
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:45:74-135
 	android:name
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:44:19-48
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:45:19-48
 activity#com.example.stereopano.GoogleActivity
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:45:9-77
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:46:9-77
 	android:exported
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:45:50-74
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:46:50-74
 	android:name
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:45:19-49
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:46:19-49
 activity#com.example.stereopano.ViewerActivity
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:48:9-57:20
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:49:9-58:20
 	android:exported
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:50:13-36
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:51:13-36
 	android:configChanges
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:51:13-106
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:52:13-106
 	android:name
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:49:13-43
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:50:13-43
 intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.DEFAULT+data:mimeType:image/jpeg
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:52:13-56:29
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:53:13-57:29
 action#android.intent.action.VIEW
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:53:17-69
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:54:17-69
 	android:name
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:53:25-66
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:54:25-66
 category#android.intent.category.DEFAULT
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:54:17-76
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:55:17-76
 	android:name
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:54:27-73
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:55:27-73
 data
-ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:55:17-55
+ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:56:17-55
 	android:mimeType
-		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:55:23-52
+		ADDED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml:56:23-52
 uses-sdk
 INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /Users/denis/Downloads/3D print/AndroidStereoPanorama/StereoPano/app/src/main/AndroidManifest.xml

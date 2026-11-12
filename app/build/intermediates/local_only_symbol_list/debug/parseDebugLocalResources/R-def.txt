@@ -290,3 +290,4 @@ string target_both
 string target_google
 string target_phone
 string too_little
+xml locales_config
