@@ -109,6 +109,7 @@ public class SettingsActivity extends Activity {
         regler(R.string.set_seamextra_t, R.string.set_seamextra_d, Settings.K_NAHTEXTRA, 10, 40, 2, 30, v -> v + "°");
         schalter(R.string.set_ghost_t, R.string.set_ghost_d, Settings.K_GHOST, false);
         schalter(R.string.set_guides_t, R.string.set_guides_d, Settings.K_LEIT, true);
+        schalter(R.string.set_arrows_t, R.string.set_arrows_d, Settings.K_PFEILE, true);
         schalter(R.string.set_audio_t, R.string.set_audio_d, Settings.K_AUDIO, true);
 
         abschnitt(R.string.sec_calibration);

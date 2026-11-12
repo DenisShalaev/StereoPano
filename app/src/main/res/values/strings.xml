@@ -264,4 +264,6 @@
     <string name="seam_auto_none">Nothing clear found: the start and end of the recording show no matching detail. Set the correction by hand.</string>
     <string name="seam_mode_move">✋ Move</string>
     <string name="seam_mode_look">🔍 Look only</string>
+    <string name="set_arrows_t">Calm direction arrows</string>
+    <string name="set_arrows_d">Soft arrows moving to the right show which way to turn. They do not set a pace: if you pause, nothing is lost. They turn yellow only when you turn much too fast. Off = the red pace dot.</string>
 </resources>

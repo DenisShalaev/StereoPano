@@ -217,6 +217,8 @@ string set_all_d
 string set_all_t
 string set_angle_d
 string set_angle_t
+string set_arrows_d
+string set_arrows_t
 string set_audio_d
 string set_audio_t
 string set_author_d

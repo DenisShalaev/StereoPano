@@ -183,6 +183,8 @@
     <string name="set_all_t">Show panoramas of other apps</string>
     <string name="set_angle_d">Distance of the image strips from the image centre. Larger = stronger 3D effect (stereo base ≈ 2 × arm length × sin). Default 3.5°.</string>
     <string name="set_angle_t">Stereo angle</string>
+    <string name="set_arrows_d">Soft arrows moving to the right show which way to turn. They do not set a pace: if you pause, nothing is lost. They turn yellow only when you turn much too fast. Off = the red pace dot.</string>
+    <string name="set_arrows_t">Calm direction arrows</string>
     <string name="set_audio_d">Also record ambient sound (stored in the .vr.jpg).</string>
     <string name="set_audio_t">Record sound</string>
     <string name="set_author_d">Stored in every new panorama (searchable in galleries and Google Photos). Leave empty to store no name. Inserts the e-mail address of the chosen Google account.</string>

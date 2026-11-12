@@ -177,6 +177,8 @@
     <string name="set_all_t">Mostrar panoramas de otras aplicaciones</string>
     <string name="set_angle_d">Distancia de las franjas de imagen respecto al centro de la imagen. Más grande = efecto 3D más fuerte (base estéreo ≈ 2 × longitud del brazo × sen). Predeterminado 3,5°.</string>
     <string name="set_angle_t">Ángulo estéreo</string>
+    <string name="set_arrows_d">Flechas suaves que avanzan hacia la derecha indican el sentido del giro. No marcan un ritmo: si te detienes, no se pierde nada. Solo se vuelven amarillas si giras demasiado rápido. Desactivado = punto rojo de ritmo.</string>
+    <string name="set_arrows_t">Flechas de dirección discretas</string>
     <string name="set_audio_d">Graba también el sonido ambiente (se guarda en el .vr.jpg).</string>
     <string name="set_audio_t">Grabar sonido</string>
     <string name="set_author_d">Se guarda en cada panorama nuevo (se puede buscar en galerías y Google Fotos). Déjalo vacío para no guardar ningún nombre. Inserta el correo electrónico de la cuenta de Google elegida.</string>

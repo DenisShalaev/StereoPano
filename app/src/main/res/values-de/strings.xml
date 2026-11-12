@@ -254,4 +254,6 @@
     <string name="seam_auto_none">Nichts Eindeutiges gefunden: Anfang und Ende zeigen kein passendes Detail. Korrektur von Hand einstellen.</string>
     <string name="seam_mode_move">✋ Verschieben</string>
     <string name="seam_mode_look">🔍 Nur ansehen</string>
+    <string name="set_arrows_t">Ruhige Richtungspfeile</string>
+    <string name="set_arrows_d">Sanfte Pfeile, die nach rechts laufen, zeigen die Drehrichtung. Sie geben kein Tempo vor: Wenn du anhältst, geht nichts verloren. Nur bei deutlich zu schnellem Drehen werden sie gelb. Aus = roter Tempo-Punkt.</string>
 </resources>

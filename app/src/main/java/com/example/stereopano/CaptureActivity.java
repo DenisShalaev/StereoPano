@@ -99,6 +99,7 @@ public class CaptureActivity extends Activity {
     private volatile double fPxGeraet = 0;     // Brennweite in Pixeln laut Kamera (nur zur Diagnose)
     private GuideView guide;
     private boolean leitpunkte = true;
+    private boolean pfeile = true;             // ruhige Richtungspfeile statt Tempo-Punkt
     private long startZeit, letzteT;
     private double letzterYaw, tempo;
     private final Runnable tick = new Runnable() {
@@ -112,7 +113,7 @@ public class CaptureActivity extends Activity {
                 letzterYaw = yaw;
                 letzteT = jetzt;
                 double anker = nimmtAuf ? startYaw : yaw;
-                double ziel = nimmtAuf ? Math.min(360, (jetzt - startZeit) / 1000.0 * zielTempo) : Double.NaN;
+                double ziel = nimmtAuf && !pfeile ? Math.min(360, (jetzt - startZeit) / 1000.0 * zielTempo) : Double.NaN;
                 double elVirt = nimmtAuf ? startEl : snapElevation(Math.toDegrees(Math.asin(Math.max(-1, Math.min(1, -R[8])))));
                 guide.setzen(R, anker, yaw - anker, nimmtAuf, ziel, tempo, elVirt);
             } else {
@@ -293,6 +294,8 @@ public class CaptureActivity extends Activity {
         bewegung = Settings.bewegung(this);
         belichtungSperren = Settings.belichtungSperren(this);
         leitpunkte = Settings.leitpunkte(this);
+        pfeile = Settings.pfeile(this);
+        if (guide != null) guide.setPfeile(pfeile, zielTempo);
         if (fPxBasis > 0) fPx = fPxBasis * fpxFaktor;
     }
 
@@ -329,6 +332,7 @@ public class CaptureActivity extends Activity {
         // ---- Leitpunkte direkt ueber dem Kamerabild
         guide = new GuideView(this);
         guide.setFocalRatio(fPx / groesse.getHeight());
+        guide.setPfeile(pfeile, zielTempo);
         root.addView(guide, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 

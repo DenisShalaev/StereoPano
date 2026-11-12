@@ -177,6 +177,8 @@
     <string name="set_all_t">Panoramen anderer Apps zeigen</string>
     <string name="set_angle_d">Abstand der Bildstreifen zur Bildmitte. Größer = stärkerer 3D-Effekt (Stereobasis ≈ 2 × Armlänge × sin). Standard 3,5°.</string>
     <string name="set_angle_t">Stereo-Winkel</string>
+    <string name="set_arrows_d">Sanfte Pfeile, die nach rechts laufen, zeigen die Drehrichtung. Sie geben kein Tempo vor: Wenn du anhältst, geht nichts verloren. Nur bei deutlich zu schnellem Drehen werden sie gelb. Aus = roter Tempo-Punkt.</string>
+    <string name="set_arrows_t">Ruhige Richtungspfeile</string>
     <string name="set_audio_d">Umgebungston mit aufzeichnen (wird im .vr.jpg gespeichert).</string>
     <string name="set_audio_t">Ton aufnehmen</string>
     <string name="set_author_d">Wird in jedes neue Panorama geschrieben (in Galerien und Google Fotos durchsuchbar). Leer lassen, um keinen Namen zu speichern. Fügt die E-Mail-Adresse des gewählten Google-Kontos ein.</string>

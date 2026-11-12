@@ -250,4 +250,6 @@
     <string name="seam_auto_none">No se encontró nada claro: el inicio y el final de la grabación no muestran detalles coincidentes. Ajusta la corrección a mano.</string>
     <string name="seam_mode_move">✋ Mover</string>
     <string name="seam_mode_look">🔍 Solo mirar</string>
+    <string name="set_arrows_t">Flechas de dirección discretas</string>
+    <string name="set_arrows_d">Flechas suaves que avanzan hacia la derecha indican el sentido del giro. No marcan un ritmo: si te detienes, no se pierde nada. Solo se vuelven amarillas si giras demasiado rápido. Desactivado = punto rojo de ritmo.</string>
 </resources>

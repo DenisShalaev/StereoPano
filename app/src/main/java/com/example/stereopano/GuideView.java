@@ -30,6 +30,10 @@ final class GuideView extends View {
     private float[] rot;
     private double anchor, psi, ziel = Double.NaN, tempo;
     private boolean aufnahme;
+    private boolean pfeile;                // ruhige Richtungspfeile statt Tempo-Punkt
+    private double pfeilTempo = 8;
+    private final Paint chev = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Path chevPath = new Path();
     private double focalRatio = 1;
     private android.graphics.Bitmap ghost;
     private double ghostKorr = 1.0;
@@ -54,9 +58,14 @@ final class GuideView extends View {
         text.setTextAlign(Paint.Align.CENTER);
         text.setShadowLayer(3 * d, 0, 0, Color.BLACK);
         fill.setStyle(Paint.Style.FILL);
+        chev.setStyle(Paint.Style.STROKE);
+        chev.setStrokeCap(Paint.Cap.ROUND);
+        chev.setStrokeJoin(Paint.Join.ROUND);
     }
 
     void setFocalRatio(double r) { focalRatio = r; }
+
+    void setPfeile(boolean an, double zielTempo) { pfeile = an; pfeilTempo = zielTempo; invalidate(); }
 
     /** Erstes Bild der Aufnahme (klein) zum Einblenden am Ende; korr = Faktor der Winkelkorrektur (1 + c). */
     void setGhost(android.graphics.Bitmap b, double korr) {
@@ -164,6 +173,32 @@ final class GuideView extends View {
                 fill.setColor(farbe);
                 c.drawPath(pfeil, fill);
                 c.drawText(Math.round(Math.abs(delta)) + "\u00B0", ex, ey + 30 * d, text);
+            }
+        }
+
+        // Ruhige Richtungspfeile: laufen endlos nach rechts (= in Drehrichtung), unabhaengig davon, wie schnell du drehst.
+        // Stehenbleiben ist unschaedlich. Nur bei deutlich zu schnellem Drehen werden sie gelb.
+        if (aufnahme && pfeile) {
+            boolean schnell = Math.abs(tempo) > 1.6 * pfeilTempo;
+            if (schnell) farbe = 0xFFFFC107;
+            float sp = 64 * d, s = 13 * d, y = h / 2f + 92 * d;
+            float off = (android.os.SystemClock.elapsedRealtime() % 100000L) / 1000f * 56 * d % sp;
+            int n = (int) (w / sp) + 3;
+            for (int i = 0; i < n; i++) {
+                float x = -sp + off + i * sp;
+                float env = (float) Math.sin(Math.PI * Math.max(0, Math.min(1, x / w)));
+                int a = (int) (115 * env);
+                if (a < 6) continue;
+                chevPath.reset();
+                chevPath.moveTo(x - s * 0.5f, y - s);
+                chevPath.lineTo(x + s * 0.5f, y);
+                chevPath.lineTo(x - s * 0.5f, y + s);
+                chev.setStrokeWidth(7.5f * d);
+                chev.setColor((a * 2 / 5) << 24);
+                c.drawPath(chevPath, chev);
+                chev.setStrokeWidth(4.5f * d);
+                chev.setColor((a << 24) | (schnell ? 0xFFC107 : 0xFFFFFF));
+                c.drawPath(chevPath, chev);
             }
         }
 
