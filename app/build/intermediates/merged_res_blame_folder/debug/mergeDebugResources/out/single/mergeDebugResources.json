@@ -36,20 +36,12 @@
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_mode.xml"
     },
     {
-        "merged": "com.example.stereopano.app-debug-4:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/mipmap-anydpi-v26/ic_launcher_round.xml"
-    },
-    {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_view.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_view.xml"
     },
     {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_shutter_idle.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_shutter_idle.xml"
-    },
-    {
-        "merged": "com.example.stereopano.app-debug-4:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_center.xml.flat",
@@ -116,6 +108,10 @@
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/btn_rounded_glass.xml"
     },
     {
+        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_back.xml.flat",
+        "source": "com.example.stereopano.app-main-6:/drawable/ic_back.xml"
+    },
+    {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_shutter_stop.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_shutter_stop.xml"
     },
@@ -138,10 +134,6 @@
     {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_cloud.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_cloud.xml"
-    },
-    {
-        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_launcher_foreground.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/drawable/ic_launcher_foreground.xml"
     },
     {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_mode_sbs.xml.flat",

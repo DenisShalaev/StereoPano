@@ -6,6 +6,7 @@ drawable btn_rounded_dark
 drawable btn_rounded_glass
 drawable btn_rounded_primary
 drawable ic_arrow_up
+drawable ic_back
 drawable ic_capture
 drawable ic_center
 drawable ic_chevron_up

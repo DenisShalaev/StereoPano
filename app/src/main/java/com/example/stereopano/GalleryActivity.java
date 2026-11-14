@@ -24,6 +24,7 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -59,7 +60,7 @@ public class GalleryActivity extends Activity {
         String name, ort, autor = "";
     }
 
-    /** Zeilen der Liste: String = Gruppenueberschrift, Item[2] = zwei Miniaturen nebeneinander. */
+    /** Zeilen der Liste: String = Gruppenueberschrift, Item = eine Bildzeile. */
     private final List<Object> zeilen = new ArrayList<>();
     private final LruCache<Long, Bitmap> cache = new LruCache<>(48);
     private final ExecutorService pool = Executors.newFixedThreadPool(2);
@@ -109,23 +110,32 @@ public class GalleryActivity extends Activity {
         super.onCreate(b);
         sortModus = Settings.p(this).getInt(Settings.K_SORT, 0);
 
+        float dd = getResources().getDisplayMetrics().density;
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.BLACK);
+        root.setBackgroundColor(0xFF0F172A);
 
-        TextView titel = new TextView(this);
-        titel.setText(R.string.gallery_title);
-        titel.setTextColor(Color.WHITE);
-        titel.setTextSize(20);
-        titel.setPadding(32, 24, 32, 24);
-
+        int rp = (int) (16 * dd);
         LinearLayout kopf = new LinearLayout(this);
         kopf.setOrientation(LinearLayout.HORIZONTAL);
         kopf.setGravity(Gravity.CENTER_VERTICAL);
-        kopf.setPadding(0, 0, 24, 0);
-        kopf.addView(titel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        float dd = getResources().getDisplayMetrics().density;
+        kopf.setPadding(rp, rp, rp, (int) (8 * dd));
         int sz = (int) (44 * dd);
+        ImageView zurueck = new ImageView(this);
+        zurueck.setImageResource(R.drawable.ic_back);
+        int bp = (int) (10 * dd);
+        zurueck.setPadding(bp, bp, bp, bp);
+        zurueck.setBackground(Ui.rund(dd, 22, Ui.KARTE, Ui.RAND));
+        zurueck.setContentDescription(getString(R.string.cd_back));
+        zurueck.setOnClickListener(v -> onBackPressed());
+        LinearLayout.LayoutParams zlp = new LinearLayout.LayoutParams(sz, sz);
+        zlp.rightMargin = (int) (12 * dd);
+        kopf.addView(zurueck, zlp);
+        TextView titel = new TextView(this);
+        titel.setText(R.string.gallery_title);
+        titel.setTextColor(Color.WHITE);
+        titel.setTextSize(22);
+        kopf.addView(titel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         ImageView sortKnopf = Ui.runderKnopf(this, R.drawable.ic_sort, R.string.cd_sort);
         sortKnopf.setOnClickListener(v -> zeigeSortierMenue());
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(sz, sz);
@@ -142,15 +152,15 @@ public class GalleryActivity extends Activity {
         auswahlLeiste = new LinearLayout(this);
         auswahlLeiste.setOrientation(LinearLayout.HORIZONTAL);
         auswahlLeiste.setGravity(Gravity.CENTER_VERTICAL);
-        auswahlLeiste.setBackgroundColor(0xFF1E2A33);
-        auswahlLeiste.setPadding(24, 8, 16, 8);
+        auswahlLeiste.setBackgroundColor(Ui.KARTE);
+        auswahlLeiste.setPadding((int) (16 * dd), (int) (8 * dd), (int) (16 * dd), (int) (8 * dd));
         auswahlZahl = new TextView(this);
         auswahlZahl.setTextColor(Color.WHITE);
         auswahlZahl.setTextSize(16);
         auswahlLeiste.addView(auswahlZahl, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         android.widget.Button alle = Ui.pille(this, R.string.select_all, false);
         alle.setOnClickListener(v -> {
-            for (Object z : zeilen) if (z instanceof Item[]) for (Item it : (Item[]) z) if (it != null) gewaehlt.add(it.id);
+            for (Object z : zeilen) if (z instanceof Item) gewaehlt.add(((Item) z).id);
             aktualisiereAuswahl();
         });
         LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -174,7 +184,7 @@ public class GalleryActivity extends Activity {
 
         ListView grid = new ListView(this);
         grid.setDivider(null);
-        grid.setPadding(8, 0, 8, 8);
+        grid.setPadding((int) (16 * dd), 0, (int) (16 * dd), (int) (16 * dd));
         grid.setClipToPadding(false);
         adapter = new BaseAdapter() {
             @Override public int getCount() { return zeilen.size(); }
@@ -188,29 +198,12 @@ public class GalleryActivity extends Activity {
                 if (z instanceof String) {
                     TextView t = v instanceof TextView ? (TextView) v : new TextView(GalleryActivity.this);
                     t.setText((String) z);
-                    t.setTextColor(0xFF4FC3F7);
+                    t.setTextColor(Ui.AKZENT);
                     t.setTextSize(15);
-                    t.setPadding(12, i == 0 ? 8 : 28, 12, 8);
+                    t.setPadding((int) (4 * dd), (int) ((i == 0 ? 8 : 20) * dd), (int) (4 * dd), (int) (8 * dd));
                     return t;
                 }
-                Item[] paar = (Item[]) z;
-                LinearLayout r = v instanceof LinearLayout ? (LinearLayout) v : null;
-                if (r == null) {
-                    r = new LinearLayout(GalleryActivity.this);
-                    r.setOrientation(LinearLayout.HORIZONTAL);
-                    for (int k = 0; k < 2; k++) {
-                        ImageView iv = new SymbolView(GalleryActivity.this);
-                        iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                        iv.setBackgroundColor(0xFF222222);
-                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-                        lp.setMargins(4, 4, 4, 4);
-                        r.addView(iv, lp);
-                    }
-                }
-                int h = (getResources().getDisplayMetrics().widthPixels / 2 - 16) / 2 + 8;    // Seitenverhaeltnis 2:1
-                r.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h));
-                for (int k = 0; k < 2; k++) bindeMiniatur((ImageView) r.getChildAt(k), paar[k]);
-                return r;
+                return zeile((Item) z, dd);
             }
         };
         grid.setAdapter(adapter);
@@ -254,41 +247,74 @@ public class GalleryActivity extends Activity {
         super.onDestroy();
     }
 
-    private void bindeMiniatur(ImageView iv, Item it) {
-        if (it == null) {
-            iv.setVisibility(View.INVISIBLE);
-            iv.setOnClickListener(null);
-            iv.setOnLongClickListener(null);
-            iv.setTag(null);
-            return;
+    /** Eine Zeile im Stil der StereoCam-Galerie: Karte mit Miniatur (mit Mono-/Stereo-/Ton-Symbolen), Name und Datum. */
+    private View zeile(final Item it, float dd) {
+        boolean on = gewaehlt.contains(it.id);
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setBackground(Ui.rund(dd, 14, on ? 0xFF234B63 : Ui.KARTE, on ? Ui.AKZENT : Ui.RAND));
+        int q = (int) (10 * dd);
+        row.setPadding(q, q, q, q);
+        if (auswahl) {
+            TextView mark = new TextView(this);
+            mark.setText(on ? "\u2713" : "");
+            mark.setTextSize(15);
+            mark.setTextColor(0xFF0B1220);
+            mark.setGravity(Gravity.CENTER);
+            mark.setBackground(Ui.rund(dd, 12, on ? Ui.AKZENT : 0, Ui.GRAU));
+            LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams((int) (24 * dd), (int) (24 * dd));
+            mp.rightMargin = (int) (10 * dd);
+            row.addView(mark, mp);
         }
-        iv.setVisibility(View.VISIBLE);
+        final ImageView iv = new SymbolView(this);
+        iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        iv.setBackground(Ui.rund(dd, 8, 0xFF0F172A, 0));
+        iv.setClipToOutline(true);
+        row.addView(iv, new LinearLayout.LayoutParams((int) (108 * dd), (int) (54 * dd)));
+        LinearLayout tx = new LinearLayout(this);
+        tx.setOrientation(LinearLayout.VERTICAL);
+        tx.setPadding((int) (12 * dd), 0, 0, 0);
+        TextView n = new TextView(this);
+        n.setText(it.name);
+        n.setTextColor(Color.WHITE);
+        n.setTextSize(14);
+        tx.addView(n);
+        TextView d2 = new TextView(this);
+        StringBuilder sb = new StringBuilder(DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(new Date(it.datum * 1000L)));
+        sb.append("  \u00B7  ").append(String.format(Locale.US, "%.1f MB", it.groesse / 1048576.0));
+        if (!it.ort.isEmpty()) sb.append("  \u00B7  ").append(it.ort);
+        d2.setText(sb.toString());
+        d2.setTextColor(Ui.GRAU);
+        d2.setTextSize(12);
+        tx.addView(d2);
+        row.addView(tx, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        FrameLayout wrap = new FrameLayout(this);
+        wrap.setPadding(0, 0, 0, (int) (8 * dd));
+        wrap.addView(row, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         iv.setTag(it.id);
-        if (gewaehlt.contains(it.id)) iv.setColorFilter(0xAA4FC3F7, android.graphics.PorterDuff.Mode.SRC_ATOP);
-        else iv.clearColorFilter();
-        iv.setOnClickListener(v -> {
+        row.setOnClickListener(v -> {
             if (auswahl) { schalteAuswahl(it); return; }
             startActivity(new Intent(this, ViewerActivity.class)
                     .setAction(Intent.ACTION_VIEW).setData(it.uri).putExtra("von_galerie", true));
         });
-        iv.setOnLongClickListener(v -> {
+        row.setOnLongClickListener(v -> {
             if (auswahl) schalteAuswahl(it); else zeigeMenue(it);
             return true;
         });
         Bitmap bm = cache.get(it.id);
-        Integer known = stereoMap.get(it.id);
-        setzeSymbol(iv, known);
-        if (bm != null) { iv.setImageBitmap(bm); return; }
-        iv.setImageDrawable(null);
+        setzeSymbol(iv, stereoMap.get(it.id));
+        if (bm != null) { iv.setImageBitmap(bm); return wrap; }
         pool.execute(() -> {
             try {
-                Bitmap t = getContentResolver().loadThumbnail(it.uri, new Size(640, 320), null);
+                Bitmap t = getContentResolver().loadThumbnail(it.uri, new Size(432, 216), null);
                 final int st = symbolFlags(it.uri);
                 stereoMap.put(it.id, st);
                 cache.put(it.id, t);
                 runOnUiThread(() -> { Object tag = iv.getTag(); if (tag != null && it.id == (Long) tag) { iv.setImageBitmap(t); setzeSymbol(iv, st); } });
             } catch (Exception ignored) { }
         });
+        return wrap;
     }
 
     static final int SYM_STEREO = 1, SYM_AUDIO = 2;
@@ -401,8 +427,9 @@ public class GalleryActivity extends Activity {
             if (flags == null || getDrawable() == null) return;
             boolean stereo = (flags & SYM_STEREO) != 0, audio = (flags & SYM_AUDIO) != 0;
             float w = getWidth();
-            float r = w * 0.04f, sw = Math.max(2.5f, w * 0.008f), gap = r * 1.15f;
-            float m = w * 0.04f;
+            float base = Math.max(w, 160 * getResources().getDisplayMetrics().density);
+            float r = base * 0.04f, sw = Math.max(2.5f, base * 0.008f), gap = r * 1.15f;
+            float m = base * 0.04f;
             float cy = r + m, cx2 = w - m - r, cx1 = cx2 - (stereo ? gap : 0);
             sh.setStrokeWidth(sw * 2.4f);
             wh.setStrokeWidth(sw);
@@ -514,7 +541,7 @@ public class GalleryActivity extends Activity {
                 int j = i;
                 while (j < neu.size() && gruppe(neu.get(j), modus, df).equals(g)) j++;
                 neueZeilen.add(g + "  \u00B7  " + (j - i));
-                for (int k = i; k < j; k += 2) neueZeilen.add(new Item[]{neu.get(k), k + 1 < j ? neu.get(k + 1) : null});
+                for (int k = i; k < j; k++) neueZeilen.add(neu.get(k));
                 i = j;
             }
             runOnUiThread(() -> {
@@ -593,7 +620,7 @@ public class GalleryActivity extends Activity {
     private List<Item> ausgewaehlteItems() {
         List<Item> out = new ArrayList<>();
         for (Object z : zeilen)
-            if (z instanceof Item[]) for (Item it : (Item[]) z) if (it != null && gewaehlt.contains(it.id)) out.add(it);
+            if (z instanceof Item && gewaehlt.contains(((Item) z).id)) out.add((Item) z);
         return out;
     }
 

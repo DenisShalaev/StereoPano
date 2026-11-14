@@ -91,7 +91,7 @@ final class Ui {
 
     static final int KARTE = 0xFF1E293B, RAND = 0xFF334155, TEXTC = 0xFFFFFFFF, GRAU = 0xFF94A3B8, AKZENT = 0xFF4FC3F7;
 
-    private static android.graphics.drawable.GradientDrawable rund(float d, float r, int fill, int stroke) {
+    static android.graphics.drawable.GradientDrawable rund(float d, float r, int fill, int stroke) {
         android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
         g.setCornerRadius(r * d);
         g.setColor(fill);
