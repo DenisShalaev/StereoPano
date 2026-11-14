@@ -49,7 +49,7 @@
     <string name="gp_import_done">Импортировано: %1$d, из них стерео: %2$d</string>
     <string name="gp_loading">Загрузка…</string>
     <string name="gp_m_check">Проверить стерео и звук</string>
-    <string name="gp_m_link">Создать ссылку</string>
+    <string name="gp_m_link">Открыть в Google Фото, чтобы поделиться</string>
     <string name="gp_m_open">Открыть на телефоне</string>
     <string name="gp_no_account">Аккаунт Google не выбран (Настройки → Google Фото).</string>
     <string name="gp_no_token">Google не выдал токен доступа.</string>
@@ -58,6 +58,7 @@
     <string name="gp_old_on">Старые .vr.jpg других приложений теперь видны в галерее (может понадобиться доступ к памяти).</string>
     <string name="gp_pick">Выбрать фото из Google Фото / другого приложения</string>
     <string name="gp_refresh">Обновить список моих загруженных панорам</string>
+    <string name="gp_share_hint">Google больше не позволяет приложениям создавать ссылки для доступа. Откроется Google Фото: нажмите там «Поделиться».</string>
     <string name="gp_title">Google Фото</string>
     <string name="gp_unreg">Google отклонил запрос: приложение ещё не зарегистрировано в консоли Google Cloud. Создайте OAuth-клиент типа Android (имя пакета и SHA-1) и включите Photos Library API.</string>
     <string name="gp_upload_failed">Не удалось загрузить в Google Фото: %s</string>

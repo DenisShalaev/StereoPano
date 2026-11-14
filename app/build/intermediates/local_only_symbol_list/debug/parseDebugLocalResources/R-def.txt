@@ -95,6 +95,7 @@ string gp_old
 string gp_old_on
 string gp_pick
 string gp_refresh
+string gp_share_hint
 string gp_title
 string gp_unreg
 string gp_upload_failed

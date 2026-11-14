@@ -25,9 +25,9 @@ import java.util.List;
  * Seit 2025 liefert die API nur Dateien, die diese App selbst hochgeladen hat.
  */
 final class GooglePhotos {
+    // Seit 31.03.2025 gibt es photoslibrary.sharing/readonly nicht mehr (Google Photos Library API); Freigabe-Funktionen liefern 403.
     static final String SCOPE = "oauth2:https://www.googleapis.com/auth/photoslibrary.appendonly "
-            + "https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata "
-            + "https://www.googleapis.com/auth/photoslibrary.sharing";
+            + "https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata";
     private static final String BASE = "https://photoslibrary.googleapis.com/v1/";
 
     static final class Item {
@@ -134,18 +134,10 @@ final class GooglePhotos {
         return new JSONObject(new String(lese(h), StandardCharsets.UTF_8));
     }
 
-    /** Legt ein Album mit dem Objekt an und gibt es per Link frei (nur ansehen); liefert die Freigabe-URL. */
+    /** Link zum Objekt in Google Photos (nur fuer den Besitzer). Teilen geht nur in der Google-Photos-App selbst. */
     static String linkTeilen(Activity a, Item it) throws Exception {
-        String tok = token(a, false, null);
-        String titel = "StereoPano " + it.name;
-        String albumId = post(tok, BASE + "albums", new JSONObject().put("album", new JSONObject().put("title", titel))).getString("id");
-        post(tok, BASE + "albums/" + albumId + ":batchAddMediaItems",
-                new JSONObject().put("mediaItemIds", new JSONArray().put(it.id)));
-        JSONObject r = post(tok, BASE + "albums/" + albumId + ":share", new JSONObject().put("sharedAlbumOptions",
-                new JSONObject().put("isCollaborative", false).put("isCommentable", false)));
-        String url = r.getJSONObject("shareInfo").optString("shareableUrl");
-        if (url.isEmpty()) throw new Exception("no shareableUrl");
-        return url;
+        if (it.productUrl == null || it.productUrl.isEmpty()) throw new Exception("no productUrl");
+        return it.productUrl;
     }
 
     /** Laedt das Original zurueck und prueft, ob rechtes Auge und Ton noch enthalten sind (und die Bytes identisch). */

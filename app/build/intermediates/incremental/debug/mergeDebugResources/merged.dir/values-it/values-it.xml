@@ -49,7 +49,7 @@
     <string name="gp_import_done">Importati: %1$d, di cui stereo: %2$d</string>
     <string name="gp_loading">Caricamento…</string>
     <string name="gp_m_check">Verifica stereo e suono</string>
-    <string name="gp_m_link">Crea link di condivisione</string>
+    <string name="gp_m_link">Apri in Google Foto per condividere</string>
     <string name="gp_m_open">Apri sul telefono</string>
     <string name="gp_no_account">Nessun account Google scelto (Impostazioni → Google Foto).</string>
     <string name="gp_no_token">Google non ha restituito un token di accesso.</string>
@@ -58,6 +58,7 @@
     <string name="gp_old_on">I vecchi file .vr.jpg di altre app ora compariranno nella galleria (potrebbe essere richiesta l\'autorizzazione di archiviazione).</string>
     <string name="gp_pick">Scegli una foto da Google Foto / un\'altra app</string>
     <string name="gp_refresh">Aggiorna l\'elenco dei miei panorami caricati</string>
+    <string name="gp_share_hint">Google non consente più alle app di creare link di condivisione. Si apre Google Foto: tocca Condividi.</string>
     <string name="gp_title">Google Foto</string>
     <string name="gp_unreg">Google ha rifiutato la richiesta: questa app non è ancora registrata nella console Google Cloud. Crea un client OAuth di tipo Android (nome del pacchetto e SHA-1) e abilita la Photos Library API.</string>
     <string name="gp_upload_failed">Caricamento su Google Foto non riuscito: %s</string>

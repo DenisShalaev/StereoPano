@@ -49,7 +49,7 @@
     <string name="gp_import_done">Імпортовано: %1$d, зі стерео: %2$d</string>
     <string name="gp_loading">Завантаження…</string>
     <string name="gp_m_check">Перевірити стерео та звук</string>
-    <string name="gp_m_link">Створити посилання для спільного доступу</string>
+    <string name="gp_m_link">Відкрити в Google Фото, щоб поділитися</string>
     <string name="gp_m_open">Відкрити на телефоні</string>
     <string name="gp_no_account">Обліковий запис Google не вибрано (Налаштування → Google Фото).</string>
     <string name="gp_no_token">Google не повернув маркер доступу.</string>
@@ -58,6 +58,7 @@
     <string name="gp_old_on">Старі файли .vr.jpg інших програм тепер з\'являтимуться в галереї (може знадобитися дозвіл на сховище).</string>
     <string name="gp_pick">Вибрати фото з Google Фото / іншої програми</string>
     <string name="gp_refresh">Оновити список моїх завантажених панорам</string>
+    <string name="gp_share_hint">Google більше не дозволяє застосункам створювати посилання для доступу. Відкриється Google Фото: натисніть там «Поділитися».</string>
     <string name="gp_title">Google Фото</string>
     <string name="gp_unreg">Google відхилив запит: цю програму ще не зареєстровано в консолі Google Cloud. Створіть клієнт OAuth типу Android (назва пакета й SHA-1) та ввімкніть Photos Library API.</string>
     <string name="gp_upload_failed">Не вдалося завантажити до Google Фото: %s</string>

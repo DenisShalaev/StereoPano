@@ -216,7 +216,7 @@
     <string name="gp_failed">Non riuscito: %s</string>
     <string name="gp_downloading">Download in corso…</string>
     <string name="gp_m_open">Apri sul telefono</string>
-    <string name="gp_m_link">Crea link di condivisione</string>
+    <string name="gp_m_link">Apri in Google Foto per condividere</string>
     <string name="gp_m_check">Verifica stereo e suono</string>
     <string name="gp_check_result">Stereo: %1$s  Suono: %2$s  Identico al file inviato: %3$s  (%4$d KB)</string>
     <string name="set_loop_t">Chiusura dell\'anello</string>
@@ -255,4 +255,5 @@
     <string name="set_strip_t">Salva la striscia completa per il computer</string>
     <string name="set_strip_d">Salva inoltre l\'intero cerchio più un tratto oltre i 360° come striscia non ritagliata, non chiusa e non sfumata (Download/StereoPano, *_strip.vr.jpg) e registra circa 8° in più, così la fine si sovrappone all\'inizio. StereoPano Viewer sul computer trova la sovrapposizione e chiude il cerchio in base all\'immagine, senza dover disegnare nulla. Richiede più memoria e circa il doppio del tempo di salvataggio. Disattivato di default.</string>
     <string name="strip_saved">Striscia salvata in Download/StereoPano</string>
+    <string name="gp_share_hint">Google non consente più alle app di creare link di condivisione. Si apre Google Foto: tocca Condividi.</string>
 </resources>

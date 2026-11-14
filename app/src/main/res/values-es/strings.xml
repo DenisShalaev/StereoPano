@@ -216,7 +216,7 @@
     <string name="gp_failed">Error: %s</string>
     <string name="gp_downloading">Descargando…</string>
     <string name="gp_m_open">Abrir en el teléfono</string>
-    <string name="gp_m_link">Crear enlace para compartir</string>
+    <string name="gp_m_link">Abrir en Google Fotos para compartir</string>
     <string name="gp_m_check">Comprobar estéreo y sonido</string>
     <string name="gp_check_result">Estéreo: %1$s  Sonido: %2$s  Idéntico al archivo enviado: %3$s  (%4$d KB)</string>
     <string name="set_loop_t">Cierre del bucle</string>
@@ -255,4 +255,5 @@
     <string name="set_strip_t">Guardar la tira completa para el ordenador</string>
     <string name="set_strip_d">Guarda además el círculo entero más un tramo más allá de 360° como tira sin recortar, sin cerrar y sin mezclar (Download/StereoPano, *_strip.vr.jpg) y graba unos 8° más, de modo que el final se solape con el principio. StereoPano Viewer en el ordenador encuentra el solape y cierra el círculo a partir de la imagen, sin tener que dibujar nada. Necesita más memoria y unas dos veces más tiempo para guardar. Desactivado por defecto.</string>
     <string name="strip_saved">Tira guardada en Download/StereoPano</string>
+    <string name="gp_share_hint">Google ya no permite que las apps creen enlaces para compartir. Se abre Google Fotos: toque Compartir.</string>
 </resources>

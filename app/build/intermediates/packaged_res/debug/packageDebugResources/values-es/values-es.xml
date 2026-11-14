@@ -49,7 +49,7 @@
     <string name="gp_import_done">Importado: %1$d, de ellos estéreo: %2$d</string>
     <string name="gp_loading">Cargando…</string>
     <string name="gp_m_check">Comprobar estéreo y sonido</string>
-    <string name="gp_m_link">Crear enlace para compartir</string>
+    <string name="gp_m_link">Abrir en Google Fotos para compartir</string>
     <string name="gp_m_open">Abrir en el teléfono</string>
     <string name="gp_no_account">No se ha elegido ninguna cuenta de Google (Ajustes → Google Fotos).</string>
     <string name="gp_no_token">Google no devolvió un token de acceso.</string>
@@ -58,6 +58,7 @@
     <string name="gp_old_on">Los archivos .vr.jpg antiguos de otras aplicaciones aparecerán ahora en la galería (puede que se pida el permiso de almacenamiento).</string>
     <string name="gp_pick">Elegir una foto de Google Fotos / otra aplicación</string>
     <string name="gp_refresh">Actualizar la lista de mis panoramas subidos</string>
+    <string name="gp_share_hint">Google ya no permite que las apps creen enlaces para compartir. Se abre Google Fotos: toque Compartir.</string>
     <string name="gp_title">Google Fotos</string>
     <string name="gp_unreg">Google rechazó la solicitud: esta aplicación aún no está registrada en la consola de Google Cloud. Crea un cliente OAuth de tipo Android (nombre de paquete y SHA-1) y activa la Photos Library API.</string>
     <string name="gp_upload_failed">Error al subir a Google Fotos: %s</string>

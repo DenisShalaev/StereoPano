@@ -206,20 +206,13 @@ public class GoogleActivity extends Activity {
         }).start();
     }
 
+    /** Oeffnet das Objekt in Google Photos; Teilen-Links koennen Apps seit 2025 nicht mehr erzeugen. */
     private void link(GooglePhotos.Item it) {
-        status.setText(R.string.gp_loading);
-        new Thread(() -> {
-            try {
-                String url = GooglePhotos.linkTeilen(this, it);
-                runOnUiThread(() -> {
-                    status.setText(url);
-                    Intent s = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, url);
-                    startActivity(Intent.createChooser(s, getString(R.string.share_title)));
-                });
-            } catch (Exception e) {
-                runOnUiThread(() -> status.setText(fehler(e)));
-            }
-        }).start();
+        try {
+            String url = GooglePhotos.linkTeilen(this, it);
+            status.setText(R.string.gp_share_hint);
+            startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)));
+        } catch (Exception e) { status.setText(fehler(e)); }
     }
 
     private void pruefe(GooglePhotos.Item it) {

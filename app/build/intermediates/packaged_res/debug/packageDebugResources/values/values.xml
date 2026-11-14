@@ -52,7 +52,7 @@
     <string name="gp_import_done">Imported: %1$d, of them stereo: %2$d</string>
     <string name="gp_loading">Loading…</string>
     <string name="gp_m_check">Check stereo &amp; sound</string>
-    <string name="gp_m_link">Create share link</string>
+    <string name="gp_m_link">Open in Google Photos to share</string>
     <string name="gp_m_open">Open on phone</string>
     <string name="gp_no_account">No Google account chosen (Settings → Google Photos).</string>
     <string name="gp_no_token">Google did not return an access token.</string>
@@ -61,6 +61,7 @@
     <string name="gp_old_on">Old .vr.jpg files of other apps will now appear in the gallery (storage permission may be requested).</string>
     <string name="gp_pick">Pick a photo from Google Photos / other app</string>
     <string name="gp_refresh">Refresh list of my uploaded panoramas</string>
+    <string name="gp_share_hint">Google no longer lets apps create share links. Google Photos opens: tap Share there.</string>
     <string name="gp_title">Google Photos</string>
     <string name="gp_unreg">Google refused the request: this app is not registered in the Google Cloud console yet. Create an OAuth client of type Android (package name and SHA-1) and enable the Photos Library API.</string>
     <string name="gp_upload_failed">Google Photos upload failed: %s</string>

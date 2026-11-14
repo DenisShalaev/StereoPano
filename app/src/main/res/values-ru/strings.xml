@@ -220,7 +220,7 @@
     <string name="gp_failed">Ошибка: %s</string>
     <string name="gp_downloading">Скачивание…</string>
     <string name="gp_m_open">Открыть на телефоне</string>
-    <string name="gp_m_link">Создать ссылку</string>
+    <string name="gp_m_link">Открыть в Google Фото, чтобы поделиться</string>
     <string name="gp_m_check">Проверить стерео и звук</string>
     <string name="gp_check_result">Стерео: %1$s  Звук: %2$s  Идентичен отправленному: %3$s  (%4$d КБ)</string>
     <string name="set_loop_t">Замыкание кольца</string>
@@ -259,4 +259,5 @@
     <string name="set_strip_t">Сохранять полную полосу для компьютера</string>
     <string name="set_strip_d">Дополнительно сохраняет весь круг и запас за 360° как необрезанную, незамкнутую и несглаженную полосу (Download/StereoPano, *_strip.vr.jpg) и снимает примерно на 8° дольше, чтобы конец перекрывал начало. StereoPano Viewer на компьютере сам находит перекрытие и замыкает круг по изображению, ничего дорисовывать не нужно. Нужно больше памяти и примерно вдвое больше времени на сохранение. По умолчанию выключено.</string>
     <string name="strip_saved">Полоса сохранена в Download/StereoPano</string>
+    <string name="gp_share_hint">Google больше не позволяет приложениям создавать ссылки для доступа. Откроется Google Фото: нажмите там «Поделиться».</string>
 </resources>
