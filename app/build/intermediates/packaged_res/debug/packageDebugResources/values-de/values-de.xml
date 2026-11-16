@@ -80,6 +80,7 @@
     <string name="hint_start">Telefon hochkant halten, Arme ausstrecken. Auslöser tippen, dann langsam nach rechts drehen.</string>
     <string name="hint_turn_right">Bitte nach RECHTS drehen.</string>
     <string name="invalid_jpeg">Kein gültiges JPEG.</string>
+    <string name="lang_system">Systemsprache</string>
     <string name="lens_fmt">Objektiv: %1$s</string>
     <string name="lens_main">Hauptkamera 1×</string>
     <string name="lens_off">Linsenkorrektur aus</string>
@@ -204,6 +205,8 @@
     <string name="set_k1_t">Linsen-Koeffizient k1</string>
     <string name="set_k2_d">Stärke der Verzerrung am Rand. Standard 0,55.</string>
     <string name="set_k2_t">Linsen-Koeffizient k2</string>
+    <string name="set_lang_d">Sprache der App unabhängig von der Telefonsprache wählen. Die Bildschirme ändern sich, sobald Sie zu ihnen zurückkehren.</string>
+    <string name="set_lang_t">Sprache</string>
     <string name="set_latency_d">Zeitversatz zwischen Kamerabild und Drehsensor. Bei Doppelkanten oder Zacken an senkrechten Linien in kleinen Schritten anpassen.</string>
     <string name="set_latency_t">Sensor-Latenz</string>
     <string name="set_lens_d">Tonnenförmige Vorverzerrung für Cardboard-Linsen.</string>

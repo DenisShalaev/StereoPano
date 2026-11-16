@@ -51,6 +51,10 @@ import java.util.concurrent.Executors;
  */
 public class GalleryActivity extends Activity {
 
+    private String langAtStart = "";
+    @Override protected void attachBaseContext(android.content.Context base) { langAtStart = Lang.get(base); super.attachBaseContext(Lang.wrap(base)); }
+    @Override protected void onRestart() { super.onRestart(); if (!Lang.get(this).equals(langAtStart)) recreate(); }
+
     private static final String PFAD = Environment.DIRECTORY_PICTURES + "/StereoPano%";
     private static final int REQ_BERECHTIGUNG = 11, REQ_LOESCHEN = 12;
 

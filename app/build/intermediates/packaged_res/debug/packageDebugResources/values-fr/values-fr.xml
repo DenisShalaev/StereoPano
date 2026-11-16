@@ -80,6 +80,7 @@
     <string name="hint_start">Tenez le téléphone à la verticale, bras tendus. Appuyez sur le déclencheur, puis tournez lentement vers la droite.</string>
     <string name="hint_turn_right">Tournez vers la DROITE.</string>
     <string name="invalid_jpeg">JPEG non valide.</string>
+    <string name="lang_system">Langue du système</string>
     <string name="lens_fmt">Objectif : %1$s</string>
     <string name="lens_main">Appareil principal 1×</string>
     <string name="lens_off">Correction de l\'objectif désactivée</string>
@@ -204,6 +205,8 @@
     <string name="set_k1_t">Coefficient d\'objectif k1</string>
     <string name="set_k2_d">Intensité de la distorsion au bord. Par défaut 0,55.</string>
     <string name="set_k2_t">Coefficient d\'objectif k2</string>
+    <string name="set_lang_d">Choisir la langue de l’application indépendamment de celle du téléphone. Les écrans changent lorsque vous y revenez.</string>
+    <string name="set_lang_t">Langue</string>
     <string name="set_latency_d">Décalage temporel entre l\'image de la caméra et le capteur de rotation. Si les lignes verticales montrent des doubles bords ou des zigzags, ajustez par petits pas.</string>
     <string name="set_latency_t">Latence du capteur</string>
     <string name="set_lens_d">Pré-distorsion en barillet pour les lentilles Cardboard.</string>

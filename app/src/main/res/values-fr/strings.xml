@@ -256,4 +256,7 @@
     <string name="set_strip_d">Enregistre aussi le cercle entier plus une portion au-delà de 360° sous forme de bande non rognée, non fermée et non fondue (Download/StereoPano, *_strip.vr.jpg), et enregistre environ 8° de plus pour que la fin chevauche le début. StereoPano Viewer sur l\'ordinateur trouve le chevauchement et ferme le cercle d\'après l\'image, sans rien dessiner. Demande plus de mémoire et environ deux fois plus de temps d\'enregistrement. Désactivé par défaut.</string>
     <string name="strip_saved">Bande enregistrée dans Download/StereoPano</string>
     <string name="gp_share_hint">Google ne permet plus aux applications de créer des liens de partage. Google Photos s’ouvre : touchez Partager.</string>
+    <string name="set_lang_t">Langue</string>
+    <string name="set_lang_d">Choisir la langue de l’application indépendamment de celle du téléphone. Les écrans changent lorsque vous y revenez.</string>
+    <string name="lang_system">Langue du système</string>
 </resources>

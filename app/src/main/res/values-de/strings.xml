@@ -260,4 +260,7 @@
     <string name="set_strip_d">Speichert zusätzlich den ganzen Kreis plus ein Stück über 360° hinaus als unbeschnittenen, ungeschlossenen, nicht überblendeten Streifen (Download/StereoPano, *_strip.vr.jpg) und nimmt etwa 8° länger auf, sodass das Ende den Anfang überlappt. Der StereoPano-Viewer am Computer findet die Überlappung und schließt den Kreis anhand des Bildes, es muss nichts dazugemalt werden. Braucht mehr Speicher und etwa doppelt so lange zum Speichern. Standardmäßig aus.</string>
     <string name="strip_saved">Streifen in Download/StereoPano gespeichert</string>
     <string name="gp_share_hint">Google erlaubt Apps keine Freigabelinks mehr. Google Fotos öffnet sich: Dort auf „Teilen“ tippen.</string>
+    <string name="set_lang_t">Sprache</string>
+    <string name="set_lang_d">Sprache der App unabhängig von der Telefonsprache wählen. Die Bildschirme ändern sich, sobald Sie zu ihnen zurückkehren.</string>
+    <string name="lang_system">Systemsprache</string>
 </resources>

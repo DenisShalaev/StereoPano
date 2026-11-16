@@ -80,6 +80,7 @@
     <string name="hint_start">Держите телефон вертикально на вытянутых руках. Нажмите кнопку съёмки и медленно поворачивайтесь вправо.</string>
     <string name="hint_turn_right">Поворачивайтесь ВПРАВО.</string>
     <string name="invalid_jpeg">Это не корректный JPEG.</string>
+    <string name="lang_system">Язык системы</string>
     <string name="lens_fmt">Объектив: %1$s</string>
     <string name="lens_main">Основная камера 1×</string>
     <string name="lens_off">Коррекция линз выключена</string>
@@ -204,6 +205,8 @@
     <string name="set_k1_t">Коэффициент линз k1</string>
     <string name="set_k2_d">Сила искажения у края. По умолчанию 0,55.</string>
     <string name="set_k2_t">Коэффициент линз k2</string>
+    <string name="set_lang_d">Выбор языка приложения независимо от языка телефона. Экраны меняются, когда вы к ним возвращаетесь.</string>
+    <string name="set_lang_t">Язык</string>
     <string name="set_latency_d">Сдвиг по времени между кадром камеры и датчиком вращения. Если на вертикальных линиях видны двойные края или зубцы, меняйте небольшими шагами.</string>
     <string name="set_latency_t">Задержка датчика</string>
     <string name="set_lens_d">Бочкообразное предыскажение для линз Cardboard.</string>

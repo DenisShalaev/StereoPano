@@ -65,6 +65,10 @@ import java.util.Locale;
  */
 public class CaptureActivity extends Activity {
 
+    private String langAtStart = "";
+    @Override protected void attachBaseContext(android.content.Context base) { langAtStart = Lang.get(base); super.attachBaseContext(Lang.wrap(base)); }
+    @Override protected void onRestart() { super.onRestart(); if (!Lang.get(this).equals(langAtStart)) recreate(); }
+
     // Werte kommen aus den Einstellungen (Zahnrad) - siehe ladeEinstellungen()
     private int maxBreite = 1280;          // Kamerabild 4:3, lange Seite max. N px
     private double stereoWinkel = 3.5;     // Streifenversatz zur Bildmitte (Stereobasis)

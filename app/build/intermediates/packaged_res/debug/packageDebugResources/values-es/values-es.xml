@@ -80,6 +80,7 @@
     <string name="hint_start">Sujeta el teléfono en vertical con los brazos extendidos. Pulsa el disparador y gira lentamente hacia la derecha.</string>
     <string name="hint_turn_right">Gira hacia la DERECHA.</string>
     <string name="invalid_jpeg">JPEG no válido.</string>
+    <string name="lang_system">Idioma del sistema</string>
     <string name="lens_fmt">Objetivo: %1$s</string>
     <string name="lens_main">Cámara principal 1×</string>
     <string name="lens_off">Corrección de la lente desactivada</string>
@@ -204,6 +205,8 @@
     <string name="set_k1_t">Coeficiente de lente k1</string>
     <string name="set_k2_d">Intensidad de la distorsión en el borde. Predeterminado 0,55.</string>
     <string name="set_k2_t">Coeficiente de lente k2</string>
+    <string name="set_lang_d">Elige el idioma de la app independientemente del del teléfono. Las pantallas cambian al volver a ellas.</string>
+    <string name="set_lang_t">Idioma</string>
     <string name="set_latency_d">Desfase de tiempo entre el fotograma de la cámara y el sensor de rotación. Si las líneas verticales muestran bordes dobles o zigzags, ajusta en pasos pequeños.</string>
     <string name="set_latency_t">Latencia del sensor</string>
     <string name="set_lens_d">Predistorsión de barril para las lentes Cardboard.</string>

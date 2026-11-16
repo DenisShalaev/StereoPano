@@ -28,6 +28,10 @@ import java.util.function.IntFunction;
  */
 public class SettingsActivity extends Activity {
 
+    private String langAtStart = "";
+    @Override protected void attachBaseContext(android.content.Context base) { langAtStart = Lang.get(base); super.attachBaseContext(Lang.wrap(base)); }
+    @Override protected void onRestart() { super.onRestart(); if (!Lang.get(this).equals(langAtStart)) recreate(); }
+
     private static final int BG = 0xFF0F172A, KARTE = 0xFF1E293B, RAND = 0xFF334155;
     private static final int TEXT = Color.WHITE, GRAU = 0xFF94A3B8, AKZENT = 0xFF4FC3F7;
 
@@ -88,6 +92,8 @@ public class SettingsActivity extends Activity {
     private void baue() {
         liste.removeAllViews();
         Locale loc = Locale.getDefault();
+
+        sprachZeile();
 
         abschnitt(R.string.sec_capture);
         regler(R.string.set_angle_t, R.string.set_angle_d, Settings.K_WINKEL, 15, 60, 1, 35,
@@ -264,6 +270,27 @@ public class SettingsActivity extends Activity {
             @Override public void onStopTrackingTouch(SeekBar s) { }
         });
         k.addView(sb);
+    }
+
+    private void sprachZeile() {
+        LinearLayout k = karte();
+        LinearLayout zeile = new LinearLayout(this);
+        zeile.setOrientation(LinearLayout.HORIZONTAL);
+        zeile.addView(text(getString(R.string.set_lang_t), TEXT, 16), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        String[] namen = new String[Lang.CODES.length];
+        for (int i = 0; i < namen.length; i++) namen[i] = i == 0 ? getString(R.string.lang_system) : Lang.NAMES[i];
+        zeile.addView(text(namen[Lang.index(this)], AKZENT, 14));
+        k.addView(zeile);
+        TextView i = text(getString(R.string.set_lang_d), GRAU, 12);
+        i.setPadding(0, dp(2), 0, 0);
+        k.addView(i);
+        k.setOnClickListener((View v) -> new Ui.Dlg(this).setTitle(getString(R.string.set_lang_t))
+                .setSingleChoiceItems(namen, Lang.index(this), (dlg, w) -> {
+                    dlg.dismiss();
+                    if (Lang.CODES[w].equals(Lang.get(this))) return;
+                    Lang.set(this, Lang.CODES[w]);
+                    recreate();
+                }).show());
     }
 
     private void auswahl(int titel, int info, String key, int[] werte, String[] labels, int def) {

@@ -256,4 +256,7 @@
     <string name="set_strip_d">Guarda además el círculo entero más un tramo más allá de 360° como tira sin recortar, sin cerrar y sin mezclar (Download/StereoPano, *_strip.vr.jpg) y graba unos 8° más, de modo que el final se solape con el principio. StereoPano Viewer en el ordenador encuentra el solape y cierra el círculo a partir de la imagen, sin tener que dibujar nada. Necesita más memoria y unas dos veces más tiempo para guardar. Desactivado por defecto.</string>
     <string name="strip_saved">Tira guardada en Download/StereoPano</string>
     <string name="gp_share_hint">Google ya no permite que las apps creen enlaces para compartir. Se abre Google Fotos: toque Compartir.</string>
+    <string name="set_lang_t">Idioma</string>
+    <string name="set_lang_d">Elige el idioma de la app independientemente del del teléfono. Las pantallas cambian al volver a ellas.</string>
+    <string name="lang_system">Idioma del sistema</string>
 </resources>

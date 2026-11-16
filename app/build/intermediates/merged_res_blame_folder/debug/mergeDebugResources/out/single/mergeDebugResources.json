@@ -108,10 +108,6 @@
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/btn_rounded_glass.xml"
     },
     {
-        "merged": "com.example.stereopano.app-debug-4:/drawable_ic_back.xml.flat",
-        "source": "com.example.stereopano.app-main-6:/drawable/ic_back.xml"
-    },
-    {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_shutter_stop.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_shutter_stop.xml"
     },
@@ -130,6 +126,10 @@
     {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/xml_locales_config.xml.flat",
         "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/xml/locales_config.xml"
+    },
+    {
+        "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_back.xml.flat",
+        "source": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-main-6:/drawable/ic_back.xml"
     },
     {
         "merged": "/Users/denis/.gradle/daemon/9.6.0/com.example.stereopano.app-debug-4:/drawable_ic_cloud.xml.flat",

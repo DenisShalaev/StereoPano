@@ -256,4 +256,7 @@
     <string name="set_strip_d">Salva inoltre l\'intero cerchio più un tratto oltre i 360° come striscia non ritagliata, non chiusa e non sfumata (Download/StereoPano, *_strip.vr.jpg) e registra circa 8° in più, così la fine si sovrappone all\'inizio. StereoPano Viewer sul computer trova la sovrapposizione e chiude il cerchio in base all\'immagine, senza dover disegnare nulla. Richiede più memoria e circa il doppio del tempo di salvataggio. Disattivato di default.</string>
     <string name="strip_saved">Striscia salvata in Download/StereoPano</string>
     <string name="gp_share_hint">Google non consente più alle app di creare link di condivisione. Si apre Google Foto: tocca Condividi.</string>
+    <string name="set_lang_t">Lingua</string>
+    <string name="set_lang_d">Scegli la lingua dell’app indipendentemente da quella del telefono. Le schermate cambiano quando ci torni.</string>
+    <string name="lang_system">Lingua del sistema</string>
 </resources>

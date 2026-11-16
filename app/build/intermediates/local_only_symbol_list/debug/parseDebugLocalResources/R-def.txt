@@ -118,6 +118,7 @@ string hint_slower
 string hint_start
 string hint_turn_right
 string invalid_jpeg
+string lang_system
 string lens_fmt
 string lens_main
 string lens_off
@@ -245,6 +246,8 @@ string set_k1_d
 string set_k1_t
 string set_k2_d
 string set_k2_t
+string set_lang_d
+string set_lang_t
 string set_latency_d
 string set_latency_t
 string set_lens_d

@@ -270,4 +270,7 @@
     <string name="set_strip_d">Also saves the whole circle plus an extra stretch beyond 360° as an uncut, unclosed, unblended strip (Download/StereoPano, *_strip.vr.jpg) and records about 8° longer, so the end overlaps the start. The StereoPano Viewer on the computer finds the overlap and closes the circle from the image, so nothing has to be painted in. Needs more memory and about twice the saving time. Off by default.</string>
     <string name="strip_saved">Strip saved to Download/StereoPano</string>
     <string name="gp_share_hint">Google no longer lets apps create share links. Google Photos opens: tap Share there.</string>
+    <string name="set_lang_t">Language</string>
+    <string name="set_lang_d">Choose the app language independently of the phone language. The screens change when you return to them.</string>
+    <string name="lang_system">System default</string>
 </resources>

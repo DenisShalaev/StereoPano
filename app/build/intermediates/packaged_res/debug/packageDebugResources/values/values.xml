@@ -83,6 +83,7 @@
     <string name="hint_start">Hold the phone upright with arms stretched out. Tap the shutter, then turn slowly to the right.</string>
     <string name="hint_turn_right">Please turn to the RIGHT.</string>
     <string name="invalid_jpeg">Not a valid JPEG.</string>
+    <string name="lang_system">System default</string>
     <string name="lens_fmt">Lens: %1$s</string>
     <string name="lens_main">Main camera 1×</string>
     <string name="lens_off">Lens correction off</string>
@@ -210,6 +211,8 @@
     <string name="set_k1_t">Lens coefficient k1</string>
     <string name="set_k2_d">Distortion strength at the edge. Default 0.55.</string>
     <string name="set_k2_t">Lens coefficient k2</string>
+    <string name="set_lang_d">Choose the app language independently of the phone language. The screens change when you return to them.</string>
+    <string name="set_lang_t">Language</string>
     <string name="set_latency_d">Time offset between camera frame and rotation sensor. If vertical lines show double edges or zigzags, adjust in small steps.</string>
     <string name="set_latency_t">Sensor latency</string>
     <string name="set_lens_d">Barrel pre-distortion for Cardboard lenses.</string>

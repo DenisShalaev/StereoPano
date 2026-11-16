@@ -45,6 +45,10 @@ import java.util.function.IntConsumer;
  * (siehe LentiCore). Ausgabe: PNG mit DPI-Angabe nach Bilder/StereoPano/Lenticular.
  */
 public class LentiActivity extends Activity {
+
+    private String langAtStart = "";
+    @Override protected void attachBaseContext(android.content.Context base) { langAtStart = Lang.get(base); super.attachBaseContext(Lang.wrap(base)); }
+    @Override protected void onRestart() { super.onRestart(); if (!Lang.get(this).equals(langAtStart)) recreate(); }
     private static final int BG = 0xFF0F172A, KARTE = 0xFF1E293B, RAND = 0xFF334155;
     private static final int TEXT = Color.WHITE, GRAU = 0xFF94A3B8, AKZENT = 0xFF4FC3F7;
     private static final double[][] FORMAT_MM = {{297, 210}, {210, 148}, {148, 105}};   // A4, A5, A6 (quer: lang x kurz)

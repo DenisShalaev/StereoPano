@@ -29,6 +29,10 @@ import java.util.List;
  * .vr.jpg-Dateien auf dem Telefon in der Galerie einblenden.
  */
 public class GoogleActivity extends Activity {
+
+    private String langAtStart = "";
+    @Override protected void attachBaseContext(android.content.Context base) { langAtStart = Lang.get(base); super.attachBaseContext(Lang.wrap(base)); }
+    @Override protected void onRestart() { super.onRestart(); if (!Lang.get(this).equals(langAtStart)) recreate(); }
     private static final int REQ_WAHL = 31, REQ_ZIP = 32;
     private final List<GooglePhotos.Item> items = new ArrayList<>();
     private TextView status;

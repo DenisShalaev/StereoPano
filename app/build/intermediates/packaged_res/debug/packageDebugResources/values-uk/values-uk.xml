@@ -80,6 +80,7 @@
     <string name="hint_start">Тримайте телефон вертикально на витягнутих руках. Натисніть кнопку зйомки, потім повільно обертайтеся праворуч.</string>
     <string name="hint_turn_right">Обертайтеся ПРАВОРУЧ.</string>
     <string name="invalid_jpeg">Недійсний файл JPEG.</string>
+    <string name="lang_system">Мова системи</string>
     <string name="lens_fmt">Об\'єктив: %1$s</string>
     <string name="lens_main">Основна камера 1×</string>
     <string name="lens_off">Корекцію лінз вимкнено</string>
@@ -204,6 +205,8 @@
     <string name="set_k1_t">Коефіцієнт лінзи k1</string>
     <string name="set_k2_d">Сила спотворення на краю. Типово 0,55.</string>
     <string name="set_k2_t">Коефіцієнт лінзи k2</string>
+    <string name="set_lang_d">Вибір мови застосунку незалежно від мови телефону. Екрани змінюються, коли ви до них повертаєтесь.</string>
+    <string name="set_lang_t">Мова</string>
     <string name="set_latency_d">Зсув у часі між кадром камери та датчиком обертання. Якщо вертикальні лінії мають подвійні краї або зигзаги, змінюйте малими кроками.</string>
     <string name="set_latency_t">Затримка датчика</string>
     <string name="set_lens_d">Бочкоподібне попереднє спотворення для лінз Cardboard.</string>
